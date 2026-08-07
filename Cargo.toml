@@ -1,7 +1,7 @@
 [package]
 name = "spf"
 version = "0.1.0"
+description = "Simple package format"
 edition = "2024"
-
-[dependencies]
-zip = "8.6.0"
+authors = ["Owen Debiasio <owen.debiasio@gmail.com>"]
+license = "GPL-3.0-or-later"
