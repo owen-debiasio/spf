@@ -1,5 +1,6 @@
 use std::{
-    fs::{self, create_dir_all},
+    fs::{self, File, create_dir_all},
+    io::Write,
     path::{Path, PathBuf},
     process::exit,
 };
@@ -8,13 +9,7 @@ use crate::{error, fs::create_archive_of_dir};
 
 /// # Create .spf package
 ///
-/// dir list format:
-/// path/of/original/file:/path/of/install/location
-///
-/// Example:
-/// target/debug/spf:/usr/bin/spf
-///
-/// Note: `output_location` defaults to cwd if empty
+/// See the example config in spf/samples/example_config
 pub fn create_spf_package(dir_list: &str, output_location: &str) {
     if !Path::new(dir_list).exists() {
         error("Directory list not found!")
@@ -47,7 +42,7 @@ pub fn create_spf_package(dir_list: &str, output_location: &str) {
         error("Your output location must not contain a file extension.")
     }
 
-    fs::create_dir_all(output_location).unwrap_or_else(|err| {
+    fs::create_dir(output_location).unwrap_or_else(|err| {
         error(&format!(
             "Failed to create directory \"{output_location}\": {err}"
         ))
@@ -58,15 +53,66 @@ pub fn create_spf_package(dir_list: &str, output_location: &str) {
     let dir_list = &*fs::read_to_string(dir_list)
         .unwrap_or_else(|err| error(&format!("Failed to open file: {err}")));
 
+    let (mut meta_has_parsed, mut paths_have_parsed) = (false, false);
+    let mut project_meta_file = File::create(format!("{output_location}/META")).unwrap();
+
     for entry in dir_list.lines() {
+        // Skip comments or empty lines
+        if entry.starts_with('#') || entry.is_empty() {
+            continue;
+        }
+
+        if entry == "=== PROJECT_META_BEGIN ===" {
+            meta_has_parsed = true;
+            continue;
+        } else if entry == "===  PROJECT_META_END  ===" {
+            meta_has_parsed = false;
+            continue;
+        }
+
+        let meta_category = entry.split(" = ").next().unwrap();
+
+        // Verify the meta category
+
+        if meta_has_parsed {
+            if matches!(
+                meta_category,
+                "PROJECT_NAME" | "LICENSE" | "AUTHORS" | "ARCH"
+            ) {
+                // Write the metadata to the metadata file
+                println!("Writing metadata: {entry}");
+                project_meta_file
+                    .write_all(format!("{entry}\n").as_bytes())
+                    .unwrap();
+            } else {
+                error(&format!(
+                    "Failed to parse entry \"{entry}\": Invalid metadata category"
+                ))
+            }
+        }
+
+        if meta_has_parsed {
+            continue;
+        }
+
+        if entry == "=== DEFINE PATHS BEGIN ===" {
+            paths_have_parsed = true;
+            continue;
+        } else if entry == "===  DEFINE PATHS END  ===" {
+            paths_have_parsed = false;
+            continue;
+        }
+
         let original_file = entry.split(':').next().unwrap().to_string();
         let file_destination = entry.split(':').next_back().unwrap().to_string();
 
-        // check if the entry is formatted correctly
-        check_entry(entry, original_file.clone(), file_destination.clone());
-
         let destination_of_file =
             format!("{output_location}/{file_destination}").replace("//", "/");
+
+        if !meta_has_parsed && paths_have_parsed {
+            // check if the entry is formatted correctly
+            check_path_entry(entry, original_file.clone(), file_destination.clone());
+        }
 
         let mut dirs_to_create = vec![];
 
@@ -124,7 +170,7 @@ pub fn create_spf_package(dir_list: &str, output_location: &str) {
 /// 1. original file is mentioned
 /// 2. file destination is mentioned
 /// 3. entry is formatted correctly
-fn check_entry(entry: &str, original: String, destination: String) {
+fn check_path_entry(entry: &str, original: String, destination: String) {
     if !(!original.is_empty()
         && !destination.is_empty()
         && format!("{original}:{destination}") == entry
