@@ -22,10 +22,14 @@ fn main() {
         user_args.push(arg);
     }
 
+    let get_arg =
+        |arg: usize| -> String { user_args.get(arg).unwrap_or(&String::new()).to_string() };
+
     // The first action after running `spf` in a cli:
     // $ spf <root arg> <other actions>
-    let root_arg = user_args.first().unwrap_or(&String::new()).to_string();
-    let secondary_arg = user_args.get(1).unwrap_or(&String::new()).to_string();
+    let root_arg = get_arg(0);
+    let secondary_arg = get_arg(1);
+    let tertiary_arg = get_arg(2);
 
     // Parse args
     // If there are more args than the root arg, pass them on to the desired function
@@ -33,7 +37,7 @@ fn main() {
         // Create package
         "create" | "-c" => {
             // `secondary_arg` is the file with the list of paths to package
-            create_spf_package(&secondary_arg)
+            create_spf_package(&secondary_arg, &tertiary_arg)
         }
         // Install package
         "install" | "-i" => {
@@ -48,12 +52,12 @@ fn main() {
 fn available_commands() {
     println!(
         "{}",
-        format!(
+        format_args!(
             "\
             spf {VERSION}\n\
             \n\
             Available Commands:\n\n\
-              create    <list of entries in text file>\n\
+              create    <list of entries in text file> <output directory>\n\
               install   <.spf package location>\n\
         "
         )
