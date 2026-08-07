@@ -53,7 +53,7 @@ pub fn create_spf_package(dir_list: &str, output_location: &str) {
         ))
     });
 
-    println!("Compiling files and directories...");
+    println!("Compiling files and directories...\n");
 
     let dir_list = &*fs::read_to_string(dir_list)
         .unwrap_or_else(|err| error(&format!("Failed to open file: {err}")));
@@ -65,24 +65,17 @@ pub fn create_spf_package(dir_list: &str, output_location: &str) {
         // check if the entry is formatted correctly
         check_entry(entry, original_file.clone(), file_destination.clone());
 
-        let path_str = original_file.replace("//", "/");
         let destination_of_file =
             format!("{output_location}/{file_destination}").replace("//", "/");
 
         let mut dirs_to_create = vec![];
 
-        let separated_dirs: Vec<&str> = path_str.split('/').collect();
-        let amount_of_dirs = separated_dirs.len();
-
-        for (i, dir) in destination_of_file.split('/').skip(1).enumerate() {
-            if i < amount_of_dirs - 1 {
-                dirs_to_create.push(dir.to_string());
-            } else {
-                break;
-            }
+        for dir in destination_of_file.split('/').skip(1) {
+            dirs_to_create.push(dir.to_string())
         }
 
         let destination_directory = &format!("{output_location}/{}", dirs_to_create.join("/"));
+        println!("Copying: {destination_directory}");
         create_dir_all(destination_directory).unwrap();
 
         let file_name = PathBuf::from(&original_file)
@@ -116,7 +109,7 @@ pub fn create_spf_package(dir_list: &str, output_location: &str) {
     );
 
     // Zip the output folder into a .spf package
-    println!("Packaging...");
+    println!("\nPackaging...");
     create_archive_of_dir(archive_name, output_location);
 
     println!("Cleaning up...");
