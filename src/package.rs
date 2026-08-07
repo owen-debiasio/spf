@@ -10,18 +10,18 @@ use crate::{error, fs::create_archive_of_dir};
 /// # Create .spf package
 ///
 /// See the example config in spf/samples/example_config
-pub fn create_spf_package(dir_list: &str, output_location: &str) {
-    if !Path::new(dir_list).exists() {
-        error("Directory list not found!")
+pub fn create_spf_package(package_config: &str, output_location: &str) {
+    if !Path::new(package_config).exists() {
+        error("Package config not found!")
     }
 
     // Check file extension
-    let dir_list_has_extension = Path::new(dir_list)
+    let dir_list_has_extension = Path::new(package_config)
         .extension()
         .unwrap_or_default()
         .is_empty();
 
-    if !dir_list_has_extension || dir_list.is_empty() {
+    if !dir_list_has_extension || package_config.is_empty() {
         error("Please provide a text file with no file extension!")
     }
 
@@ -50,7 +50,7 @@ pub fn create_spf_package(dir_list: &str, output_location: &str) {
 
     println!("Compiling files and directories...\n");
 
-    let dir_list = &*fs::read_to_string(dir_list)
+    let dir_list = &*fs::read_to_string(package_config)
         .unwrap_or_else(|err| error(&format!("Failed to open file: {err}")));
 
     let (mut meta_has_parsed, mut paths_have_parsed) = (false, false);
