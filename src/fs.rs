@@ -4,14 +4,22 @@
 //     Path::new(path).exists()
 // }
 
-use std::{fs::File, path::Path};
-use zip::ZipWriter;
+use std::process::Command;
 
 use crate::error;
 
-pub fn create_archive(name: &str, paths_to_include: Vec<&str>) {
-    let path = Path::new(name);
-    let file =
-        File::create(&path).unwrap_or_else(|file| error(&format!("Failed to create file: {file}")));
-    let mut zip = ZipWriter::new(file);
+/// Creates an archive of a directory.
+/// Why am I using `std::process::command` instead of a crate? F*ck you, that's why
+/// I'm using `tar` because it's basically on every distro and supported well on Linux.
+pub fn create_archive_of_dir(output: &str, directory: &str) {
+    Command::new("tar")
+        .arg("-cf")
+        .arg(output)
+        .arg(directory)
+        .output()
+        .unwrap_or_else(|err| {
+            error(&format!(
+                "Failed to create archive of dir \"{directory}\" to \"{output}\": {err}"
+            ))
+        });
 }
