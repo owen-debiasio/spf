@@ -1,0 +1,16 @@
+# Header for project meta
+# NOTE: META MUST BE DEFINED BEFORE PATHS
+=== PROJECT_META_BEGIN ===
+PROJECT_NAME = spf
+LICENSE = gplv3
+AUTHORS = Owen Debiasio
+ARCH = x86_64
+===  PROJECT_META_END  ===
+
+# Paths to file
+# Key:
+# original/file/path:location/to/install
+=== DEFINE PATHS BEGIN ===
+target/debug/spf.d:/usr/bin/spf.d
+target/debug/spf:/usr/bin/spf
+===  DEFINE PATHS END  ===
