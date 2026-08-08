@@ -85,9 +85,15 @@ pub fn create_spf_package(package_config: &str, output_location: &str) {
                     .write_all(format!("{entry}\n").as_bytes())
                     .unwrap();
             } else {
-                error(&format!(
-                    "Failed to parse entry \"{entry}\": Invalid metadata category"
-                ))
+                if !entry.contains(" = ") {
+                    error(&format!(
+                        "Failed to parse entry \"{entry}\": Invalid entry formatting"
+                    ))
+                } else {
+                    error(&format!(
+                        "Failed to parse entry \"{entry}\": Invalid metadata category"
+                    ))
+                }
             }
         }
 
@@ -97,32 +103,27 @@ pub fn create_spf_package(package_config: &str, output_location: &str) {
 
         if entry == "=== DEFINE PATHS BEGIN ===" {
             paths_have_parsed = true;
+            println!();
             continue;
         } else if entry == "===  DEFINE PATHS END  ===" {
             paths_have_parsed = false;
+            println!();
             continue;
         }
 
         let original_file = entry.split(':').next().unwrap().to_string();
         let file_destination = entry.split(':').next_back().unwrap().to_string();
 
-        let destination_of_file =
-            format!("{output_location}/{file_destination}").replace("//", "/");
+        if !file_destination.starts_with('/') {
+            error(&format!(
+                "Entered destination must start from the root: {file_destination}"
+            ))
+        }
 
         if !meta_has_parsed && paths_have_parsed {
             // check if the entry is formatted correctly
             check_path_entry(entry, original_file.clone(), file_destination.clone());
         }
-
-        let mut dirs_to_create = vec![];
-
-        for dir in destination_of_file.split('/').skip(1) {
-            dirs_to_create.push(dir.to_string())
-        }
-
-        let destination_directory = &format!("{output_location}/{}", dirs_to_create.join("/"));
-        println!("Copying: {destination_directory}");
-        create_dir_all(destination_directory).unwrap();
 
         let file_name = PathBuf::from(&original_file)
             .file_name()
@@ -130,6 +131,26 @@ pub fn create_spf_package(package_config: &str, output_location: &str) {
             .to_str()
             .unwrap()
             .to_string();
+
+        let destination_of_file =
+            format!("{output_location}/{file_destination}").replace("//", "/");
+
+        let mut dirs_to_create = vec![];
+
+        for dir in destination_of_file.split('/').skip(1) {
+            // Avoid creating a directory named the same as the file that contains it.
+            // I still don't understand why that was happening
+            if dir == file_name {
+                break;
+            }
+            dirs_to_create.push(dir)
+        }
+
+        let destination_directory = &format!("{output_location}/{}", dirs_to_create.join("/"));
+
+        println!("Copying: {destination_directory}/{file_name}");
+
+        create_dir_all(destination_directory).unwrap();
 
         // Here to avoid copying files that don't exist to directories
         // that are supposed to be empty
@@ -155,7 +176,7 @@ pub fn create_spf_package(package_config: &str, output_location: &str) {
     );
 
     // Zip the output folder into a .spf package
-    println!("\nPackaging...");
+    println!("Packaging...");
     create_archive_of_dir(archive_name, output_location);
 
     println!("Cleaning up...");
