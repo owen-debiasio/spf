@@ -23,3 +23,12 @@ pub fn create_archive_of_dir(output: &str, directory: &str) {
             ))
         });
 }
+
+/// Creates an archive of a directory.
+pub fn extract_archive(path: &str) {
+    Command::new("tar")
+        .arg("-xf")
+        .arg(path)
+        .output()
+        .unwrap_or_else(|err| error(&format!("Failed to extract archive \"{path}\": {err}")));
+}
