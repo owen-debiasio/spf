@@ -16,6 +16,9 @@ pub fn error(message: &str) -> ! {
 }
 
 fn main() {
+    // Intro
+    println!("spf {VERSION}\n");
+
     // Collect user args
     let mut user_args: Vec<String> = Vec::new();
     for arg in std::env::args().skip(1) {
@@ -54,12 +57,9 @@ fn available_commands() {
         "{}",
         format_args!(
             "\
-            spf {VERSION}\n\
-            \n\
             Available Commands:\n\n\
               create    <list of entries in text file> <output directory>\n\
-              install   <.spf package location>\n\
-        "
+              install   <.spf package location>"
         )
     )
 }
