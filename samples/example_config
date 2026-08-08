@@ -11,6 +11,5 @@ ARCH = x86_64
 # Key:
 # original/file/path:location/to/install
 === DEFINE PATHS BEGIN ===
-target/debug/spf.d:/usr/bin/spf.d
 target/debug/spf:/usr/bin/spf
 ===  DEFINE PATHS END  ===
