@@ -1,5 +1,8 @@
 #!/bin/bash
 
+rustup update
+cargo update
+
 cargo clippy
 cargo fmt
 cargo build
