@@ -1,10 +1,16 @@
 use std::process::exit;
 
-use crate::{install::spf_install, package::create_spf_package};
+use crate::{
+    install::spf_install, list::list_packages, package::create_spf_package,
+    remove::remove_spf_package,
+};
 
 mod fs;
+mod init;
 mod install;
+mod list;
 mod package;
+mod remove;
 
 static VERSION: &str = "v0.1.0";
 
@@ -16,6 +22,8 @@ pub fn error(message: &str) -> ! {
 }
 
 fn main() {
+    init::init();
+
     // Intro
     println!("spf {VERSION}\n");
 
@@ -47,6 +55,14 @@ fn main() {
             // `secondary_arg` is the package to install
             spf_install(secondary_arg)
         }
+        "remove" | "-r" => {
+            // `secondary_arg` is the package to remove
+            remove_spf_package(&secondary_arg);
+        }
+        "list" | "-l" => {
+            // `secondary_arg` is the optional string to search
+            list_packages(secondary_arg);
+        }
         "" => available_commands(),
         _ => error(&format!("Invalid command: {root_arg}")),
     }
@@ -59,7 +75,9 @@ fn available_commands() {
             "\
             Available Commands:\n\n\
               create    <list of entries in text file> <output directory>\n\
-              install   <.spf package location>"
+              install   <.spf package location>\n\
+              remove    <package to uninstall>\n\
+              list      <(optional) string to match>"
         )
     )
 }
