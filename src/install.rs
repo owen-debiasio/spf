@@ -99,14 +99,21 @@ pub fn spf_install(spf_package_path: String) {
         let file_from_archive = entry.unwrap().to_str().unwrap().to_string();
         let file_destination = file_from_archive.replacen(&extracted_package_path, "", 1);
 
-        let folder_to_create = Path::new(&file_destination);
-        if folder_to_create.is_dir() {
-            if folder_to_create.exists() {
+        let path_to_create = Path::new(&file_destination);
+        if path_to_create.is_dir() {
+            if path_to_create.exists() {
                 create_dir_all(&file_destination).unwrap_or_else(|err| {
                     error(&format!(
                         "Failed to create directory \"{file_destination}\": {err}"
                     ))
                 });
+
+                // Check that the directory was copied
+                if !path_to_create.exists() {
+                    error(&format!(
+                        "Failed to create directory: \"{file_destination}\""
+                    ))
+                }
             }
 
             continue;
@@ -117,10 +124,18 @@ pub fn spf_install(spf_package_path: String) {
         fs::copy(file_from_archive, final_destination).unwrap();
 
         // Check that the file was copied
-        if !Path::new(&file_destination).exists() {
+        if !path_to_create.exists() {
             error(&format!("Failed to copy file: \"{file_destination}\""))
         }
     }
+
+    println!("Cleaning up...");
+
+    fs::remove_dir_all(&extracted_package_path).unwrap_or_else(|err| {
+        error(&format!(
+            "Failed to clean up and remove directory \"{extracted_package_path}\": {err}"
+        ))
+    });
 
     println!("Successfully installed \"{project_name}\"!");
 
