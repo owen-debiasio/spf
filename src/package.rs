@@ -62,10 +62,10 @@ pub fn create_spf_package(package_config: &str, output_location: &str) {
             continue;
         }
 
-        if entry == "=== PROJECT_META_BEGIN ===" {
+        if entry == ":::META DEFINE START:::" {
             meta_has_parsed = true;
             continue;
-        } else if entry == "===  PROJECT_META_END  ===" {
+        } else if entry == ":::META DEFINE END:::" {
             meta_has_parsed = false;
             continue;
         }
@@ -77,7 +77,7 @@ pub fn create_spf_package(package_config: &str, output_location: &str) {
         if meta_has_parsed {
             if matches!(
                 meta_category,
-                "PROJECT_NAME" | "LICENSE" | "AUTHORS" | "ARCH"
+                "PROJECT_NAME" | "VERSION" | "LICENSE" | "AUTHORS" | "ARCH"
             ) {
                 // Write the metadata to the metadata file
                 println!("Writing metadata: {entry}");
@@ -101,11 +101,11 @@ pub fn create_spf_package(package_config: &str, output_location: &str) {
             continue;
         }
 
-        if entry == "=== DEFINE PATHS BEGIN ===" {
+        if entry == ":::PATH DEFINE START:::" {
             paths_have_parsed = true;
             println!();
             continue;
-        } else if entry == "===  DEFINE PATHS END  ===" {
+        } else if entry == ":::PATH DEFINE END:::" {
             paths_have_parsed = false;
             println!();
             continue;
