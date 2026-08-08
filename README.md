@@ -9,9 +9,3 @@ still being worked on.
 ## Prerequisites
 
 - `tar` (GNU version) (Needed for creating packages)
-
-## TODO
-
-- ✅ Package installer
-- ✅ Package creator/packager
-- ❌ Package uninstaller
