@@ -54,20 +54,20 @@ pub fn spf_install(spf_package_path: String) {
             .replace(&format!("{category} = "), "")
     };
 
-    let project_name = get_meta_category("PROJECT_NAME");
-    let project_version = get_meta_category("VERSION");
-    let project_description = get_meta_category("DESCRIPTION");
-    let project_license = get_meta_category("LICENSE");
-    let project_authors = get_meta_category("AUTHORS");
-    let project_packaged_arch = get_meta_category("ARCH");
+    let packaged_project_name = get_meta_category("PROJECT_NAME");
+    let packaged_project_version = get_meta_category("VERSION");
+    let packaged_project_description = get_meta_category("DESCRIPTION");
+    let packaged_project_license = get_meta_category("LICENSE");
+    let packaged_project_authors = get_meta_category("AUTHORS");
+    let packaged_project_packaged_arch = get_meta_category("ARCH");
 
     // Display project info/metadata
     println!(
-        "Do you want to proceed to install \"{project_name}\" {project_version}?\n\
-        Description: {project_description}\n\
-        License(s): {project_license}\n\
-        Author(s): {project_authors}\n\
-        Arch: {project_packaged_arch}\n\
+        "Do you want to proceed to install {packaged_project_name}-{packaged_project_version}?\n\n\
+        Description: {packaged_project_description}\n\
+        License(s): {packaged_project_license}\n\
+        Author(s): {packaged_project_authors}\n\
+        Arch: {packaged_project_packaged_arch}\n\n\
         (Y/N)"
     );
 
@@ -91,10 +91,75 @@ pub fn spf_install(spf_package_path: String) {
     }
 
     // To be safe, move the metadata file. But check if it's already installed first.
-    let package_meta_path = format!("/usr/share/spf/packages/{project_name}");
+    let package_meta_path = format!("/usr/share/spf/packages/{packaged_project_name}");
 
+    // WARNING: The code ahead is FUUUUUCKED
     if Path::new(&package_meta_path).exists() {
-        println!("{project_name} is already installed. Continue?\n(Y/N)");
+        let get_installed_version = {
+            fs::read_to_string(&package_meta_path)
+                .unwrap()
+                .split('\n')
+                .find(|entry| entry.contains("VERSION"))
+                .unwrap_or_else(|| error("Failed to retrieve project name from metadata!"))
+                .replace("VERSION = ", "")
+        };
+
+        // Check for version differences
+        let installed_version = get_installed_version;
+        if packaged_project_version == installed_version {
+            println!(
+                "{packaged_project_name}-{packaged_project_version} is already installed. Continue?"
+            );
+        } else {
+            // Compare versions by leaving only numbers, combine them together,
+            // then parsing them as `usize`. Then compare the two versions.
+            // Works best if the version if formatted as "v0.1.0" or "v0.1.0-1".
+            //
+            // `project_version_num` is the version in the package, `installed_version_num`
+            // is what's already installed.
+            //
+            // If my code shits and pisses itself, the versions default to `0`, which
+            // will lead to spf shitting itself (intentionally, see below). It's also prone
+            // to issues, so I hope it works properly.
+            let special_chars = &['(', ')', ',', '\"', '.', ';', ':', '\''][..];
+            let project_version_num = packaged_project_version
+                .replace(special_chars, "")
+                .trim_matches('v')
+                .parse::<usize>()
+                .unwrap_or(0);
+
+            let installed_version_num = installed_version
+                .replace(special_chars, "")
+                .trim_matches('v')
+                .parse::<usize>()
+                .unwrap_or(0);
+
+            // This is where spf shits itself intentionally.
+            #[allow(clippy::ifs_same_cond)]
+            if project_version_num == 0 {
+                error(&format!(
+                    "Failed to parse version in the package \"{spf_package_path}\": \
+                    {packaged_project_version}->{project_version_num}"
+                ))
+            } else if project_version_num == 0 {
+                error(&format!(
+                    "Failed to parse version in the installed package {package_meta_path}: \
+                    {installed_version}->{installed_version_num}"
+                ))
+            }
+
+            println!(
+                "Do you want to {} {packaged_project_name}-{installed_version} -> {packaged_project_name}-{packaged_project_version}?",
+                // Determine action
+                if project_version_num > installed_version_num {
+                    "update"
+                } else {
+                    "downgrade"
+                }
+            );
+        }
+
+        println!("\n(Y/N)");
 
         let mut proceed_to_install = String::new();
         io::stdin()
@@ -134,7 +199,9 @@ pub fn spf_install(spf_package_path: String) {
         .unwrap();
 
     // Start creating directories and copying files
-    println!("Installing: \"{project_name}\" from ./{spf_package_path}\n");
+    println!(
+        "Installing: {packaged_project_name}-{packaged_project_version} from ./{spf_package_path}\n"
+    );
 
     for entry in glob(path_to_search).unwrap_or_else(|err| {
         error(&format!(
@@ -188,7 +255,7 @@ pub fn spf_install(spf_package_path: String) {
         ))
     });
 
-    println!("Successfully installed \"{project_name}\"!");
+    println!("Successfully installed {packaged_project_name}-{packaged_project_version}!");
 
     exit(0)
 }

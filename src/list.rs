@@ -33,7 +33,7 @@ pub fn list_packages(optional_string: String) {
 
         let package_desc = get_meta_category("DESCRIPTION");
 
-        println!("> {package_name} {package_version}\n    {package_desc}")
+        println!("> {package_name}-{package_version}\n    {package_desc}")
     }
 
     exit(0)
