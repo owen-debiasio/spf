@@ -1,6 +1,11 @@
 use crate::error;
 use is_root::is_root;
-use std::{fs, io, path::Path};
+use std::{
+    fs::{self, remove_dir_all, remove_file},
+    io,
+    path::Path,
+    process::exit,
+};
 
 pub fn remove_spf_package(packages: Vec<String>) {
     if !is_root() {
@@ -58,13 +63,43 @@ pub fn remove_spf_package(packages: Vec<String>) {
         println!()
     }
 
-    for package in packages {
+    for package in &packages {
         let package_meta_path = format!("/usr/share/spf/packages/{package}");
 
-        let package_version = get_meta_category(package_meta_path, "VERSION");
+        let package_version = get_meta_category(package_meta_path.clone(), "VERSION");
 
-        println!("Removing: {package}-{package_version}");
+        let package_formatted = format!("{package}-{package_version}");
+
+        println!("Removing: {package_formatted}");
+
+        let mut enable_path_deletion = false;
+        for entry in fs::read_to_string(&package_meta_path).unwrap().lines() {
+            if entry == ":::PATH DEFINE START:::" {
+                enable_path_deletion = true;
+                continue;
+            }
+
+            if !enable_path_deletion {
+                continue;
+            }
+
+            println!("    Removing \"{entry}\"...");
+
+            // Delete the paths
+            if Path::new(entry).is_file() {
+                remove_file(entry).unwrap()
+            } else {
+                remove_dir_all(entry).unwrap()
+            }
+        }
+
+        println!("    Removing \"{package_meta_path}\"...");
+        remove_file(&package_meta_path).unwrap();
+
+        println!("Successfully removed {package_formatted}!");
     }
 
-    error("package removal still has yet to be implemented! I'll deal with it soon!")
+    println!("\nSuccessfully removed package(s)!");
+
+    exit(0);
 }
