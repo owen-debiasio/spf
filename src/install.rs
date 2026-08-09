@@ -17,7 +17,7 @@ pub fn spf_install(spf_package_path: String) {
     }
 
     // If file is provided
-    if spf_package_path.is_empty() || spf_package_path.ends_with(".spf") {
+    if spf_package_path.is_empty() || !spf_package_path.ends_with(".spf") {
         error("Please provide a .spf package")
     } else if !Path::new(&spf_package_path).exists() {
         error(&format!("File not found: {spf_package_path}"))
