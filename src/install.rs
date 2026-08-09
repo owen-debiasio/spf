@@ -151,7 +151,7 @@ pub fn spf_install(spf_package_path: String) {
             );
         }
 
-        println!("\n(Y/N)");
+        println!("(Y/N)");
 
         let mut proceed_to_install = String::new();
         io::stdin()
