@@ -56,8 +56,20 @@ fn main() {
             spf_install(secondary_arg)
         }
         "remove" | "-r" => {
-            // `secondary_arg` is the package to remove
-            remove_spf_package(&secondary_arg);
+            // Manually supply args because I hate this. Allows you to
+            // remove multiple packages at once.
+            let mut packages: Vec<String> = Vec::new();
+
+            for package_arg in std::env::args().skip(2) {
+                // Don't process args
+                if package_arg.starts_with('-') {
+                    continue;
+                }
+
+                packages.push(package_arg);
+            }
+
+            remove_spf_package(packages);
         }
         "list" | "-l" => {
             // `secondary_arg` is the optional string to search
