@@ -77,7 +77,7 @@ pub fn create_spf_package(package_config: &str, output_location: &str) {
         if meta_has_parsed {
             if matches!(
                 meta_category,
-                "PROJECT_NAME" | "VERSION" | "LICENSE" | "AUTHORS" | "ARCH"
+                "PROJECT_NAME" | "VERSION" | "DESCRIPTION" | "LICENSE" | "AUTHORS" | "ARCH"
             ) {
                 // Write the metadata to the metadata file
                 println!("Writing metadata: {entry}");

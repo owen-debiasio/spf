@@ -20,14 +20,20 @@ pub fn list_packages(optional_string: String) {
             continue;
         }
 
-        let package_version = fs::read_to_string(package_path)
-            .unwrap()
-            .split('\n')
-            .find(|entry| entry.contains("VERSION = "))
-            .unwrap()
-            .replace("VERSION = ", "");
+        let get_meta_category = |category: &str| -> String {
+            fs::read_to_string(&package_path)
+                .unwrap()
+                .split('\n')
+                .find(|entry| entry.contains(category))
+                .unwrap_or_else(|| error("Failed to retrieve project name from metadata!"))
+                .replace(&format!("{category} = "), "")
+        };
 
-        println!("{package_name} {package_version}")
+        let package_version = get_meta_category("VERSION");
+
+        let package_desc = get_meta_category("DESCRIPTION");
+
+        println!("> {package_name} {package_version}\n    {package_desc}")
     }
 
     exit(0)

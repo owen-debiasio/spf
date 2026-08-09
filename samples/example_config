@@ -3,6 +3,7 @@
 :::META DEFINE START:::
 PROJECT_NAME = spf
 VERSION = v0.1.0
+DESCRIPTION = Simple package manager
 LICENSE = gplv3
 AUTHORS = Owen Debiasio
 ARCH = x86_64

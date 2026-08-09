@@ -56,6 +56,7 @@ pub fn spf_install(spf_package_path: String) {
 
     let project_name = get_meta_category("PROJECT_NAME");
     let project_version = get_meta_category("VERSION");
+    let project_description = get_meta_category("DESCRIPTION");
     let project_license = get_meta_category("LICENSE");
     let project_authors = get_meta_category("AUTHORS");
     let project_packaged_arch = get_meta_category("ARCH");
@@ -63,6 +64,7 @@ pub fn spf_install(spf_package_path: String) {
     // Display project info/metadata
     println!(
         "Do you want to proceed to install \"{project_name}\" {project_version}?\n\
+        Description: {project_description}\n\
         License(s): {project_license}\n\
         Author(s): {project_authors}\n\
         Arch: {project_packaged_arch}\n\
