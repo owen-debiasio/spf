@@ -1,17 +1,23 @@
 use crate::{
     install::spf_install, list::list_packages, package::create_spf_package,
-    remove::remove_spf_package, sys::error,
+    remove::remove_spf_package, sys::error, template::gen_meta_template,
 };
 
+// Shared
 mod fs;
+mod sys;
+
+// Core
 mod init;
+
+// Commands
 mod install;
 mod list;
 mod package;
 mod remove;
-mod sys;
+mod template;
 
-static VERSION: &str = "v0.1.0";
+static VERSION: &str = "v0.2.0";
 
 fn main() {
     init::init();
@@ -67,6 +73,11 @@ fn main() {
             // `secondary_arg` is the optional string to search
             list_packages(secondary_arg);
         }
+
+        "template" | "-t" => {
+            // `secondary_arg` is the optional output location
+            gen_meta_template(secondary_arg);
+        }
         // Version is already mentioned at the top of this file (src/main.rs: line 22)
         "--version" | "-v" => println!(
             "Written by Owen Debiasio <owen.debiasio@gmail.com>. Licensed under GPLv3.\n\
@@ -83,11 +94,13 @@ fn available_commands() {
         format_args!(
             "\
             Available Commands:\n\n\
-              create    <metadata file> <output directory>   Create package\n\
-              install   <.spf package location>              Install package\n\
-              remove    <package to uninstall>               Uninstall package\n\
-              list      <(optional) string to match>         List installed packages\n\
-              \n\
+              create     <metadata file> <output directory>   Create package\n\
+              install    <.spf package location>              Install package\n\
+              remove     <package to uninstall>               Uninstall package\n\
+              list       <(optional) string to match>         List installed packages\n\
+              template   <(optional) output location>         Generate package metadata template\n\
+            \n\
+            Available options:\n\
               --version   Display spf version"
         )
     )

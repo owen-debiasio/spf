@@ -9,10 +9,11 @@ Simple package format
 ## How to use
 
 ```none
-create    <metadata file> <output directory>
-install   <.spf package location>
-remove    <package to uninstall>
-list      <(optional) string to match>
+create     <metadata file> <output directory>   Create package
+install    <.spf package location>              Install package
+remove     <package to uninstall>               Uninstall package
+list       <(optional) string to match>         List installed packages
+template   <(optional) output location>         Generate package metadata template
 ```
 
 ### Examples
@@ -22,25 +23,32 @@ list      <(optional) string to match>
 > [!IMPORTANT]
 > The metadata config file must NOT have a file extension
 
-`spf create config package.spf`
+`$ spf create config package.spf`
 
 #### Install package
 
 > [!WARNING]
 > Using spf along with other package managers could cause issues
 
-`sudo spf create install package.spf`
+`$ sudo spf create install package.spf`
 
 #### Remove package
 
-`sudo spf remove package`
+`$ sudo spf remove package`
 
 #### List packages
 
 > [!NOTE]
 > You could also just run `spf list` to list all packages
 
-`spf list pac`
+`$ spf list pac`
+
+#### Generate template package config
+
+> [!NOTE]
+> The output location must be to a directory.
+
+`$ spf template ~/Downloads/`
 
 ## Install
 
