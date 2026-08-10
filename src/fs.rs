@@ -4,16 +4,40 @@
 //     Path::new(path).exists()
 // }
 
-use std::process::Command;
+use std::{path::PathBuf, process::Command};
 
 use crate::error;
+
+pub struct FileProperty;
+
+impl FileProperty {
+    pub fn extension(path: &str) -> String {
+        PathBuf::from(path)
+            .extension()
+            .unwrap_or_default()
+            .to_str()
+            .unwrap_or_else(|| error(&format!("Failed to retrieve file extension from: {path}")))
+            .to_string()
+    }
+
+    pub fn name(path: &str) -> String {
+        PathBuf::from(path)
+            .file_name()
+            .unwrap()
+            .to_str()
+            .unwrap()
+            .to_string()
+    }
+}
 
 /// Creates an archive of a directory.
 /// Why am I using `std::process::command` instead of a crate? F*ck you, that's why
 /// I'm using `tar` because it's basically on every distro and supported well on Linux.
-pub fn create_archive_of_dir(output: &str, directory: &str) {
+pub fn create_archive_of_dir(parent_directories: &str, output: &str, directory: &str) {
     Command::new("tar")
-        .arg("-cf")
+        .arg("-C")
+        .arg(parent_directories)
+        .arg("-cvf")
         .arg(output)
         .arg(directory)
         .output()
