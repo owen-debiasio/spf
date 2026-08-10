@@ -7,10 +7,14 @@ use std::{
 
 use glob::glob;
 
-use crate::{error, fs::extract_archive, sys::is_root};
+use crate::{
+    error,
+    fs::{FileProperty, extract_archive},
+    sys::is_root,
+};
 
 /// Installs a *.spf package
-pub fn spf_install(spf_package_path: String) {
+pub fn spf_install(mut spf_package_path: String) {
     if !is_root() {
         error("To execute this action, please run spf as root.")
     }
@@ -25,6 +29,8 @@ pub fn spf_install(spf_package_path: String) {
     println!("Loading package: {spf_package_path}\n");
 
     extract_archive(&spf_package_path);
+
+    spf_package_path = FileProperty::name(&spf_package_path);
 
     let metadata_file = spf_package_path.replace(".spf", "/META");
 
@@ -172,7 +178,11 @@ pub fn spf_install(spf_package_path: String) {
         }
     }
 
-    fs::copy(&metadata_file, &package_meta_path).unwrap();
+    fs::copy(&metadata_file, &package_meta_path).unwrap_or_else(|err| {
+        error(&format!(
+            "Failed to copy file \"{metadata_file}\" -> \"{package_meta_path}\": {err}"
+        ))
+    });
 
     fs::remove_file(&metadata_file)
         .unwrap_or_else(|err| error(&format!("Failed to delete metadata file: {err}")));
@@ -224,7 +234,11 @@ pub fn spf_install(spf_package_path: String) {
 
         let final_destination = file_from_archive.replacen(&extracted_package_path, "", 1);
 
-        fs::copy(file_from_archive, &final_destination).unwrap();
+        fs::copy(&file_from_archive, &final_destination).unwrap_or_else(|err| {
+            error(&format!(
+                "Failed to copy file \"{file_from_archive}\" -> \"{final_destination}\": {err}"
+            ))
+        });
 
         // Write the path of the file to later be removed when uninstalled.
         // Basically shows that the program is installed.
