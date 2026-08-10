@@ -17,7 +17,7 @@ fn main() {
     init::init();
 
     // Intro
-    println!("spf {VERSION}\n");
+    println!("spf-{VERSION}\n");
 
     // Collect user args
     let mut user_args: Vec<String> = Vec::new();
@@ -67,6 +67,11 @@ fn main() {
             // `secondary_arg` is the optional string to search
             list_packages(secondary_arg);
         }
+        // Version is already mentioned at the top of this file (src/main.rs: line 22)
+        "--version" | "-v" => println!(
+            "Written by Owen Debiasio <owen.debiasio@gmail.com>. Licensed under GPLv3.\n\
+            spf has NO WARRANTY and is not responsible for breaking your system."
+        ),
         "" => available_commands(),
         _ => error(&format!("Invalid command: {root_arg}")),
     }
@@ -78,10 +83,12 @@ fn available_commands() {
         format_args!(
             "\
             Available Commands:\n\n\
-              create    <metadata file> <output directory>\n\
-              install   <.spf package location>\n\
-              remove    <package to uninstall>\n\
-              list      <(optional) string to match>"
+              create    <metadata file> <output directory>   Create package\n\
+              install   <.spf package location>              Install package\n\
+              remove    <package to uninstall>               Uninstall package\n\
+              list      <(optional) string to match>         List installed packages\n\
+              \n\
+              --version   Display spf version"
         )
     )
 }
