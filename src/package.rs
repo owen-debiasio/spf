@@ -5,7 +5,7 @@ use std::{
     process::exit,
 };
 
-use crate::{error, fs::create_archive_of_dir};
+use crate::{fs::create_archive_of_dir, sys::error};
 
 /// # Create .spf package
 ///
@@ -62,6 +62,8 @@ pub fn create_spf_package(package_config: &str, output_location: &str) {
             continue;
         }
 
+        // Verify the meta category
+
         if entry == ":::META DEFINE START:::" {
             meta_has_parsed = true;
             continue;
@@ -71,8 +73,6 @@ pub fn create_spf_package(package_config: &str, output_location: &str) {
         }
 
         let meta_category = entry.split(" = ").next().unwrap();
-
-        // Verify the meta category
 
         if meta_has_parsed {
             if matches!(

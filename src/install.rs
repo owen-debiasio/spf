@@ -6,9 +6,8 @@ use std::{
 };
 
 use glob::glob;
-use is_root::is_root;
 
-use crate::{error, fs::extract_archive};
+use crate::{error, fs::extract_archive, sys::is_root};
 
 /// Installs a *.spf package
 pub fn spf_install(spf_package_path: String) {

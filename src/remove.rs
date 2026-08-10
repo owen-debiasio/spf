@@ -1,5 +1,4 @@
-use crate::error;
-use is_root::is_root;
+use crate::sys::{error, is_root};
 use std::{
     fs::{self, remove_dir_all, remove_file},
     io,

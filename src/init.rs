@@ -1,7 +1,6 @@
-use is_root::is_root;
 use std::{fs::create_dir_all, path::Path};
 
-use crate::error;
+use crate::{error, sys::is_root};
 
 pub fn init() {
     let paths_to_check = vec!["/usr/share/spf/packages/"];

@@ -1,8 +1,6 @@
-use std::process::exit;
-
 use crate::{
     install::spf_install, list::list_packages, package::create_spf_package,
-    remove::remove_spf_package,
+    remove::remove_spf_package, sys::error,
 };
 
 mod fs;
@@ -11,15 +9,9 @@ mod install;
 mod list;
 mod package;
 mod remove;
+mod sys;
 
 static VERSION: &str = "v0.1.0";
-
-/// Display an error. When called, exit with status 1
-pub fn error(message: &str) -> ! {
-    eprintln!("{message}");
-
-    exit(1)
-}
 
 fn main() {
     init::init();
