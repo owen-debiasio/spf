@@ -1,6 +1,6 @@
 [package]
 name = "spf"
-version = "0.1.0"
+version = "0.2.0"
 description = "Simple package format"
 edition = "2024"
 authors = ["Owen Debiasio <owen.debiasio@gmail.com>"]
