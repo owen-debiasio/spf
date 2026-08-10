@@ -1,4 +1,7 @@
-use std::{env::var, process::exit};
+use std::{
+    env::{current_exe, var},
+    process::exit,
+};
 
 pub struct Env;
 
@@ -26,4 +29,12 @@ pub fn error(message: &str) -> ! {
     eprintln!("{message}");
 
     exit(1)
+}
+
+pub fn get_binary_path() -> String {
+    current_exe()
+        .unwrap_or_else(|err| error(&format!("Failed to get binary path: {err}")))
+        .to_str()
+        .unwrap()
+        .to_string()
 }
