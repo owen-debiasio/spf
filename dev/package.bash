@@ -20,6 +20,8 @@ cargo fmt
 # Build
 cargo build --release
 
+./packages/clean.bash
+
 # Write metadata
 echo -e "
 :::META DEFINE START:::
