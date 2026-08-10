@@ -78,7 +78,7 @@ fn available_commands() {
         format_args!(
             "\
             Available Commands:\n\n\
-              create    <list of entries in text file> <output directory>\n\
+              create    <metadata file> <output directory>\n\
               install   <.spf package location>\n\
               remove    <package to uninstall>\n\
               list      <(optional) string to match>"
