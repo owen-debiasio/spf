@@ -37,7 +37,6 @@ pub fn create_spf_package(package_config: &str, mut output_location: &str) {
     // The output archive is initially created as a directory so strip the
     // file extension.
     output_location = output_location.trim_end_matches(".spf");
-    println!("{output_location}");
 
     fs::create_dir_all(output_location).unwrap_or_else(|err| {
         error(&format!(
