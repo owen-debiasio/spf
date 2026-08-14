@@ -17,7 +17,7 @@ use crate::{
 
 static SOURCE_FILE: &str = "src/package.rs";
 
-/// # Create .spf package
+/// Create .spf package
 ///
 /// See the example config in spf/samples/example_config
 pub fn create_spf_package(package_config: &str, mut output_location: &str) {
@@ -29,7 +29,7 @@ pub fn create_spf_package(package_config: &str, mut output_location: &str) {
         error(
             SOURCE_FILE,
             "create_spf_package()",
-            24,
+            29,
             "Please provide a text file with no file extension!",
         )
 
@@ -38,7 +38,7 @@ pub fn create_spf_package(package_config: &str, mut output_location: &str) {
         error(
             SOURCE_FILE,
             "create_spf_package()",
-            33,
+            38,
             "Package config not found!",
         )
     }
@@ -48,7 +48,7 @@ pub fn create_spf_package(package_config: &str, mut output_location: &str) {
         error(
             SOURCE_FILE,
             "create_spf_package()",
-            43,
+            48,
             &format!("Your provided output location (\"{output_location}\") must be a .spf file."),
         )
     }
@@ -61,7 +61,7 @@ pub fn create_spf_package(package_config: &str, mut output_location: &str) {
         error(
             SOURCE_FILE,
             "create_spf_package()",
-            56,
+            61,
             &format!("Failed to create directory \"{output_location}\": {err}"),
         )
     });
@@ -72,7 +72,7 @@ pub fn create_spf_package(package_config: &str, mut output_location: &str) {
         error(
             SOURCE_FILE,
             "create_spf_package()",
-            67,
+            72,
             &format!("Failed to open file: {err}"),
         )
     });
@@ -105,7 +105,7 @@ pub fn create_spf_package(package_config: &str, mut output_location: &str) {
         error(
             SOURCE_FILE,
             "create_spf_package()",
-            100,
+            105,
             &format!("Failed to clean up packaging: {err}"),
         )
     });
@@ -145,7 +145,7 @@ fn write_project_meta_config(package_config_contents: &str, mut project_meta_fil
             error(
                 SOURCE_FILE,
                 "write_project_meta_config()",
-                140,
+                145,
                 &format!("Failed to parse entry: {entry}"),
             )
         });
@@ -175,7 +175,7 @@ fn write_project_meta_config(package_config_contents: &str, mut project_meta_fil
         error(
             SOURCE_FILE,
             "write_project_meta_config()",
-            170,
+            175,
             &format!(
                 "Failed to parse entry \"{entry}\": {}",
                 if !entry.contains(" = ") {
@@ -199,7 +199,7 @@ fn write_project_meta_config(package_config_contents: &str, mut project_meta_fil
             error(
                 SOURCE_FILE,
                 "write_project_meta_config()",
-                194,
+                199,
                 &format!("Failed to write package config metadata buffer to \"{project_meta_file:#?}\": {err}")));
 }
 
@@ -256,7 +256,7 @@ fn copy_package_paths(package_config_contents: &str, output_location: &str) {
             error(
                 SOURCE_FILE,
                 "copy_package_paths()",
-                251,
+                256,
                 &format!("Entered destination must start from the root: {file_destination}"),
             )
         }
@@ -296,7 +296,7 @@ fn copy_package_paths(package_config_contents: &str, output_location: &str) {
             error(
                 SOURCE_FILE,
                 "copy_package_paths()",
-                291,
+                296,
                 &format!("Failed to create \"{destination_directories_to_create}\": {err}"),
             )
         });
@@ -306,7 +306,7 @@ fn copy_package_paths(package_config_contents: &str, output_location: &str) {
             error(
                 SOURCE_FILE,
                 "copy_package_paths()",
-                301,
+                306,
                 &format!("Failed to copy file \"{original_file_path}\": {err}"),
             )
         });
@@ -333,7 +333,7 @@ fn package_to_spf(output_location: &str, archive_name: &str) {
         error(
             SOURCE_FILE,
             "package_to_spf()",
-            328,
+            333,
             &format!("Failed to package to \"{output_location}\": File not found"),
         )
     }
@@ -354,7 +354,7 @@ fn check_path_entry(entry: &str, original: String, destination: String) {
         error(
             SOURCE_FILE,
             "check_path_entry()",
-            349,
+            354,
             &format!("Failed to parse entry: {entry}"),
         )
     }
