@@ -83,7 +83,7 @@ fn main() {
         }
         // Version is already mentioned at the top of this file (src/main.rs: line 22)
         "--version" | "-v" => println!(
-            "Written by Owen Debiasio <owen.debiasio@gmail.com>. Licensed under GPLv3.\n\
+            "Written by Owen Debiasio <owen.debiasio@gmail.com>. Licensed under GPL-3.0-or-later.\n\
             spf has NO WARRANTY and is not responsible for breaking your system."
         ),
         "" => available_commands(),
