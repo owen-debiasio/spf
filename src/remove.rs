@@ -6,17 +6,34 @@ use std::{
     process::exit,
 };
 
+static SOURCE_FILE: &str = "src/remove.rs";
+
 pub fn remove_spf_package(packages_to_list: Vec<String>) {
     if !is_root() {
-        error("To execute this action, please run spf as root.")
+        error(
+            SOURCE_FILE,
+            "remove_spf_package()",
+            13,
+            "To execute this action, please run spf as root.",
+        )
     }
 
     if packages_to_list.is_empty() {
-        error("Provide the package(s) you want to remove.")
+        error(
+            SOURCE_FILE,
+            "remove_spf_package()",
+            22,
+            "Provide the package(s) you want to remove.",
+        )
 
     // Restrict the ability to uninstall spf with spf to avoid conflicts
     } else if packages_to_list.contains(&"spf".to_string()) && get_binary_path() == "/usr/bin/spf" {
-        error("If you want to remove spf using spf, please use the standalone binary.")
+        error(
+            SOURCE_FILE,
+            "remove_spf_package()",
+            31,
+            "If you want to remove spf using spf, please use the standalone binary.",
+        )
     }
 
     // Some bullshit of a "function"?? idkk
@@ -25,7 +42,14 @@ pub fn remove_spf_package(packages_to_list: Vec<String>) {
             .unwrap()
             .split('\n')
             .find(|entry| entry.contains(category))
-            .unwrap_or_else(|| error("Failed to retrieve project name from metadata!"))
+            .unwrap_or_else(|| {
+                error(
+                    SOURCE_FILE,
+                    "remove_spf_package()",
+                    46,
+                    "Failed to retrieve project name from metadata!",
+                )
+            })
             .replace(&format!("{category} = "), "")
     };
 
@@ -36,7 +60,12 @@ pub fn remove_spf_package(packages_to_list: Vec<String>) {
 
         // Check if packages are installed
         if !Path::new(&package_meta_path).exists() {
-            error(&format!("Package not installed: {package}"))
+            error(
+                SOURCE_FILE,
+                "remove_spf_package()",
+                63,
+                &format!("Package not installed: {package}"),
+            )
         }
 
         let package_version = get_meta_category(package_meta_path.clone(), "VERSION");
@@ -76,7 +105,8 @@ pub fn remove_spf_package(packages_to_list: Vec<String>) {
                 .expect("failed to readline");
 
             if proceed_to_remove.trim().to_lowercase() != "y" {
-                error("Aborted.")
+                println!("Aborted.");
+                exit(0)
             }
 
             enable_list_packages = false
@@ -87,9 +117,12 @@ pub fn remove_spf_package(packages_to_list: Vec<String>) {
         let mut enable_path_deletion = false;
         for entry in fs::read_to_string(package_meta_path.clone())
             .unwrap_or_else(|err| {
-                error(&format!(
-                    "Failed to retrieve contents of \"{package_meta_path}\": {err}"
-                ))
+                error(
+                    SOURCE_FILE,
+                    "remove_spf_package()",
+                    119,
+                    &format!("Failed to retrieve contents of \"{package_meta_path}\": {err}"),
+                )
             })
             .lines()
         {
@@ -106,17 +139,34 @@ pub fn remove_spf_package(packages_to_list: Vec<String>) {
 
             // Delete the paths
             if Path::new(entry).is_file() {
-                remove_file(entry)
-                    .unwrap_or_else(|err| error(&format!("Failed to remove \"{entry}\": {err}")))
+                remove_file(entry).unwrap_or_else(|err| {
+                    error(
+                        SOURCE_FILE,
+                        "remove_spf_package()",
+                        142,
+                        &format!("Failed to remove \"{entry}\": {err}"),
+                    )
+                })
             } else {
-                remove_dir_all(entry)
-                    .unwrap_or_else(|err| error(&format!("Failed to remove \"{entry}\": {err}")))
+                remove_dir_all(entry).unwrap_or_else(|err| {
+                    error(
+                        SOURCE_FILE,
+                        "remove_spf_package()",
+                        151,
+                        &format!("Failed to remove \"{entry}\": {err}"),
+                    )
+                })
             }
         }
 
         println!("    Removing package entry...");
         remove_file(&package_meta_path).unwrap_or_else(|err| {
-            error(&format!("Failed to remove \"{package_meta_path}\": {err}"))
+            error(
+                SOURCE_FILE,
+                "remove_spf_package()",
+                163,
+                &format!("Failed to remove \"{package_meta_path}\": {err}"),
+            )
         });
 
         println!("Successfully removed {package_formatted}!");

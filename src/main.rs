@@ -22,6 +22,9 @@ static VERSION: &str = "v0.2.0";
 fn main() {
     init::init();
 
+    // Keep this inside `main()` to prevent conflicts with other files
+    static SOURCE_FILE: &str = "src/main.rs";
+
     // Intro
     println!("spf-{VERSION}\n");
 
@@ -84,7 +87,12 @@ fn main() {
             spf has NO WARRANTY and is not responsible for breaking your system."
         ),
         "" => available_commands(),
-        _ => error(&format!("Invalid command: {root_arg}")),
+        _ => error(
+            SOURCE_FILE,
+            "main()",
+            89,
+            &format!("Invalid command: {root_arg}"),
+        ),
     }
 }
 

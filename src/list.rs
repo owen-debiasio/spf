@@ -3,15 +3,20 @@ use std::{fs, process::exit};
 use crate::error;
 use glob::glob;
 
+static SOURCE_FILE: &str = "src/list.rs";
+
 pub fn list_packages(optional_string: String) {
     println!("Installed packages:\n");
 
     static META_INSTALL: &str = "/usr/share/spf/packages/";
 
     for package_path_raw in glob("/usr/share/spf/packages/*").unwrap_or_else(|err| {
-        error(&format!(
-            "Failed to collect directories at \"{META_INSTALL}\": {err}"
-        ))
+        error(
+            SOURCE_FILE,
+            "list_packages()",
+            14,
+            &format!("Failed to collect directories at \"{META_INSTALL}\": {err}"),
+        )
     }) {
         let package_path = package_path_raw.unwrap().to_str().unwrap().to_string();
         let package_name = package_path.replace(META_INSTALL, "");
@@ -25,7 +30,14 @@ pub fn list_packages(optional_string: String) {
                 .unwrap()
                 .split('\n')
                 .find(|entry| entry.contains(category))
-                .unwrap_or_else(|| error("Failed to retrieve project name from metadata!"))
+                .unwrap_or_else(|| {
+                    error(
+                        SOURCE_FILE,
+                        "list_packages()",
+                        34,
+                        "Failed to retrieve project name from metadata!",
+                    )
+                })
                 .replace(&format!("{category} = "), "")
         };
 

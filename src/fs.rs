@@ -8,6 +8,8 @@ use std::{path::PathBuf, process::Command};
 
 use crate::error;
 
+static SOURCE_FILE: &str = "src/fs.rs";
+
 pub struct FileProperty;
 
 impl FileProperty {
@@ -16,14 +18,28 @@ impl FileProperty {
             .extension()
             .unwrap_or_default()
             .to_str()
-            .unwrap_or_else(|| error(&format!("Failed to retrieve file extension from: {path}")))
+            .unwrap_or_else(|| {
+                error(
+                    SOURCE_FILE,
+                    "FileProperty::extension()",
+                    22,
+                    &format!("Failed to retrieve file extension from: {path}"),
+                )
+            })
             .to_string()
     }
 
     pub fn name(path: &str) -> String {
         PathBuf::from(path)
             .file_name()
-            .unwrap()
+            .unwrap_or_else(|| {
+                error(
+                    SOURCE_FILE,
+                    "FileProperty::name()",
+                    36,
+                    &format!("Failed to get name of file: {path}"),
+                )
+            })
             .to_str()
             .unwrap()
             .to_string()
@@ -42,9 +58,14 @@ pub fn create_archive_of_dir(parent_directories: &str, output: &str, directory: 
             .arg(directory)
             .output()
             .unwrap_or_else(|err| {
-                error(&format!(
-                    "Failed to create archive of dir \"{directory}\" to \"{output}\": {err}"
-                ))
+                error(
+                    SOURCE_FILE,
+                    "create_archive_of_dir()",
+                    54,
+                    &format!(
+                        "Failed to create archive of dir \"{directory}\" to \"{output}\": {err}"
+                    ),
+                )
             });
     } else {
         Command::new("tar")
@@ -55,9 +76,14 @@ pub fn create_archive_of_dir(parent_directories: &str, output: &str, directory: 
             .arg(directory)
             .output()
             .unwrap_or_else(|err| {
-                error(&format!(
-                    "Failed to create archive of dir \"{directory}\" to \"{output}\": {err}"
-                ))
+                error(
+                    SOURCE_FILE,
+                    "create_archive_of_dir()",
+                    72,
+                    &format!(
+                        "Failed to create archive of dir \"{directory}\" to \"{output}\": {err}"
+                    ),
+                )
             });
     }
 }
@@ -68,5 +94,12 @@ pub fn extract_archive(path: &str) {
         .arg("-xf")
         .arg(path)
         .output()
-        .unwrap_or_else(|err| error(&format!("Failed to extract archive \"{path}\": {err}")));
+        .unwrap_or_else(|err| {
+            error(
+                SOURCE_FILE,
+                "extract_archive()",
+                98,
+                &format!("Failed to extract archive \"{path}\": {err}"),
+            )
+        });
 }

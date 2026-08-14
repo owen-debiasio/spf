@@ -1,5 +1,5 @@
 use std::{
-    fs::{self, OpenOptions, create_dir_all},
+    fs::{self, create_dir_all, OpenOptions},
     io::{self, Write},
     path::Path,
     process::exit,
@@ -9,21 +9,38 @@ use glob::glob;
 
 use crate::{
     error,
-    fs::{FileProperty, extract_archive},
+    fs::{extract_archive, FileProperty},
     sys::is_root,
 };
+
+static SOURCE_FILE: &str = "src/install.rs";
 
 /// Installs a *.spf package
 pub fn spf_install(mut spf_package_path: String) {
     if !is_root() {
-        error("To execute this action, please run spf as root.")
+        error(
+            SOURCE_FILE,
+            "spf_install()",
+            21,
+            "To execute this action, please run spf as root.",
+        )
     }
 
     // If file is provided
     if spf_package_path.is_empty() || !spf_package_path.ends_with(".spf") {
-        error("Please provide a .spf package")
+        error(
+            SOURCE_FILE,
+            "spf_install()",
+            31,
+            "Please provide a .spf package",
+        )
     } else if !Path::new(&spf_package_path).exists() {
-        error(&format!("File not found: {spf_package_path}"))
+        error(
+            SOURCE_FILE,
+            "spf_install()",
+            38,
+            &format!("File not found: {spf_package_path}"),
+        )
     }
 
     println!("Loading package: {spf_package_path}\n");
@@ -36,16 +53,26 @@ pub fn spf_install(mut spf_package_path: String) {
 
     // Retrieve the metadata
     let stored_metadata = fs::read_to_string(&metadata_file).unwrap_or_else(|err| {
-        error(&format!(
-            "Failed to retrieve metadata from \"{spf_package_path}\": {err}"
-        ))
+        error(
+            SOURCE_FILE,
+            "spf_install()",
+            56,
+            &format!("Failed to retrieve metadata from \"{spf_package_path}\": {err}"),
+        )
     });
 
     let get_meta_category = |category: &str| -> String {
         stored_metadata
             .split('\n')
             .find(|entry| entry.contains(category))
-            .unwrap_or_else(|| error("Failed to retrieve project name from metadata!"))
+            .unwrap_or_else(|| {
+                error(
+                    SOURCE_FILE,
+                    "spf_install()",
+                    69,
+                    "Failed to retrieve project name from metadata!",
+                )
+            })
             // Because the compiler suck ass, it won't let me use .next_back()
             // so I have to use .replace() and pray that it works smh
             .replace(&format!("{category} = "), "")
@@ -79,12 +106,18 @@ pub fn spf_install(mut spf_package_path: String) {
 
     if proceed_to_install.trim().to_lowercase() != "y" {
         fs::remove_dir_all(&extracted_package_path).unwrap_or_else(|err| {
-            error(&format!(
-                "Failed to clean up and remove directory \"{extracted_package_path}\": {err}"
-            ))
+            error(
+                SOURCE_FILE,
+                "spf_install()",
+                112,
+                &format!(
+                    "Failed to clean up and remove directory \"{extracted_package_path}\": {err}"
+                ),
+            )
         });
 
-        error("Aborted.")
+        println!("Aborted.");
+        exit(0)
     }
 
     // To be safe, move the metadata file. But check if it's already installed first.
@@ -97,7 +130,14 @@ pub fn spf_install(mut spf_package_path: String) {
                 .unwrap()
                 .split('\n')
                 .find(|entry| entry.contains("VERSION"))
-                .unwrap_or_else(|| error("Failed to retrieve project name from metadata!"))
+                .unwrap_or_else(|| {
+                    error(
+                        SOURCE_FILE,
+                        "spf_install()",
+                        137,
+                        "Failed to retrieve project name from metadata!",
+                    )
+                })
                 .replace("VERSION = ", "")
         };
 
@@ -134,15 +174,25 @@ pub fn spf_install(mut spf_package_path: String) {
             // This is where spf shits itself intentionally.
             #[allow(clippy::ifs_same_cond)]
             if project_version_num == 0 {
-                error(&format!(
-                    "Failed to parse version in the package \"{spf_package_path}\": \
+                error(
+                    SOURCE_FILE,
+                    "spf_install()",
+                    177,
+                    &format!(
+                        "Failed to parse version in the package \"{spf_package_path}\": \
                     {packaged_project_version}->{project_version_num}"
-                ))
+                    ),
+                )
             } else if project_version_num == 0 {
-                error(&format!(
-                    "Failed to parse version in the installed package {package_meta_path}: \
+                error(
+                    SOURCE_FILE,
+                    "spf_install()",
+                    187,
+                    &format!(
+                        "Failed to parse version in the installed package {package_meta_path}: \
                     {installed_version}->{installed_version_num}"
-                ))
+                    ),
+                )
             }
 
             println!(
@@ -169,23 +219,38 @@ pub fn spf_install(mut spf_package_path: String) {
 
         if proceed_to_install.trim().to_lowercase() != "y" {
             fs::remove_dir_all(&extracted_package_path).unwrap_or_else(|err| {
-                error(&format!(
+                error(
+                    SOURCE_FILE,
+                    "spf_install()",
+                    222,
+                    &format!(
                     "Failed to clean up and remove directory \"{extracted_package_path}\": {err}"
-                ))
+                ),
+                )
             });
 
-            error("Aborted.")
+            println!("Aborted.");
+            exit(0)
         }
     }
 
     fs::copy(&metadata_file, &package_meta_path).unwrap_or_else(|err| {
-        error(&format!(
-            "Failed to copy file \"{metadata_file}\" -> \"{package_meta_path}\": {err}"
-        ))
+        error(
+            SOURCE_FILE,
+            "spf_install()",
+            238,
+            &format!("Failed to copy file \"{metadata_file}\" -> \"{package_meta_path}\": {err}"),
+        )
     });
 
-    fs::remove_file(&metadata_file)
-        .unwrap_or_else(|err| error(&format!("Failed to delete metadata file: {err}")));
+    fs::remove_file(&metadata_file).unwrap_or_else(|err| {
+        error(
+            SOURCE_FILE,
+            "spf_install()",
+            247,
+            &format!("Failed to delete metadata file: {err}"),
+        )
+    });
 
     let path_to_search = &format!("./{extracted_package_path}/**/*");
 
@@ -205,9 +270,12 @@ pub fn spf_install(mut spf_package_path: String) {
     );
 
     for entry in glob(path_to_search).unwrap_or_else(|err| {
-        error(&format!(
-            "Failed to collect directories at \"{path_to_search}\": {err}"
-        ))
+        error(
+            SOURCE_FILE,
+            "spf_install()",
+            273,
+            &format!("Failed to collect directories at \"{path_to_search}\": {err}"),
+        )
     }) {
         let file_from_archive = entry.unwrap().to_str().unwrap().to_string();
         let file_destination = file_from_archive.replacen(&extracted_package_path, "", 1);
@@ -216,16 +284,22 @@ pub fn spf_install(mut spf_package_path: String) {
         if path_to_create.is_dir() {
             if path_to_create.exists() {
                 create_dir_all(&file_destination).unwrap_or_else(|err| {
-                    error(&format!(
-                        "Failed to create directory \"{file_destination}\": {err}"
-                    ))
+                    error(
+                        SOURCE_FILE,
+                        "spf_install()",
+                        287,
+                        &format!("Failed to create directory \"{file_destination}\": {err}"),
+                    )
                 });
 
                 // Check that the directory was copied
                 if !path_to_create.exists() {
-                    error(&format!(
-                        "Failed to create directory: \"{file_destination}\""
-                    ))
+                    error(
+                        SOURCE_FILE,
+                        "spf_install()",
+                        297,
+                        &format!("Failed to create directory: \"{file_destination}\""),
+                    )
                 }
             }
 
@@ -235,9 +309,14 @@ pub fn spf_install(mut spf_package_path: String) {
         let final_destination = file_from_archive.replacen(&extracted_package_path, "", 1);
 
         fs::copy(&file_from_archive, &final_destination).unwrap_or_else(|err| {
-            error(&format!(
-                "Failed to copy file \"{file_from_archive}\" -> \"{final_destination}\": {err}"
-            ))
+            error(
+                SOURCE_FILE,
+                "spf_install()",
+                312,
+                &format!(
+                    "Failed to copy file \"{file_from_archive}\" -> \"{final_destination}\": {err}"
+                ),
+            )
         });
 
         // Write the path of the file to later be removed when uninstalled.
@@ -248,16 +327,24 @@ pub fn spf_install(mut spf_package_path: String) {
 
         // Check that the file was copied
         if !path_to_create.exists() {
-            error(&format!("Failed to copy file: \"{file_destination}\""))
+            error(
+                SOURCE_FILE,
+                "spf_install()",
+                330,
+                &format!("Failed to copy file: \"{file_destination}\""),
+            )
         }
     }
 
     println!("Cleaning up...");
 
     fs::remove_dir_all(&extracted_package_path).unwrap_or_else(|err| {
-        error(&format!(
-            "Failed to clean up and remove directory \"{extracted_package_path}\": {err}"
-        ))
+        error(
+            SOURCE_FILE,
+            "spf_install()",
+            342,
+            &format!("Failed to clean up and remove directory \"{extracted_package_path}\": {err}"),
+        )
     });
 
     println!("Successfully installed {packaged_project_name}-{packaged_project_version}!");
