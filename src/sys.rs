@@ -43,7 +43,7 @@ pub fn is_root() -> bool {
 /// Display an error. When called, exit with status 1
 pub fn error(source_file: &str, function: &str, error_call_line: usize, message: &str) -> ! {
     eprintln!(
-        "{source_file}:{function}:{message}\n\
+        "{source_file}::{function}: {message}\n\
         Error called on line: {error_call_line}"
     );
 
