@@ -1,3 +1,8 @@
+//! Contains functions that control the init process of spf.
+//!
+//! Copyright (C) 2026 Owen Debiasio <owen.debiasio@gmail.com>
+//! SPDX-License-Identifier: GPL-3.0-or-later
+
 use std::{fs::create_dir_all, path::Path};
 
 use crate::sys::{Error, is_root};
@@ -26,7 +31,7 @@ pub fn init() {
                 Error::fatal(
                     SOURCE_FILE,
                     "init()",
-                    26,
+                    31,
                     &format!("Failed init spf: Failed to create directory \"{path}\": {err}"),
                 )
             });

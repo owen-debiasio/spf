@@ -1,8 +1,8 @@
-// use std::path::Path;
-
-// pub fn path_exists(path: &str) -> bool {
-//     Path::new(path).exists()
-// }
+//! Shared functions and variables that assist with returning filesystem
+//! properties.
+//!
+//! Copyright (C) 2026 Owen Debiasio <owen.debiasio@gmail.com>
+//! SPDX-License-Identifier: GPL-3.0-or-later
 
 use std::{path::PathBuf, process::Command};
 

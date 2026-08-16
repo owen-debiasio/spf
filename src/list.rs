@@ -1,3 +1,9 @@
+//! Functions related to and providing the ability list any packages installed
+//! by spf.
+//!
+//! Copyright (C) 2026 Owen Debiasio <owen.debiasio@gmail.com>
+//! SPDX-License-Identifier: GPL-3.0-or-later
+
 use std::{fs, process::exit};
 
 use glob::glob;

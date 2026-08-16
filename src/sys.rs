@@ -1,3 +1,8 @@
+//! Shared functions and variables that assist with returning system properties.
+//!
+//! Copyright (C) 2026 Owen Debiasio <owen.debiasio@gmail.com>
+//! SPDX-License-Identifier: GPL-3.0-or-later
+
 use std::{
     env::{current_exe, var},
     process::exit,
@@ -18,7 +23,7 @@ impl Env {
             Error::fatal(
                 SOURCE_FILE,
                 "Env::home()",
-                18,
+                23,
                 &format!("Failed to retrieve user home: {err}"),
             )
         })
@@ -30,7 +35,7 @@ impl Env {
             Error::fatal(
                 SOURCE_FILE,
                 "Env::name()",
-                30,
+                35,
                 &format!("Failed to retrieve user name: {err}"),
             )
         })
@@ -88,7 +93,7 @@ pub fn get_binary_path() -> String {
             Error::fatal(
                 SOURCE_FILE,
                 "get_binary_path()",
-                88,
+                93,
                 &format!("Failed to get binary path: {err}"),
             )
         })
