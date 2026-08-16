@@ -1,4 +1,12 @@
-use crate::sys::{Error, get_binary_path, is_root};
+//! Shared functions and variables that assist with returning system properties.
+//!
+//! Copyright (C) 2026 Owen Debiasio <owen.debiasio@gmail.com>
+//! SPDX-License-Identifier: GPL-3.0-or-later
+
+use crate::{
+    metadata::{PACKAGE_INSTALL_PATH, get_meta_value},
+    sys::{Error, get_binary_path, is_root},
+};
 use std::{
     fs::{self, remove_dir_all, remove_file},
     io,
@@ -21,138 +29,199 @@ pub fn remove_spf_package(packages_to_list: Vec<String>) {
         Error::normal("If you want to remove spf using spf, please use the standalone binary.")
     }
 
-    // Some bullshit of a "function"?? idkk
-    let get_meta_category = |meta_path: String, category: &str| -> String {
-        fs::read_to_string(meta_path)
-            .unwrap()
-            .split('\n')
-            .find(|entry| entry.contains(category))
-            .unwrap_or_else(|| {
-                Error::fatal(
-                    SOURCE_FILE,
-                    "remove_spf_package()",
-                    31,
-                    "Failed to retrieve project name from metadata!",
-                )
-            })
-            .replace(&format!("{category} = "), "")
-    };
-
-    // Variables kept to make sure things only one a certain amount
+    // Keeps track of when the ability to list packages
+    // is allowed.
+    //
+    // Once the packages finish listing, disable.
     let mut enable_list_packages = true;
+
+    // Cycle through the packages
     for package in &packages_to_list {
-        let package_meta_path = format!("/usr/share/spf/packages/{package}");
+        // The marker of where the package is installed. Also removed.
+        let package_meta_path = format!("{PACKAGE_INSTALL_PATH}{package}");
 
         // Check if packages are installed
         if !Path::new(&package_meta_path).exists() {
             Error::normal(&format!("Package not installed: {package}"))
         }
 
-        let package_version = get_meta_category(package_meta_path.clone(), "VERSION");
+        // Retrieves the package version
+        let package_version = get_meta_value(package_meta_path.clone(), "VERSION");
 
+        // The pretty-print of the package to be removed. Shows the package name
+        // and the version.
         let package_formatted = format!("{package}-{package_version}");
 
-        // List packages, if able to
+        // Check if the ability to list packages is enabled, and do such
+        // if so.
         if enable_list_packages {
-            println!("You are about to remove the following package(s):\n");
+            // Handles listing packages.
+            list_packages(packages_to_list.clone(), package_meta_path.clone());
 
-            // the code here is absolute dogshit so you can try to
-            // fix it if you want but I won't cause it works
-            if packages_to_list.len() > 6 {
-                for package in &packages_to_list {
-                    let listed_package_meta_path = format!("/usr/share/spf/packages/{package}");
-                    let listed_package_version =
-                        get_meta_category(listed_package_meta_path, "VERSION");
-
-                    print!("{package}-{listed_package_version}")
-                }
-                println!();
-            } else {
-                for package in &packages_to_list {
-                    let listed_package_meta_path = format!("/usr/share/spf/packages/{package}");
-                    let listed_package_version =
-                        get_meta_category(listed_package_meta_path, "VERSION");
-
-                    println!("{package}-{listed_package_version}")
-                }
-            }
-
+            // Everything below here is to ask user for confirmation
+            // to remove their selected packages
             println!("\nProceed?\n(Y/N)");
 
             let mut proceed_to_remove = String::new();
             io::stdin()
                 .read_line(&mut proceed_to_remove)
-                .expect("failed to readline");
+                .unwrap_or_else(|err| {
+                    Error::fatal(
+                        SOURCE_FILE,
+                        "remove_spf_package()",
+                        69,
+                        &format!("Failed to readline: {err}"),
+                    )
+                });
 
             if proceed_to_remove.trim().to_lowercase() != "y" {
-                println!("Aborted.");
-                exit(0)
+                Error::normal("Aborted.")
             }
 
+            // Disable package listing
             enable_list_packages = false
         }
 
-        println!("\nRemoving: {package_formatted}");
-
-        let mut enable_path_deletion = false;
-        for entry in fs::read_to_string(package_meta_path.clone())
-            .unwrap_or_else(|err| {
-                Error::fatal(
-                    SOURCE_FILE,
-                    "remove_spf_package()",
-                    100,
-                    &format!("Failed to retrieve contents of \"{package_meta_path}\": {err}"),
-                )
-            })
-            .lines()
-        {
-            if entry == ":::PATH DEFINE START:::" {
-                enable_path_deletion = true;
-                continue;
-            }
-
-            if !enable_path_deletion {
-                continue;
-            }
-
-            println!("    Removing \"{entry}\"...");
-
-            // Delete the paths
-            if Path::new(entry).is_file() {
-                remove_file(entry).unwrap_or_else(|err| {
-                    Error::fatal(
-                        SOURCE_FILE,
-                        "remove_spf_package()",
-                        123,
-                        &format!("Failed to remove \"{entry}\": {err}"),
-                    )
-                })
-            } else {
-                remove_dir_all(entry).unwrap_or_else(|err| {
-                    Error::fatal(
-                        SOURCE_FILE,
-                        "remove_spf_package()",
-                        132,
-                        &format!("Failed to remove \"{entry}\": {err}"),
-                    )
-                })
-            }
-        }
-
-        println!("    Removing package entry...");
-        remove_file(&package_meta_path).unwrap_or_else(|err| {
-            Error::fatal(
-                SOURCE_FILE,
-                "remove_spf_package()",
-                144,
-                &format!("Failed to remove \"{package_meta_path}\": {err}"),
-            )
-        });
-
-        println!("Successfully removed {package_formatted}!");
+        // Finally remove the package
+        remove_package(package_formatted, package_meta_path)
     }
 
     println!("\nSuccessfully removed package(s)!");
 
     exit(0);
+}
+
+/// Removes an installed spf package (entries and metadata file).
+///
+/// Requires:
+///     - `package_formatted`: To list that the package has been removed
+///     - `package_meta_path`: for retrieving paths to delete and to have itself
+///     deleted.
+fn remove_package(package_formatted: String, package_meta_path: String) {
+    println!("\nRemoving: {package_formatted}");
+
+    // Cycle through the lines of the metadata file
+    for entry in fs::read_to_string(package_meta_path.clone())
+        .unwrap_or_else(|err| {
+            Error::fatal(
+                SOURCE_FILE,
+                "remove_package()",
+                106,
+                &format!("Failed to retrieve contents of \"{package_meta_path}\": {err}"),
+            )
+        })
+        .lines()
+    {
+        // If the entry isn't an obvious path, skip to next line.
+        if !entry.starts_with('/') {
+            continue;
+        }
+
+        println!("    Removing \"{entry}\"...");
+
+        // Delete the paths.
+        //
+        // Whether the path is a file or directory is detected through
+        // `.is_file()`
+        if Path::new(entry).is_file() {
+            remove_file(entry).unwrap_or_else(|err| {
+                Error::fatal(
+                    SOURCE_FILE,
+                    "remove_package()",
+                    128,
+                    &format!("Failed to remove \"{entry}\": {err}"),
+                )
+            })
+        } else {
+            remove_dir_all(entry).unwrap_or_else(|err| {
+                Error::fatal(
+                    SOURCE_FILE,
+                    "remove_package()",
+                    137,
+                    &format!("Failed to remove \"{entry}\": {err}"),
+                )
+            })
+        }
+
+        // Recreate the status of the path to properly detect if the file
+        // is deleted.
+        let path_to_remove_check = Path::new(entry);
+
+        // Check if the path has been removed
+        if path_to_remove_check.exists() {
+            Error::fatal(
+                SOURCE_FILE,
+                "remove_package()",
+                152,
+                &format!(
+                    "Failed to remove \"{}\": Path still remains",
+                    path_to_remove_check.to_str().unwrap()
+                ),
+            )
+        }
+    }
+
+    println!("    Removing package entry...");
+
+    // Removes the metadata file
+    remove_file(&package_meta_path).unwrap_or_else(|err| {
+        Error::fatal(
+            SOURCE_FILE,
+            "remove_package()",
+            168,
+            &format!("Failed to remove \"{package_meta_path}\": {err}"),
+        )
+    });
+
+    if Path::new(&package_meta_path).exists() {
+        Error::fatal(
+            SOURCE_FILE,
+            "remove_package()",
+            177,
+            &format!("Failed to remove \"{package_meta_path}\": File still remains"),
+        )
+    }
+
+    println!("Successfully removed {package_formatted}!");
+}
+
+/// Lists the packages that are going to be removed (`packages`).
+///
+/// `package_meta_path` is used to retrieve the version of those
+/// packages.
+///
+/// It also lists them dynamically (see below).
+fn list_packages(packages: Vec<String>, package_meta_path: String) {
+    println!("You are about to remove the following package(s):\n");
+
+    // If there are less than 5 or less packages, list packages like this:
+    //
+    // package1-v0.0.1 package2-v0.0.2 package3-v0.0.3 ...
+    //
+    // Otherwise list them like this:
+    //
+    // package1-v0.0.1
+    // package2-v0.0.2
+    // package3-v0.0.3
+    // ...
+    if packages.len() > 6 {
+        // Cycle through packages
+        for package in &packages {
+            // Retrieve package version
+            let listed_package_version = get_meta_value(package_meta_path.clone(), "VERSION");
+
+            // List package
+            print!("{package}-{listed_package_version}")
+        }
+        println!();
+    } else {
+        // Cycle through packages
+        for package in &packages {
+            // Retrieve package version
+            let listed_package_version = get_meta_value(package_meta_path.clone(), "VERSION");
+
+            // List package
+            println!("{package}-{listed_package_version}")
+        }
+    }
 }
