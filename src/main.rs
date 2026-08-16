@@ -1,6 +1,6 @@
 use crate::{
     install::spf_install, list::list_packages, package::create_spf_package,
-    remove::remove_spf_package, sys::error, template::gen_meta_template,
+    remove::remove_spf_package, sys::Error, template::gen_meta_template,
 };
 
 // Shared
@@ -23,7 +23,7 @@ fn main() {
     init::init();
 
     // Keep this inside `main()` to prevent conflicts with other files
-    static SOURCE_FILE: &str = "src/main.rs";
+    static _SOURCE_FILE: &str = "src/main.rs";
 
     // Intro
     println!("spf-{VERSION}\n");
@@ -81,18 +81,18 @@ fn main() {
             // `secondary_arg` is the optional output location
             gen_meta_template(secondary_arg);
         }
+        
         // Version is already mentioned at the top of this file (src/main.rs: line 22)
         "--version" | "-v" => println!(
             "Written by Owen Debiasio <owen.debiasio@gmail.com>. Licensed under GPL-3.0-or-later.\n\
             spf has NO WARRANTY and is not responsible for breaking your system."
         ),
+        
+        // If no args are provided, just show the usage menu
         "" => available_commands(),
-        _ => error(
-            SOURCE_FILE,
-            "main()",
-            89,
-            &format!("Invalid command: {root_arg}"),
-        ),
+
+        // If the arg provided isn't provided, throw error
+        _ => Error::normal(&format!("Invalid command: {root_arg}")),
     }
 }
 

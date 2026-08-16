@@ -5,10 +5,11 @@ use std::{
     process::exit,
 };
 
-use crate::sys::error;
+use crate::sys::Error;
 
 static SOURCE_FILE: &str = "src/template.rs";
 
+/// Sample metadata contents to be printed
 static TEMPLATE_CONTENTS: &str = "\
 # Header for project meta
 # NOTE: META MUST BE DEFINED BEFORE PATHS
@@ -35,10 +36,10 @@ pub fn gen_meta_template(mut output_location: String) {
     if output_location.is_empty() {
         output_location = env::current_dir()
             .unwrap_or_else(|err| {
-                error(
+                Error::fatal(
                     SOURCE_FILE,
                     "gen_meta_template()",
-                    38,
+                    39,
                     &format!("Failed to get current directory: {err}"),
                 )
             })
@@ -49,22 +50,17 @@ pub fn gen_meta_template(mut output_location: String) {
     // Output location has to be a directory because rust doesn't want to
     // listen to me
     } else if !Path::new(&output_location).is_dir() {
-        error(
-            SOURCE_FILE,
-            "gen_meta_template()",
-            52,
-            "Please enter a directory to generate to.",
-        )
+        Error::normal("Please enter a directory to generate to.");
     }
 
     output_location = format!("{output_location}/spf_template");
 
     // Write the contents
     fs::write(&output_location, TEMPLATE_CONTENTS).unwrap_or_else(|err| {
-        error(
+        Error::fatal(
             SOURCE_FILE,
             "gen_meta_template()",
-            64,
+            60,
             &format!("Failed to generate template to \"{output_location}\": {err}"),
         )
     });

@@ -1,28 +1,32 @@
 use std::{fs::create_dir_all, path::Path};
 
-use crate::{error, sys::is_root};
+use crate::sys::{is_root, Error};
 
 static SOURCE_FILE: &str = "src/init.rs";
 
+/// Initializes what spf needs to function properly.
+///
+/// What it does currently:
+///     - Check if needed paths exist (see `paths_to_check`)
 pub fn init() {
+    // Packages that spf needs to check so it can function
     let paths_to_check = vec!["/usr/share/spf/packages/"];
 
+    // Go through the paths and make sure they exist. Otherwise, create them.
     for path in paths_to_check {
+        // If a needed path doesn't exist.
         if !Path::new(path).exists() {
+            // Make sure user is running as root
             if !is_root() {
-                error(
-                    SOURCE_FILE,
-                    "init()",
-                    11,
-                    "In order to initialize the filesystem, you must run spf as root",
-                )
+                Error::normal("In order to initialize the filesystem, you must run spf as root")
             }
 
+            // Create the needed directory
             create_dir_all(path).unwrap_or_else(|err| {
-                error(
+                Error::fatal(
                     SOURCE_FILE,
                     "init()",
-                    20,
+                    25,
                     &format!("Failed init spf: Failed to create directory \"{path}\": {err}"),
                 )
             });

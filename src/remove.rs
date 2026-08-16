@@ -1,4 +1,4 @@
-use crate::sys::{error, get_binary_path, is_root};
+use crate::sys::{get_binary_path, is_root, Error};
 use std::{
     fs::{self, remove_dir_all, remove_file},
     io,
@@ -10,30 +10,15 @@ static SOURCE_FILE: &str = "src/remove.rs";
 
 pub fn remove_spf_package(packages_to_list: Vec<String>) {
     if !is_root() {
-        error(
-            SOURCE_FILE,
-            "remove_spf_package()",
-            13,
-            "To execute this action, please run spf as root.",
-        )
+        Error::normal("To execute this action, please run spf as root.")
     }
 
     if packages_to_list.is_empty() {
-        error(
-            SOURCE_FILE,
-            "remove_spf_package()",
-            22,
-            "Provide the package(s) you want to remove.",
-        )
+        Error::normal("Provide the package(s) you want to remove.")
 
     // Restrict the ability to uninstall spf with spf to avoid conflicts
     } else if packages_to_list.contains(&"spf".to_string()) && get_binary_path() == "/usr/bin/spf" {
-        error(
-            SOURCE_FILE,
-            "remove_spf_package()",
-            31,
-            "If you want to remove spf using spf, please use the standalone binary.",
-        )
+        Error::normal("If you want to remove spf using spf, please use the standalone binary.")
     }
 
     // Some bullshit of a "function"?? idkk
@@ -43,10 +28,10 @@ pub fn remove_spf_package(packages_to_list: Vec<String>) {
             .split('\n')
             .find(|entry| entry.contains(category))
             .unwrap_or_else(|| {
-                error(
+                Error::fatal(
                     SOURCE_FILE,
                     "remove_spf_package()",
-                    46,
+                    31,
                     "Failed to retrieve project name from metadata!",
                 )
             })
@@ -60,12 +45,7 @@ pub fn remove_spf_package(packages_to_list: Vec<String>) {
 
         // Check if packages are installed
         if !Path::new(&package_meta_path).exists() {
-            error(
-                SOURCE_FILE,
-                "remove_spf_package()",
-                63,
-                &format!("Package not installed: {package}"),
-            )
+            Error::normal(&format!("Package not installed: {package}"))
         }
 
         let package_version = get_meta_category(package_meta_path.clone(), "VERSION");
@@ -117,10 +97,10 @@ pub fn remove_spf_package(packages_to_list: Vec<String>) {
         let mut enable_path_deletion = false;
         for entry in fs::read_to_string(package_meta_path.clone())
             .unwrap_or_else(|err| {
-                error(
+                Error::fatal(
                     SOURCE_FILE,
                     "remove_spf_package()",
-                    119,
+                    100,
                     &format!("Failed to retrieve contents of \"{package_meta_path}\": {err}"),
                 )
             })
@@ -140,19 +120,19 @@ pub fn remove_spf_package(packages_to_list: Vec<String>) {
             // Delete the paths
             if Path::new(entry).is_file() {
                 remove_file(entry).unwrap_or_else(|err| {
-                    error(
+                    Error::fatal(
                         SOURCE_FILE,
                         "remove_spf_package()",
-                        142,
+                        123,
                         &format!("Failed to remove \"{entry}\": {err}"),
                     )
                 })
             } else {
                 remove_dir_all(entry).unwrap_or_else(|err| {
-                    error(
+                    Error::fatal(
                         SOURCE_FILE,
                         "remove_spf_package()",
-                        151,
+                        132,
                         &format!("Failed to remove \"{entry}\": {err}"),
                     )
                 })
@@ -161,10 +141,10 @@ pub fn remove_spf_package(packages_to_list: Vec<String>) {
 
         println!("    Removing package entry...");
         remove_file(&package_meta_path).unwrap_or_else(|err| {
-            error(
+            Error::fatal(
                 SOURCE_FILE,
                 "remove_spf_package()",
-                163,
+                144,
                 &format!("Failed to remove \"{package_meta_path}\": {err}"),
             )
         });

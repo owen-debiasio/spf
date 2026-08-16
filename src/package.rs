@@ -4,15 +4,15 @@
 //! SPDX-License-Identifier: GPL-3.0-or-later
 
 use std::{
-    fs::{self, File, create_dir_all},
+    fs::{self, create_dir_all, File},
     io::Write,
     path::Path,
     process::exit,
 };
 
 use crate::{
-    fs::{FileProperty, create_archive_of_dir},
-    sys::error,
+    fs::{create_archive_of_dir, FileProperty},
+    sys::Error,
 };
 
 static SOURCE_FILE: &str = "src/package.rs";
@@ -26,31 +26,18 @@ pub fn create_spf_package(package_config: &str, mut output_location: &str) {
     // If the file has an extension or is not provided / is empty,
     // exit.
     if !FileProperty::extension(package_config).is_empty() || package_config.is_empty() {
-        error(
-            SOURCE_FILE,
-            "create_spf_package()",
-            29,
-            "Please provide a text file with no file extension!",
-        )
+        Error::normal("Please provide a text file with no file extension!")
 
     // Check if package config exists
     } else if !Path::new(package_config).exists() {
-        error(
-            SOURCE_FILE,
-            "create_spf_package()",
-            38,
-            "Package config not found!",
-        )
+        Error::normal("Package config not found!")
     }
 
     // Make sure the output file is a .spf file
     if !FileProperty::extension(output_location).ends_with("spf") {
-        error(
-            SOURCE_FILE,
-            "create_spf_package()",
-            48,
-            &format!("Your provided output location (\"{output_location}\") must be a .spf file."),
-        )
+        Error::normal(&format!(
+            "Your provided output location (\"{output_location}\") must be a .spf file."
+        ))
     }
 
     // The output archive is initially created as a directory so strip the
@@ -58,10 +45,10 @@ pub fn create_spf_package(package_config: &str, mut output_location: &str) {
     output_location = output_location.trim_end_matches(".spf");
 
     fs::create_dir_all(output_location).unwrap_or_else(|err| {
-        error(
+        Error::fatal(
             SOURCE_FILE,
             "create_spf_package()",
-            61,
+            48,
             &format!("Failed to create directory \"{output_location}\": {err}"),
         )
     });
@@ -69,10 +56,10 @@ pub fn create_spf_package(package_config: &str, mut output_location: &str) {
     println!("Compiling files and directories...\n");
 
     let package_config_contents = &*fs::read_to_string(package_config).unwrap_or_else(|err| {
-        error(
+        Error::fatal(
             SOURCE_FILE,
             "create_spf_package()",
-            72,
+            59,
             &format!("Failed to open file: {err}"),
         )
     });
@@ -102,10 +89,10 @@ pub fn create_spf_package(package_config: &str, mut output_location: &str) {
 
     // Cleanup directory that was compressed
     fs::remove_dir_all(output_location).unwrap_or_else(|err| {
-        error(
+        Error::fatal(
             SOURCE_FILE,
             "create_spf_package()",
-            105,
+            92,
             &format!("Failed to clean up packaging: {err}"),
         )
     });
@@ -142,10 +129,10 @@ fn write_project_meta_config(package_config_contents: &str, mut project_meta_fil
 
         // Get the category of metadata. Could be "PROJECT_NAME", "VERSION", "LICENSE", and others.
         let meta_category = entry.split(" = ").next().unwrap_or_else(|| {
-            error(
+            Error::fatal(
                 SOURCE_FILE,
                 "write_project_meta_config()",
-                145,
+                132,
                 &format!("Failed to parse entry: {entry}"),
             )
         });
@@ -172,10 +159,10 @@ fn write_project_meta_config(package_config_contents: &str, mut project_meta_fil
         // - Invalid entry formatting, where the meta category and value are not
         // separated correctly
         // - The metadata category found is not a valid category.
-        error(
+        Error::fatal(
             SOURCE_FILE,
             "write_project_meta_config()",
-            175,
+            162,
             &format!(
                 "Failed to parse entry \"{entry}\": {}",
                 if !entry.contains(" = ") {
@@ -196,10 +183,10 @@ fn write_project_meta_config(package_config_contents: &str, mut project_meta_fil
     project_meta_file
         .write_all(processed_meta_buffer.as_bytes())
         .unwrap_or_else(|err|
-            error(
+            Error::fatal(
                 SOURCE_FILE,
                 "write_project_meta_config()",
-                199,
+                186,
                 &format!("Failed to write package config metadata buffer to \"{project_meta_file:#?}\": {err}")));
 }
 
@@ -253,11 +240,11 @@ fn copy_package_paths(package_config_contents: &str, output_location: &str) {
         // `file_destination` needs to start with '/' so the file destination has
         // a clearly defined root path.
         if !file_destination.starts_with('/') {
-            error(
+            Error::fatal(
                 SOURCE_FILE,
                 "copy_package_paths()",
-                256,
-                &format!("Entered destination must start from the root: {file_destination}"),
+                243,
+                &format!("Path destination must start from the root: {file_destination}"),
             )
         }
 
@@ -293,20 +280,20 @@ fn copy_package_paths(package_config_contents: &str, output_location: &str) {
 
         // Create the directories listed in `destination_directory`
         create_dir_all(destination_directories_to_create).unwrap_or_else(|err| {
-            error(
+            Error::fatal(
                 SOURCE_FILE,
                 "copy_package_paths()",
-                296,
+                283,
                 &format!("Failed to create \"{destination_directories_to_create}\": {err}"),
             )
         });
 
         // Copy `original_file_path` to `final_file_destination`
         fs::copy(&original_file_path, final_file_destination).unwrap_or_else(|err| {
-            error(
+            Error::fatal(
                 SOURCE_FILE,
                 "copy_package_paths()",
-                306,
+                293,
                 &format!("Failed to copy file \"{original_file_path}\": {err}"),
             )
         });
@@ -330,10 +317,10 @@ fn package_to_spf(output_location: &str, archive_name: &str) {
 
     // Check if the package actually exists.
     if !Path::new(archive_name).exists() {
-        error(
+        Error::fatal(
             SOURCE_FILE,
             "package_to_spf()",
-            333,
+            320,
             &format!("Failed to package to \"{output_location}\": File not found"),
         )
     }
@@ -351,10 +338,10 @@ fn check_path_entry(entry: &str, original: String, destination: String) {
     let paths_are_split = entry.contains(':');
 
     if !(paths_are_included && entry_formatting_is_preserved && paths_are_split) {
-        error(
+        Error::fatal(
             SOURCE_FILE,
             "check_path_entry()",
-            354,
+            341,
             &format!("Failed to parse entry: {entry}"),
         )
     }

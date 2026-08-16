@@ -4,7 +4,7 @@
 //! SPDX-License-Identifier: GPL-3.0-or-later
 
 use std::{
-    fs::{self, OpenOptions, create_dir_all},
+    fs::{self, create_dir_all, OpenOptions},
     io::{self, Write},
     path::Path,
     process::exit,
@@ -13,9 +13,8 @@ use std::{
 use glob::glob;
 
 use crate::{
-    error,
-    fs::{FileProperty, extract_archive},
-    sys::is_root,
+    fs::{extract_archive, FileProperty},
+    sys::{is_root, Error},
 };
 
 static SOURCE_FILE: &str = "src/install.rs";
@@ -28,32 +27,17 @@ static SOURCE_FILE: &str = "src/install.rs";
 pub fn spf_install(mut spf_package_path: String) {
     // Root is required for this command
     if !is_root() {
-        error(
-            SOURCE_FILE,
-            "spf_install()",
-            31,
-            "To execute this action, please run spf as root.",
-        )
+        Error::normal("To execute this action, please run spf as root.")
     }
 
     // If a package isn't provided, or provided package isn't a `.spf`
     // package, prompt user to do so.
     if spf_package_path.is_empty() || !spf_package_path.ends_with(".spf") {
-        error(
-            SOURCE_FILE,
-            "spf_install()",
-            42,
-            "Please provide a .spf package",
-        )
+        Error::normal("Please provide a .spf package")
 
     // If the file straight up doesn't exist, let them know
     } else if !Path::new(&spf_package_path).exists() {
-        error(
-            SOURCE_FILE,
-            "spf_install()",
-            51,
-            &format!("File not found: {spf_package_path}"),
-        )
+        Error::normal(&format!("File not found: {spf_package_path}"))
     }
 
     println!("Loading package: {spf_package_path}\n");
@@ -68,10 +52,10 @@ pub fn spf_install(mut spf_package_path: String) {
 
     // Retrieve the metadata
     let stored_metadata = fs::read_to_string(&packaged_metadata_file).unwrap_or_else(|err| {
-        error(
+        Error::fatal(
             SOURCE_FILE,
             "spf_install()",
-            71,
+            55,
             &format!("Failed to retrieve metadata from \"{spf_package_path}\": {err}"),
         )
     });
@@ -87,10 +71,10 @@ pub fn spf_install(mut spf_package_path: String) {
             // Locate the category
             .find(|entry| entry.contains(category))
             .unwrap_or_else(|| {
-                error(
+                Error::fatal(
                     SOURCE_FILE,
                     "spf_install()",
-                    90,
+                    74,
                     "Failed to retrieve project name from metadata!",
                 )
             })
@@ -157,10 +141,10 @@ pub fn spf_install(mut spf_package_path: String) {
 
     // Clean up by removing the extracted package
     fs::remove_dir_all(&extracted_package_path).unwrap_or_else(|err| {
-        error(
+        Error::fatal(
             SOURCE_FILE,
             "spf_install()",
-            160,
+            144,
             &format!("Failed to clean up and remove directory \"{extracted_package_path}\": {err}"),
         )
     });
@@ -196,10 +180,10 @@ fn ask_user_to_install(
     io::stdin()
         .read_line(&mut proceed_to_install)
         .unwrap_or_else(|err| {
-            error(
+            Error::fatal(
                 SOURCE_FILE,
                 "ask_user_to_install()",
-                199,
+                183,
                 &format!("Failed to readline: {err}"),
             )
         });
@@ -208,10 +192,10 @@ fn ask_user_to_install(
 
     if proceed_to_install.trim().to_lowercase() != "y" {
         fs::remove_dir_all(&extracted_package_path).unwrap_or_else(|err| {
-            error(
+            Error::fatal(
                 SOURCE_FILE,
                 "ask_user_to_install()",
-                211,
+                195,
                 &format!(
                     "Failed to clean up and remove directory \"{extracted_package_path}\": {err}"
                 ),
@@ -239,10 +223,10 @@ fn check_version(
         // Find the line that contains the `VERSION` metadata tag
         .find(|entry| entry.contains("VERSION"))
         .unwrap_or_else(|| {
-            error(
+            Error::fatal(
                 SOURCE_FILE,
                 "check_version()",
-                242,
+                226,
                 "Failed to retrieve project name from metadata!",
             )
         })
@@ -266,10 +250,10 @@ fn check_version(
 
         // Make sure that the versions were parsed correctly.
         if project_version_num == 0 || installed_version_num == 0 {
-            error(
+            Error::fatal(
                 SOURCE_FILE,
                 "check_version()",
-                269,
+                253,
                 &format!("Failed to parse version in the installed package {package_meta_path}"),
             )
         }
@@ -298,10 +282,10 @@ fn check_version(
     io::stdin()
         .read_line(&mut proceed_to_install)
         .unwrap_or_else(|err| {
-            error(
+            Error::fatal(
                 SOURCE_FILE,
                 "check_version()",
-                301,
+                285,
                 &format!("Failed to readline: {err}"),
             )
         });
@@ -313,10 +297,10 @@ fn check_version(
     // If user declines, clean up and exit. Otherwise, proceed and end function
     if proceed_to_install.trim().to_lowercase() != "y" {
         fs::remove_dir_all(&extracted_package_path).unwrap_or_else(|err| {
-            error(
+            Error::fatal(
                 SOURCE_FILE,
                 "check_version()",
-                316,
+                300,
                 &format!(
                     "Failed to clean up and remove directory \"{extracted_package_path}\": {err}"
                 ),
@@ -377,20 +361,20 @@ fn install_files(
 ) {
     // Copy the packaged metadata file to its install location
     fs::copy(&packaged_metadata_file, &package_meta_path_install_location).unwrap_or_else(|err| {
-        error(
+        Error::fatal(
             SOURCE_FILE,
             "install_files()",
-            380,
+            364,
             &format!("Failed to copy file \"{packaged_metadata_file}\" -> \"{package_meta_path_install_location}\": {err}"),
         )
     });
 
     // Remove the metadata file that was packaged
     fs::remove_file(&packaged_metadata_file).unwrap_or_else(|err| {
-        error(
+        Error::fatal(
             SOURCE_FILE,
             "install_files()",
-            390,
+            374,
             &format!("Failed to delete metadata file: {err}"),
         )
     });
@@ -414,10 +398,10 @@ fn install_files(
 
     // Go through and install packaged paths
     for found_path in glob(path_to_search).unwrap_or_else(|err| {
-        error(
+        Error::fatal(
             SOURCE_FILE,
             "install_files()",
-            417,
+            401,
             &format!("Failed to collect directories at \"{path_to_search}\": {err}"),
         )
     }) {
@@ -439,10 +423,10 @@ fn install_files(
         println!("    Copying \"{file_from_archive}\" -> \"{file_destination}\"");
 
         fs::copy(&file_from_archive, &file_destination).unwrap_or_else(|err| {
-            error(
+            Error::fatal(
                 SOURCE_FILE,
                 "install_files()",
-                442,
+                426,
                 &format!(
                     "Failed to copy file \"{file_from_archive}\" -> \"{file_destination}\": {err}"
                 ),
@@ -457,10 +441,10 @@ fn install_files(
 
         // Check that the path was copied/created correctly
         if !path_to_create.exists() {
-            error(
+            Error::fatal(
                 SOURCE_FILE,
                 "install_files()",
-                460,
+                444,
                 &format!("Failed to copy file: \"{file_destination}\""),
             )
         }
