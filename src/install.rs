@@ -14,6 +14,7 @@ use glob::glob;
 
 use crate::{
     fs::{FileProperty, extract_archive},
+    metadata::get_meta_value,
     sys::{Error, is_root},
 };
 
@@ -50,46 +51,13 @@ pub fn spf_install(mut spf_package_path: String) {
     // Get location of the package path (`spf_package_path`)
     let packaged_metadata_file = spf_package_path.replace(".spf", "/META");
 
-    // Retrieve the metadata
-    let stored_metadata = fs::read_to_string(&packaged_metadata_file).unwrap_or_else(|err| {
-        Error::fatal(
-            SOURCE_FILE,
-            "spf_install()",
-            55,
-            &format!("Failed to retrieve metadata from \"{spf_package_path}\": {err}"),
-        )
-    });
-
-    // Helper variable function thing to load metadata.
-    //
-    // The input is the category `category` you want to load,
-    // then the retrieved metadata leaves as a string.
-    let get_meta_category = |category: &str| -> String {
-        stored_metadata
-            // Separate the entries
-            .split('\n')
-            // Locate the category
-            .find(|entry| entry.contains(category))
-            .unwrap_or_else(|| {
-                Error::fatal(
-                    SOURCE_FILE,
-                    "spf_install()",
-                    74,
-                    "Failed to retrieve project name from metadata!",
-                )
-            })
-            // Load the category value by removing anything that isn't the
-            // value (in this case "<`category` =>")
-            .replace(&format!("{category} = "), "")
-    };
-
-    // Retrieve the metadata
-    let packaged_project_name = get_meta_category("PROJECT_NAME");
-    let packaged_project_version = get_meta_category("VERSION");
-    let packaged_project_description = get_meta_category("DESCRIPTION");
-    let packaged_project_license = get_meta_category("LICENSE");
-    let packaged_project_authors = get_meta_category("AUTHORS");
-    let packaged_project_packaged_arch = get_meta_category("ARCH");
+    // Retrieve the metadata. Wish there was a better way to do this
+    let packaged_project_name = get_meta_value(spf_package_path.clone(), "PROJECT_NAME");
+    let packaged_project_version = get_meta_value(spf_package_path.clone(), "VERSION");
+    let packaged_project_description = get_meta_value(spf_package_path.clone(), "DESCRIPTION");
+    let packaged_project_license = get_meta_value(spf_package_path.clone(), "LICENSE");
+    let packaged_project_authors = get_meta_value(spf_package_path.clone(), "AUTHORS");
+    let packaged_project_packaged_arch = get_meta_value(spf_package_path.clone(), "ARCH");
 
     // The formatted package name looks something like:
     //
