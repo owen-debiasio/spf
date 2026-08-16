@@ -5,6 +5,7 @@ use crate::{
 
 // Shared
 mod fs;
+mod metadata;
 mod sys;
 
 // Core

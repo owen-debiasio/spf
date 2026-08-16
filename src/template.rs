@@ -1,3 +1,9 @@
+//! Provides the functions that allow a sample package metadata
+//! config to be created.
+//!
+//! Copyright (C) 2026 Owen Debiasio <owen.debiasio@gmail.com>
+//! SPDX-License-Identifier: GPL-3.0-or-later
+
 use std::{
     env,
     fs::{self},
@@ -39,7 +45,7 @@ pub fn gen_meta_template(mut output_location: String) {
                 Error::fatal(
                     SOURCE_FILE,
                     "gen_meta_template()",
-                    39,
+                    45,
                     &format!("Failed to get current directory: {err}"),
                 )
             })
@@ -60,7 +66,7 @@ pub fn gen_meta_template(mut output_location: String) {
         Error::fatal(
             SOURCE_FILE,
             "gen_meta_template()",
-            60,
+            66,
             &format!("Failed to generate template to \"{output_location}\": {err}"),
         )
     });
