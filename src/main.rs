@@ -81,13 +81,13 @@ fn main() {
             // `secondary_arg` is the optional output location
             gen_meta_template(secondary_arg);
         }
-        
+
         // Version is already mentioned at the top of this file (src/main.rs: line 22)
         "--version" | "-v" => println!(
             "Written by Owen Debiasio <owen.debiasio@gmail.com>. Licensed under GPL-3.0-or-later.\n\
             spf has NO WARRANTY and is not responsible for breaking your system."
         ),
-        
+
         // If no args are provided, just show the usage menu
         "" => available_commands(),
 

@@ -4,14 +4,14 @@
 //! SPDX-License-Identifier: GPL-3.0-or-later
 
 use std::{
-    fs::{self, create_dir_all, File},
+    fs::{self, File, create_dir_all},
     io::Write,
     path::Path,
     process::exit,
 };
 
 use crate::{
-    fs::{create_archive_of_dir, FileProperty},
+    fs::{FileProperty, create_archive_of_dir},
     sys::Error,
 };
 

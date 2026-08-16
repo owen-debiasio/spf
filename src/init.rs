@@ -1,6 +1,6 @@
 use std::{fs::create_dir_all, path::Path};
 
-use crate::sys::{is_root, Error};
+use crate::sys::{Error, is_root};
 
 static SOURCE_FILE: &str = "src/init.rs";
 
@@ -26,7 +26,7 @@ pub fn init() {
                 Error::fatal(
                     SOURCE_FILE,
                     "init()",
-                    25,
+                    26,
                     &format!("Failed init spf: Failed to create directory \"{path}\": {err}"),
                 )
             });

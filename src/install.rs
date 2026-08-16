@@ -4,7 +4,7 @@
 //! SPDX-License-Identifier: GPL-3.0-or-later
 
 use std::{
-    fs::{self, create_dir_all, OpenOptions},
+    fs::{self, OpenOptions, create_dir_all},
     io::{self, Write},
     path::Path,
     process::exit,
@@ -13,8 +13,8 @@ use std::{
 use glob::glob;
 
 use crate::{
-    fs::{extract_archive, FileProperty},
-    sys::{is_root, Error},
+    fs::{FileProperty, extract_archive},
+    sys::{Error, is_root},
 };
 
 static SOURCE_FILE: &str = "src/install.rs";

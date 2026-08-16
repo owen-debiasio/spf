@@ -1,4 +1,4 @@
-use crate::sys::{get_binary_path, is_root, Error};
+use crate::sys::{Error, get_binary_path, is_root};
 use std::{
     fs::{self, remove_dir_all, remove_file},
     io,
