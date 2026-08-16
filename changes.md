@@ -13,3 +13,4 @@
 - Enhanced the cleaning functionality of `./dev/package.sh` and `./package/clean.bash`
 - Enhanced error reporting
 - Many, many code optimizations
+- Fix files not being deleted when removing a package
