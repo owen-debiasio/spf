@@ -395,7 +395,7 @@ fn install_files(
             Error::fatal(
                 SOURCE_FILE,
                 "install_files()",
-                394,
+                395,
                 &format!(
                     "Failed to copy file \"{file_from_archive}\" -> \"{file_destination}\": {err}"
                 ),
@@ -413,7 +413,7 @@ fn install_files(
             Error::fatal(
                 SOURCE_FILE,
                 "install_files()",
-                412,
+                413,
                 &format!("Failed to copy file: \"{file_destination}\""),
             )
         }

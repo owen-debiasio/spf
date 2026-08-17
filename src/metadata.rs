@@ -41,7 +41,7 @@ pub fn get_meta_value(meta_path: String, category: &str) -> String {
             Error::fatal(
                 SOURCE_FILE,
                 "get_meta_category()",
-                38,
+                41,
                 &format!("Failed to retrieve project metadata: {err}"),
             )
         })
@@ -56,7 +56,7 @@ pub fn get_meta_value(meta_path: String, category: &str) -> String {
             Error::fatal(
                 SOURCE_FILE,
                 "get_meta_category()",
-                50,
+                56,
                 &format!(
                     "Failed to retrieve metadata value from category \
                     \"{category}\" in file \"{meta_path}\""

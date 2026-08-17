@@ -49,7 +49,7 @@ pub fn create_spf_package(package_config: &str, mut output_location: &str) {
         Error::fatal(
             SOURCE_FILE,
             "create_spf_package()",
-            48,
+            49,
             &format!("Failed to create directory \"{output_location}\": {err}"),
         )
     });
@@ -60,7 +60,7 @@ pub fn create_spf_package(package_config: &str, mut output_location: &str) {
         Error::fatal(
             SOURCE_FILE,
             "create_spf_package()",
-            59,
+            60,
             &format!("Failed to open file: {err}"),
         )
     });
@@ -93,7 +93,7 @@ pub fn create_spf_package(package_config: &str, mut output_location: &str) {
         Error::fatal(
             SOURCE_FILE,
             "create_spf_package()",
-            92,
+            93,
             &format!("Failed to clean up packaging: {err}"),
         )
     });
