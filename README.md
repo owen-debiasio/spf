@@ -59,11 +59,6 @@ Currently the only ways to install spf are:
   - .spf package
 - Building from source
   - Requires linux (unless if developing), rustup/cargo
-  
-## Known issues
-
-- You may experience issues creating packages that require a file extension-less file
-(`LICENSE` for example)
 
 ## Disclaimers/Non-goals
 
