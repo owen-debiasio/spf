@@ -11,6 +11,7 @@ use std::{
 };
 
 use crate::{
+    VERSION,
     fs::{FileProperty, create_archive_of_dir},
     sys::Error,
 };
@@ -110,7 +111,12 @@ pub fn create_spf_package(package_config: &str, mut output_location: &str) {
 /// - AUTHORS     (authors behind the project/package)
 /// - ARCH        (packaged architecture)
 fn write_project_meta_config(package_config_contents: &str, mut project_meta_file: &File) {
-    let mut project_meta_buffer: Vec<&str> = vec![];
+    // Lets users know if a package was packaged using an older spf version. Only stored
+    // internally.
+    let spf_packager_header = &format!("### PACKAGED WITH SPF VERSION {VERSION} ###\n");
+
+    // Init the metadata buffer w/ the header
+    let mut project_meta_buffer: Vec<&str> = vec![spf_packager_header];
 
     // Go through the metadata file and collect needed package as necessary.
     for entry in package_config_contents.lines() {
@@ -132,7 +138,7 @@ fn write_project_meta_config(package_config_contents: &str, mut project_meta_fil
             Error::fatal(
                 SOURCE_FILE,
                 "write_project_meta_config()",
-                132,
+                138,
                 &format!("Failed to parse entry: {entry}"),
             )
         });
@@ -162,7 +168,7 @@ fn write_project_meta_config(package_config_contents: &str, mut project_meta_fil
         Error::fatal(
             SOURCE_FILE,
             "write_project_meta_config()",
-            162,
+            168,
             &format!(
                 "Failed to parse entry \"{entry}\": {}",
                 if !entry.contains(" = ") {
@@ -186,7 +192,7 @@ fn write_project_meta_config(package_config_contents: &str, mut project_meta_fil
             Error::fatal(
                 SOURCE_FILE,
                 "write_project_meta_config()",
-                186,
+                192,
                 &format!("Failed to write package config metadata buffer to \"{project_meta_file:#?}\": {err}")));
 }
 
@@ -243,7 +249,7 @@ fn copy_package_paths(package_config_contents: &str, output_location: &str) {
             Error::fatal(
                 SOURCE_FILE,
                 "copy_package_paths()",
-                243,
+                249,
                 &format!("Path destination must start from the root: {file_destination}"),
             )
         }
@@ -283,7 +289,7 @@ fn copy_package_paths(package_config_contents: &str, output_location: &str) {
             Error::fatal(
                 SOURCE_FILE,
                 "copy_package_paths()",
-                283,
+                289,
                 &format!("Failed to create \"{destination_directories_to_create}\": {err}"),
             )
         });
@@ -293,7 +299,7 @@ fn copy_package_paths(package_config_contents: &str, output_location: &str) {
             Error::fatal(
                 SOURCE_FILE,
                 "copy_package_paths()",
-                293,
+                299,
                 &format!("Failed to copy file \"{original_file_path}\": {err}"),
             )
         });
@@ -320,7 +326,7 @@ fn package_to_spf(output_location: &str, archive_name: &str) {
         Error::fatal(
             SOURCE_FILE,
             "package_to_spf()",
-            320,
+            326,
             &format!("Failed to package to \"{output_location}\": File not found"),
         )
     }
@@ -341,7 +347,7 @@ fn check_path_entry(entry: &str, original: String, destination: String) {
         Error::fatal(
             SOURCE_FILE,
             "check_path_entry()",
-            341,
+            347,
             &format!("Failed to parse entry: {entry}"),
         )
     }
