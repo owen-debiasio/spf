@@ -112,7 +112,7 @@ pub fn spf_install(mut spf_package_path: String) {
         Error::fatal(
             SOURCE_FILE,
             "spf_install()",
-            144,
+            112,
             &format!("Failed to clean up and remove directory \"{extracted_package_path}\": {err}"),
         )
     });
@@ -151,7 +151,7 @@ fn ask_user_to_install(
             Error::fatal(
                 SOURCE_FILE,
                 "ask_user_to_install()",
-                183,
+                151,
                 &format!("Failed to readline: {err}"),
             )
         });
@@ -163,7 +163,7 @@ fn ask_user_to_install(
             Error::fatal(
                 SOURCE_FILE,
                 "ask_user_to_install()",
-                195,
+                163,
                 &format!(
                     "Failed to clean up and remove directory \"{extracted_package_path}\": {err}"
                 ),
@@ -194,7 +194,7 @@ fn check_version(
             Error::fatal(
                 SOURCE_FILE,
                 "check_version()",
-                226,
+                194,
                 "Failed to retrieve project name from metadata!",
             )
         })
@@ -221,7 +221,7 @@ fn check_version(
             Error::fatal(
                 SOURCE_FILE,
                 "check_version()",
-                253,
+                221,
                 &format!("Failed to parse version in the installed package {package_meta_path}"),
             )
         }
@@ -253,7 +253,7 @@ fn check_version(
             Error::fatal(
                 SOURCE_FILE,
                 "check_version()",
-                285,
+                253,
                 &format!("Failed to readline: {err}"),
             )
         });
@@ -268,15 +268,14 @@ fn check_version(
             Error::fatal(
                 SOURCE_FILE,
                 "check_version()",
-                300,
+                268,
                 &format!(
                     "Failed to clean up and remove directory \"{extracted_package_path}\": {err}"
                 ),
             )
         });
 
-        println!("Aborted.");
-        exit(0)
+        Error::normal("Aborted");
     }
 }
 
@@ -332,7 +331,7 @@ fn install_files(
         Error::fatal(
             SOURCE_FILE,
             "install_files()",
-            364,
+            332,
             &format!("Failed to copy file \"{packaged_metadata_file}\" -> \"{package_meta_path_install_location}\": {err}"),
         )
     });
@@ -369,7 +368,7 @@ fn install_files(
         Error::fatal(
             SOURCE_FILE,
             "install_files()",
-            401,
+            369,
             &format!("Failed to collect directories at \"{path_to_search}\": {err}"),
         )
     }) {
@@ -394,7 +393,7 @@ fn install_files(
             Error::fatal(
                 SOURCE_FILE,
                 "install_files()",
-                426,
+                394,
                 &format!(
                     "Failed to copy file \"{file_from_archive}\" -> \"{file_destination}\": {err}"
                 ),
@@ -412,7 +411,7 @@ fn install_files(
             Error::fatal(
                 SOURCE_FILE,
                 "install_files()",
-                444,
+                412,
                 &format!("Failed to copy file: \"{file_destination}\""),
             )
         }
