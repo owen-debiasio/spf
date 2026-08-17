@@ -35,6 +35,9 @@ ARCH = x86_64
 
 :::PATH DEFINE START:::
 ./target/release/spf:/usr/bin/spf
+changes.md:/usr/share/doc/spf/changes.md
+README.md:/usr/share/doc/spf/README.md
+LICENSE:/usr/share/licenses/spf/LICENSE
 :::PATH DEFINE END:::" > spfbuildcfg
 
 # Create .spf package
