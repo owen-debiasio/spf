@@ -32,6 +32,9 @@ pub fn get_meta_value(meta_path: String, category: &str) -> String {
         )
     }
 
+    // The formatted category of the category + '='
+    let string_prior_to_value = &format!("{category} =");
+
     // Parse the metadata and retrieve the value that is needed.
     fs::read_to_string(&meta_path)
         .unwrap_or_else(|err| {
@@ -44,8 +47,11 @@ pub fn get_meta_value(meta_path: String, category: &str) -> String {
         })
         // Seperate the lines
         .split('\n')
-        // Find the line that contains the category
-        .find(|entry| entry.contains(category))
+        // Find the line that contains the category.
+        //
+        // Must not be a comment, and it must start with the
+        // category + the value identifier (`string_prior_to_value`)
+        .find(|entry| entry.starts_with(string_prior_to_value) && !entry.starts_with('#'))
         .unwrap_or_else(|| {
             Error::fatal(
                 SOURCE_FILE,
@@ -58,5 +64,7 @@ pub fn get_meta_value(meta_path: String, category: &str) -> String {
             )
         })
         // Return the value of the category by stripping out the category name
-        .replace(&format!("{category} = "), "")
+        .trim_start_matches(string_prior_to_value)
+        .trim()
+        .to_string()
 }

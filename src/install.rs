@@ -361,7 +361,7 @@ fn install_files(
 
     // Write the header for defining installed paths
     project_meta_file
-        .write_all(b":::PATH DEFINE START:::\n")
+        .write_all(b"\n:::PATH DEFINE START:::\n")
         .unwrap();
 
     // Go through and install packaged paths
@@ -380,10 +380,11 @@ fn install_files(
         // `extracted_package_path` is removed to prevent conflicts
         let file_destination = file_from_archive.replacen(&extracted_package_path, "", 1);
 
+        // `file_destination` as `Path`
         let path_to_create = Path::new(&file_destination);
 
-        // If the path is a directory, simply create it instead of copying it.
-        if path_to_create.is_dir() {
+        // If the path to be copied is a directory, simply create it instead of copying it.
+        if Path::new(&file_from_archive).is_dir() {
             create_dir_all(path_to_create).unwrap();
             continue;
         }

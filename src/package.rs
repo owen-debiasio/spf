@@ -113,7 +113,7 @@ pub fn create_spf_package(package_config: &str, mut output_location: &str) {
 fn write_project_meta_config(package_config_contents: &str, mut project_meta_file: &File) {
     // Lets users know if a package was packaged using an older spf version. Only stored
     // internally.
-    let spf_packager_header = &format!("### PACKAGED WITH SPF VERSION {VERSION} ###\n");
+    let spf_packager_header = &format!("### PACKAGED WITH SPF {VERSION} ###\n");
 
     // Init the metadata buffer w/ the header
     let mut project_meta_buffer: Vec<&str> = vec![spf_packager_header];
