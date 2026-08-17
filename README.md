@@ -59,10 +59,11 @@ Currently the only ways to install spf are:
   - .spf package
 - Building from source
   - Requires linux (unless if developing), rustup/cargo
+  
+## Known issues
 
-## Credits
-
-- [Glob](https://github.com/rust-lang/glob) by rust-lang
+- You may experience issues creating packages that require a file extension-less file
+(`LICENSE` for example)
 
 ## Disclaimers/Non-goals
 
@@ -71,3 +72,7 @@ Currently the only ways to install spf are:
   seriously.
 - This project is 100% human-written code. Either by me or from some forum or 10
   year old Stack Overflow post.
+  
+  ## Credits
+
+- [Glob](https://github.com/rust-lang/glob) by rust-lang
