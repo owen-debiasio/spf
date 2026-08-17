@@ -4,11 +4,14 @@
 //! Copyright (C) 2026 Owen Debiasio <owen.debiasio@gmail.com>
 //! SPDX-License-Identifier: GPL-3.0-or-later
 
-use std::{fs, process::exit};
+use std::process::exit;
 
 use glob::glob;
 
-use crate::sys::Error;
+use crate::{
+    Error,
+    metadata::{PACKAGE_INSTALL_PATH, get_meta_value},
+};
 
 static SOURCE_FILE: &str = "src/list.rs";
 
@@ -17,16 +20,13 @@ static SOURCE_FILE: &str = "src/list.rs";
 pub fn list_packages(optional_string: String) {
     println!("Installed packages:\n");
 
-    // Package metadata install directory
-    static META_INSTALL: &str = "/usr/share/spf/packages/";
-
     // Go through the package metadata install directory
-    for package_path_raw in glob("/usr/share/spf/packages/*").unwrap_or_else(|err| {
+    for package_path_raw in glob(&format!("{PACKAGE_INSTALL_PATH}/*")).unwrap_or_else(|err| {
         Error::fatal(
             SOURCE_FILE,
             "list_packages()",
-            15,
-            &format!("Failed to collect directories at \"{META_INSTALL}\": {err}"),
+            25,
+            &format!("Failed to collect directories at \"{PACKAGE_INSTALL_PATH}\": {err}"),
         )
     }) {
         // The path of the package metadata. The name of the metadata file is the name
@@ -34,35 +34,15 @@ pub fn list_packages(optional_string: String) {
         let package_path = package_path_raw.unwrap().to_str().unwrap().to_string();
 
         // Name of the package to be listed
-        let package_name = package_path.replace(META_INSTALL, "");
+        let package_name = package_path.replace(PACKAGE_INSTALL_PATH, "");
 
         if !package_name.contains(&optional_string) {
             continue;
         }
 
-        // Parses the package metadata
-        let get_meta_category = |category: &str| -> String {
-            fs::read_to_string(&package_path)
-                .unwrap()
-                // Separate lines
-                .split('\n')
-                // Finds the category to search
-                .find(|entry| entry.contains(category))
-                .unwrap_or_else(|| {
-                    Error::fatal(
-                        SOURCE_FILE,
-                        "list_packages()",
-                        46,
-                        "Failed to retrieve project name from metadata!",
-                    )
-                })
-                // Retrieve the value found in the category
-                .replace(&format!("{category} = "), "")
-        };
-
         // Retrieve the package name and version
-        let package_version = get_meta_category("VERSION");
-        let package_desc = get_meta_category("DESCRIPTION");
+        let package_version = get_meta_value(package_path.clone(), "VERSION");
+        let package_desc = get_meta_value(package_path, "DESCRIPTION");
 
         println!("> {package_name}-{package_version}\n    {package_desc}")
     }
