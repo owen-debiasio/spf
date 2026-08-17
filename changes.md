@@ -14,3 +14,5 @@
 - Enhanced error reporting
 - Many, many code optimizations
 - Fix files not being deleted when removing a package
+- Add a header at the top of a packages META file displaying what version of spf that
+package was packaged with
