@@ -52,12 +52,13 @@ pub fn spf_install(mut spf_package_path: String) {
     let packaged_metadata_file = spf_package_path.replace(".spf", "/META");
 
     // Retrieve the metadata. Wish there was a better way to do this
-    let packaged_project_name = get_meta_value(spf_package_path.clone(), "PROJECT_NAME");
-    let packaged_project_version = get_meta_value(spf_package_path.clone(), "VERSION");
-    let packaged_project_description = get_meta_value(spf_package_path.clone(), "DESCRIPTION");
-    let packaged_project_license = get_meta_value(spf_package_path.clone(), "LICENSE");
-    let packaged_project_authors = get_meta_value(spf_package_path.clone(), "AUTHORS");
-    let packaged_project_packaged_arch = get_meta_value(spf_package_path.clone(), "ARCH");
+    let packaged_project_name = get_meta_value(packaged_metadata_file.clone(), "PROJECT_NAME");
+    let packaged_project_version = get_meta_value(packaged_metadata_file.clone(), "VERSION");
+    let packaged_project_description =
+        get_meta_value(packaged_metadata_file.clone(), "DESCRIPTION");
+    let packaged_project_license = get_meta_value(packaged_metadata_file.clone(), "LICENSE");
+    let packaged_project_authors = get_meta_value(packaged_metadata_file.clone(), "AUTHORS");
+    let packaged_project_packaged_arch = get_meta_value(packaged_metadata_file.clone(), "ARCH");
 
     // The formatted package name looks something like:
     //
@@ -112,7 +113,7 @@ pub fn spf_install(mut spf_package_path: String) {
         Error::fatal(
             SOURCE_FILE,
             "spf_install()",
-            112,
+            113,
             &format!("Failed to clean up and remove directory \"{extracted_package_path}\": {err}"),
         )
     });
@@ -151,7 +152,7 @@ fn ask_user_to_install(
             Error::fatal(
                 SOURCE_FILE,
                 "ask_user_to_install()",
-                151,
+                152,
                 &format!("Failed to readline: {err}"),
             )
         });
@@ -163,7 +164,7 @@ fn ask_user_to_install(
             Error::fatal(
                 SOURCE_FILE,
                 "ask_user_to_install()",
-                163,
+                164,
                 &format!(
                     "Failed to clean up and remove directory \"{extracted_package_path}\": {err}"
                 ),
@@ -194,7 +195,7 @@ fn check_version(
             Error::fatal(
                 SOURCE_FILE,
                 "check_version()",
-                194,
+                195,
                 "Failed to retrieve project name from metadata!",
             )
         })
@@ -221,7 +222,7 @@ fn check_version(
             Error::fatal(
                 SOURCE_FILE,
                 "check_version()",
-                221,
+                222,
                 &format!("Failed to parse version in the installed package {package_meta_path}"),
             )
         }
@@ -253,7 +254,7 @@ fn check_version(
             Error::fatal(
                 SOURCE_FILE,
                 "check_version()",
-                253,
+                254,
                 &format!("Failed to readline: {err}"),
             )
         });
@@ -268,7 +269,7 @@ fn check_version(
             Error::fatal(
                 SOURCE_FILE,
                 "check_version()",
-                268,
+                269,
                 &format!(
                     "Failed to clean up and remove directory \"{extracted_package_path}\": {err}"
                 ),
@@ -341,7 +342,7 @@ fn install_files(
         Error::fatal(
             SOURCE_FILE,
             "install_files()",
-            374,
+            342,
             &format!("Failed to delete metadata file: {err}"),
         )
     });
