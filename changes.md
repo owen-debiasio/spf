@@ -20,7 +20,10 @@ that package was packaged with
 
 ## v0.2.1
 
-- Command `list`:
+- Changes to command `list`:
   - If there are no commands installed, an error will now be thrown
   - Other tweaks
 - Code optimizations
+- Add command `inspect`: Inspect metadata of a package
+  - Can inspect either a `.spf` package or an already installed package
+  - Usage: `$ spf inspect <package to inspect>`
