@@ -29,3 +29,4 @@
   - Can inspect either a `.spf` package or an already installed package
   - Usage: `$ spf inspect <package to inspect>`
 - Add support for `.deb` and `.rpm` packages
+- Add more suggested tools for linting/formatting
