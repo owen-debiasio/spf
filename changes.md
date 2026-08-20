@@ -19,7 +19,7 @@
   that package was packaged with
 - Fix issues with file copying and installing
 
-## v0.2.1
+## v0.3.0
 
 - Changes to command `list`:
   - If there are no commands installed, an error will now be thrown
