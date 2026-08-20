@@ -15,13 +15,7 @@ PACKAGE="spf-$1-x86_64-linux"
 # Get Rust ready
 echo "Installing dependencies..."
 
-# Update rust
-rustup update
-cargo update
-
-# Lint and format
-cargo clippy
-cargo fmt
+./dev/format.bash
 
 # Build
 cargo build --release
