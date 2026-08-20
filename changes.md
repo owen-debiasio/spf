@@ -17,3 +17,9 @@
 - Add a header at the top of a packages META file displaying what version of spf
 that package was packaged with
 - Fix issues with file copying and installing
+
+## v0.2.1
+
+- Command `list`:
+  - If there are no commands installed, an error will now be thrown
+  - Other tweaks
