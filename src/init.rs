@@ -5,7 +5,10 @@
 
 use std::{fs::create_dir_all, path::Path};
 
-use crate::sys::{Error, is_root};
+use crate::{
+    metadata::PACKAGE_INSTALL_PATH,
+    sys::{Error, is_root},
+};
 
 static SOURCE_FILE: &str = "src/init.rs";
 
@@ -15,7 +18,7 @@ static SOURCE_FILE: &str = "src/init.rs";
 ///     - Check if needed paths exist (see `paths_to_check`)
 pub fn init() {
     // Packages that spf needs to check so it can function
-    let paths_to_check = vec!["/usr/share/spf/packages/"];
+    let paths_to_check = vec![PACKAGE_INSTALL_PATH];
 
     // Go through the paths and make sure they exist. Otherwise, create them.
     for path in paths_to_check {
@@ -31,7 +34,7 @@ pub fn init() {
                 Error::fatal(
                     SOURCE_FILE,
                     "init()",
-                    31,
+                    34,
                     &format!("Failed init spf: Failed to create directory \"{path}\": {err}"),
                 )
             });

@@ -14,7 +14,7 @@ use glob::glob;
 
 use crate::{
     fs::{FileProperty, extract_archive},
-    metadata::get_meta_value,
+    metadata::{PACKAGE_INSTALL_PATH, get_meta_value},
     sys::{Error, is_root},
 };
 
@@ -81,7 +81,7 @@ pub fn spf_install(mut spf_package_path: String) {
 
     // To be safe, move the metadata file. But check if it's already installed first.
     let package_meta_path_install_location =
-        format!("/usr/share/spf/packages/{packaged_project_name}");
+        format!("{PACKAGE_INSTALL_PATH}{packaged_project_name}");
 
     // Check if the package is already installed. If so, proceed to check version conflicts.
     // Otherwise, skip and proceed to copying files.
