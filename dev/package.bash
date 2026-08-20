@@ -46,6 +46,12 @@ LICENSE:/usr/share/licenses/spf/LICENSE
 # Remove no longer needed metadata
 rm spfbuildcfg
 
+# Create .deb package
+cargo-deb -o "./packages/$PACKAGE.deb"
+
+# Create .rpm package
+cargo-generate-rpm -o "./packages/$PACKAGE.rpm"
+
 # Copy binary
 cp ./target/release/spf "./packages/$PACKAGE"
 
