@@ -1,5 +1,5 @@
 use crate::{
-    install::spf_install, list::list_packages, package::create_spf_package,
+    inspect::inspect, install::spf_install, list::list_packages, package::create_spf_package,
     remove::remove_spf_package, sys::Error, template::gen_meta_template,
 };
 
@@ -12,6 +12,7 @@ mod sys;
 mod init;
 
 // Commands
+mod inspect;
 mod install;
 mod list;
 mod package;
@@ -83,6 +84,11 @@ fn main() {
             gen_meta_template(secondary_arg);
         }
 
+        "inspect" | "-is" => {
+            // `secondary_arg` is the package to inspect
+            inspect(secondary_arg);
+        }
+
         // Version is already mentioned at the top of this file (src/main.rs: line 22)
         "--version" | "-v" => println!(
             "Written by Owen Debiasio <owen.debiasio@gmail.com>. Licensed under GPL-3.0-or-later.\n\
@@ -108,6 +114,7 @@ fn available_commands() {
               remove     <package to uninstall>               Uninstall package\n\
               list       <(optional) string to match>         List installed packages\n\
               template   <(optional) output location>         Generate package metadata template\n\
+              inspect    <package to inspect>                 Inspect metadata of a package
             \n\
             Available options:\n\
               --version   Display spf version"

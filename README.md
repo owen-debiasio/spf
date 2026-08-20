@@ -14,6 +14,7 @@ install    <.spf package location>              Install package
 remove     <package to uninstall>               Uninstall package
 list       <(optional) string to match>         List installed packages
 template   <(optional) output location>         Generate package metadata template
+inspect    <package to inspect>                 Inspect metadata of a package
 ```
 
 ### Examples
@@ -49,6 +50,16 @@ template   <(optional) output location>         Generate package metadata templa
 > The output location must be to a directory.
 
 `$ spf template ~/Downloads/`
+
+#### Inspect metadata of .spf package
+
+##### Installer package (`.spf` package)
+
+`$ spf inspect installer_package.spf`
+
+##### Already installed package
+
+`$ spf inspect installed_package`
 
 ## Install
 
