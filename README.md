@@ -21,15 +21,13 @@ inspect    <package to inspect>                 Inspect metadata of a package
 
 #### Create package
 
-> [!IMPORTANT]
-> The metadata config file must NOT have a file extension
+> [!IMPORTANT] The metadata config file must NOT have a file extension
 
 `$ spf create config package.spf`
 
 #### Install package
 
-> [!WARNING]
-> Using spf along with other package managers could cause issues
+> [!WARNING] Using spf along with other package managers could cause issues
 
 `$ sudo spf create install package.spf`
 
@@ -39,15 +37,13 @@ inspect    <package to inspect>                 Inspect metadata of a package
 
 #### List packages
 
-> [!NOTE]
-> You could also just run `spf list` to list all packages
+> [!NOTE] You could also just run `spf list` to list all packages
 
 `$ spf list pac`
 
 #### Generate template package config
 
-> [!NOTE]
-> The output location must be to a directory.
+> [!NOTE] The output location must be to a directory.
 
 `$ spf template ~/Downloads/`
 
@@ -65,7 +61,8 @@ inspect    <package to inspect>                 Inspect metadata of a package
 
 Currently the only ways to install spf are:
 
-- The following in the [Releases Page](https://github.com/owen-debiasio/spf/releases/latest)
+- The following in the
+  [Releases Page](https://github.com/owen-debiasio/spf/releases/latest)
   - Standalone binary (**x86_64 only** at the moment)
   - .spf package
 - Building from source
@@ -74,11 +71,10 @@ Currently the only ways to install spf are:
 ## Disclaimers/Non-goals
 
 - spf is not intended to be a common tool to use for everyone, it's only a
-  project I've whipped up out of boredom. Please don't take this too
-  seriously.
+  project I've whipped up out of boredom. Please don't take this too seriously.
 - This project is 100% human-written code. Either by me or from some forum or 10
   year old Stack Overflow post.
-  
+
   ## Credits
 
 - [Glob](https://github.com/rust-lang/glob) by rust-lang

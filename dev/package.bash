@@ -1,8 +1,14 @@
 #!/bin/bash
 set -e
 
-[[ $# -eq 1 ]] || { echo "Provide package version (MUST START WITH v)"; exit 1; }
-[[ "$1" == v* ]] || { echo "Version must start with 'v'"; exit 1; }
+[[ $# -eq 1 ]] || {
+    echo "Provide package version (MUST START WITH v)"
+    exit 1
+}
+[[ "$1" == v* ]] || {
+    echo "Version must start with 'v'"
+    exit 1
+}
 
 PACKAGE="spf-$1-x86_64-linux"
 
