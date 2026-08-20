@@ -55,7 +55,7 @@ pub fn list_packages(optional_string: String) {
         let package_path = package_path_raw.unwrap().to_str().unwrap().to_string();
 
         // Name of the package to be listed
-        let package_name = package_path.replace(PACKAGE_INSTALL_PATH, "");
+        let package_name = get_meta_value(package_path.clone(), "PROJECT_NAME");
 
         // Checks if the entered optional string is in the package name.
         // If not, move to next package.
@@ -63,7 +63,7 @@ pub fn list_packages(optional_string: String) {
             continue;
         }
 
-        // Retrieve the package name and version
+        // Retrieve the package version and description
         let package_version = get_meta_value(package_path.clone(), "VERSION");
         let package_desc = get_meta_value(package_path, "DESCRIPTION");
 
