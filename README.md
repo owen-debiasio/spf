@@ -21,13 +21,15 @@ inspect    <package to inspect>                 Inspect metadata of a package
 
 #### Create package
 
-> [!IMPORTANT] The metadata config file must NOT have a file extension
+> [!IMPORTANT]  
+> The metadata config file must NOT have a file extension
 
 `$ spf create config package.spf`
 
 #### Install package
 
-> [!WARNING] Using spf along with other package managers could cause issues
+> [!WARNING]  
+> Using spf along with other package managers could cause issues
 
 `$ sudo spf create install package.spf`
 
@@ -37,13 +39,15 @@ inspect    <package to inspect>                 Inspect metadata of a package
 
 #### List packages
 
-> [!NOTE] You could also just run `spf list` to list all packages
+> [!NOTE]  
+> You could also just run `spf list` to list all packages
 
 `$ spf list pac`
 
 #### Generate template package config
 
-> [!NOTE] The output location must be to a directory.
+> [!NOTE]  
+> The output location must be to a directory.
 
 `$ spf template ~/Downloads/`
 
