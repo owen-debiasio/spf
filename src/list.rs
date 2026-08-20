@@ -18,14 +18,35 @@ static SOURCE_FILE: &str = "src/list.rs";
 /// Lists packages that are be installed. You can optionally provide
 /// a string of text to match (`optional_string`).
 pub fn list_packages(optional_string: String) {
-    println!("Installed packages:\n");
+    // where to search for packages
+    let path_to_search = &format!("{PACKAGE_INSTALL_PATH}/*");
+
+    // packages that are to be listed.
+    //
+    // First though, it is temporarily used to verify that
+    // packages are installed
+    let mut packages_to_list = vec![];
+
+    // Collect paths and add them to the vec
+    for dir in glob(path_to_search).unwrap() {
+        packages_to_list.push(dir.unwrap().to_str().unwrap().to_string());
+    }
+
+    // If there are no paths found, that means no packages are installed.
+    // Throw an error.
+    if packages_to_list.is_empty() {
+        Error::normal("No packages are installed.")
+    }
+
+    // Clear the vec to be used for its main purpose
+    packages_to_list.clear();
 
     // Go through the package metadata install directory
-    for package_path_raw in glob(&format!("{PACKAGE_INSTALL_PATH}/*")).unwrap_or_else(|err| {
+    for package_path_raw in glob(path_to_search).unwrap_or_else(|err| {
         Error::fatal(
             SOURCE_FILE,
             "list_packages()",
-            25,
+            46,
             &format!("Failed to collect directories at \"{PACKAGE_INSTALL_PATH}\": {err}"),
         )
     }) {
@@ -36,6 +57,8 @@ pub fn list_packages(optional_string: String) {
         // Name of the package to be listed
         let package_name = package_path.replace(PACKAGE_INSTALL_PATH, "");
 
+        // Checks if the entered optional string is in the package name.
+        // If not, move to next package.
         if !package_name.contains(&optional_string) {
             continue;
         }
@@ -44,7 +67,24 @@ pub fn list_packages(optional_string: String) {
         let package_version = get_meta_value(package_path.clone(), "VERSION");
         let package_desc = get_meta_value(package_path, "DESCRIPTION");
 
-        println!("> {package_name}-{package_version}\n    {package_desc}")
+        // Add the package name, version, and description
+        packages_to_list.push(format!(
+            "> {package_name}-{package_version}\n    {package_desc}"
+        ));
+    }
+
+    println!(
+        "{} packages:\n",
+        if optional_string.is_empty() {
+            "Installed"
+        } else {
+            "Matching installed"
+        }
+    );
+
+    // List the packages collected
+    for package in packages_to_list {
+        println!("{package}")
     }
 
     exit(0)
