@@ -23,3 +23,4 @@ that package was packaged with
 - Command `list`:
   - If there are no commands installed, an error will now be thrown
   - Other tweaks
+- Code optimizations
