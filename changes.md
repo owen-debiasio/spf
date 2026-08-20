@@ -27,3 +27,4 @@ that package was packaged with
 - Add command `inspect`: Inspect metadata of a package
   - Can inspect either a `.spf` package or an already installed package
   - Usage: `$ spf inspect <package to inspect>`
+- Add support for `.deb` and `.rpm` packages
