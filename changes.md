@@ -30,3 +30,8 @@
   - Usage: `$ spf inspect <package to inspect>`
 - Add support for `.deb` and `.rpm` packages
 - Add more suggested tools for linting/formatting
+
+## v0.3.1
+
+- Improve output when listing commands to now let you know that a command
+  doesn't match the input string
