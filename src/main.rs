@@ -1,3 +1,5 @@
+use std::process::exit;
+
 use crate::{
     inspect::inspect, install::spf_install, list::list_packages, package::create_spf_package,
     remove::remove_spf_package, sys::Error, template::gen_meta_template,
@@ -19,7 +21,7 @@ mod package;
 mod remove;
 mod template;
 
-static VERSION: &str = "v0.3.0";
+static VERSION: &str = "v0.3.1";
 
 fn main() {
     init::init();
@@ -63,6 +65,8 @@ fn main() {
             // remove multiple packages at once.
             let mut packages: Vec<String> = Vec::new();
 
+            // The first two args that are skipped are `spf remove`. Everything
+            // else after that is a package to check.
             for package_arg in std::env::args().skip(2) {
                 // Don't process args
                 if package_arg.starts_with('-') {
@@ -101,8 +105,11 @@ fn main() {
         // If the arg provided isn't provided, throw error
         _ => Error::normal(&format!("Invalid command: {root_arg}")),
     }
+
+    exit(0)
 }
 
+/// All this does is list the available commands, flags, and args for spf. Does nothing else.
 fn available_commands() {
     println!(
         "{}",
