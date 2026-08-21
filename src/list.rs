@@ -73,10 +73,13 @@ pub fn list_packages(optional_string: String) {
         ));
     }
 
+    // Dynamically choose the message to show
     println!(
         "{} packages:\n",
         if optional_string.is_empty() {
             "Installed"
+        } else if packages_to_list.is_empty() {
+            Error::normal(&format!("No packages match or contain: {optional_string}"))
         } else {
             "Matching installed"
         }
