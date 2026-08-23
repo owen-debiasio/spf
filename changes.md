@@ -35,3 +35,4 @@
 
 - Improve output when listing commands to now let you know that a command
   doesn't match the input string
+- Code optimizations
