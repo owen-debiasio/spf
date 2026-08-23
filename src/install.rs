@@ -292,7 +292,7 @@ fn parse_installed_and_packaged_versions(
     // Removes `v`, any special characters, and converts to usize.
     // Returns `0` is something fails.
     let remove_chars_and_to_usize = |version: &str| -> usize {
-        let special_chars = &['(', ')', ',', '\"', '.', ';', ':', '\''][..];
+        let special_chars = &['(', ')', ',', '\"', '.', ';', ':', '\''];
 
         version
             // Remove special chars
