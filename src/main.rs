@@ -93,7 +93,7 @@ fn main() {
             inspect(secondary_arg);
         }
 
-        // Version is already mentioned at the top of this file (src/main.rs: line 22)
+        // Version is already mentioned at the top of this file
         "--version" | "-v" => println!(
             "Written by Owen Debiasio <owen.debiasio@gmail.com>. Licensed under GPL-3.0-or-later.\n\
             spf has NO WARRANTY and is not responsible for breaking your system."
