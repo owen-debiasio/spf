@@ -1,10 +1,10 @@
 {
-    "tabWidth": 4,
-    "proseWrap": "always",
-    "endOfLine": "lf",
-    "overrides": [
-        {
-            "files": ["*.md", "*.yml"]
-        }
-    ]
+  "tabWidth": 2,
+  "proseWrap": "always",
+  "endOfLine": "lf",
+  "overrides": [
+    {
+      "files": ["*.md", "*.yml"]
+    }
+  ]
 }
