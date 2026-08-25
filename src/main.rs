@@ -21,7 +21,7 @@ mod package;
 mod remove;
 mod template;
 
-static VERSION: &str = "v0.3.1";
+static VERSION: &str = "v0.4.0";
 
 fn main() {
     init::init();
