@@ -1,0 +1,35 @@
+name: Bash Lint
+
+on:
+    push:
+        paths:
+            - "**.bash"
+            - "**/.github/workflows/bash.yml"
+    pull_request:
+        paths:
+            - "**.bash"
+            - "**/.github/workflows/bash.yml"
+
+permissions:
+    contents: read
+
+jobs:
+    lint:
+        runs-on: ubuntu-latest
+
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v4
+
+            - name: Install tools
+              run: |
+                  sudo apt update
+                  sudo apt install -y shfmt shellcheck
+
+            - name: shfmt
+              run: |
+                  shfmt -d -i 4 -ci -sr .
+
+            - name: shellcheck
+              run: |
+                  shellcheck $(git ls-files '*.bash')
