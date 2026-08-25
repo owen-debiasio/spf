@@ -1,0 +1,78 @@
+name: Rust Lint
+
+on:
+    push:
+        branches: [main]
+        paths:
+            - "**.rs"
+            - "**/.github/workflows/rust.yml"
+            - "**/Cargo.toml"
+            - "**/Cargo.lock"
+    pull_request:
+        branches: [main]
+        paths:
+            - "**.rs"
+            - "**/.github/workflows/rust.yml"
+            - "**/Cargo.toml"
+            - "**/Cargo.lock"
+    workflow_dispatch:
+
+permissions:
+    contents: read
+
+env:
+    CARGO_TERM_COLOR: always
+    RUSTFLAGS: "-Dwarnings"
+
+jobs:
+    Format:
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v4
+
+            - name: Install Rust
+              uses: dtolnay/rust-toolchain@stable
+              with:
+                  components: rustfmt
+
+            - name: Cache cargo
+              uses: Swatinem/rust-cache@v2
+
+            - name: Format check
+              run: cargo fmt --all -- --check
+
+    Clippy:
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v4
+
+            - name: Install Rust
+              uses: dtolnay/rust-toolchain@stable
+              with:
+                  components: clippy
+                  targets: x86_64-unknown-linux-gnu
+
+            - name: Cache cargo
+              uses: Swatinem/rust-cache@v2
+
+            - name: x86_64
+              run: cargo clippy --all-targets --all-features
+
+    Builds:
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v4
+
+            - name: Install Rust
+              uses: dtolnay/rust-toolchain@stable
+              with:
+                  targets: x86_64-unknown-linux-gnu
+
+            - name: Cache cargo
+              uses: Swatinem/rust-cache@v2
+
+            - name: Build
+              run: cargo build --release
