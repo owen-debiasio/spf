@@ -3,6 +3,8 @@
 spf is my small side project where I aim to create a packaging format similar to
 `.deb` or `.rpm` packages.
 
+![spf logo](assets/logo.png "spf logo")
+
 ## Prerequisites
 
 - `tar` (GNU version) (Needed for creating packages)
