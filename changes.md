@@ -31,7 +31,7 @@
 - Add support for `.deb` and `.rpm` packages
 - Add more suggested tools for linting/formatting
 
-## v0.3.1
+## v0.4.0
 
 - Improve output when listing commands to now let you know that a command
   doesn't match the input string
@@ -40,3 +40,6 @@
   - Use native functions like `panic!()` or `.expect()` instead of custom
       error handlers to avoid complexity and improve code readability
 - Add logo to readme, located at `assets/logo.png`
+- You can now easily update spf from a `.spf` package
+- `./dev/install.bash` now runs `./dev/format.bash`
+- You can now remove spf using spf
