@@ -7,8 +7,7 @@ rustup update
 cargo update
 
 # lint and format
-cargo clippy
-cargo fmt
+./dev/format.bash
 
 # build
 cargo build
