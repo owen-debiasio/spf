@@ -11,9 +11,7 @@ use std::{
     process::exit,
 };
 
-use crate::sys::Error;
-
-static SOURCE_FILE: &str = "src/template.rs";
+use crate::sys::error;
 
 /// Sample metadata contents to be printed
 static TEMPLATE_CONTENTS: &str = "\
@@ -41,14 +39,7 @@ target/debug/spf:/usr/bin/spf
 pub fn gen_meta_template(mut output_location: String) {
     if output_location.is_empty() {
         output_location = env::current_dir()
-            .unwrap_or_else(|err| {
-                Error::fatal(
-                    SOURCE_FILE,
-                    "gen_meta_template()",
-                    45,
-                    &format!("Failed to get current directory: {err}"),
-                )
-            })
+            .expect("Failed to get current directory")
             .to_str()
             .unwrap()
             .to_string();
@@ -56,20 +47,14 @@ pub fn gen_meta_template(mut output_location: String) {
     // Output location has to be a directory because rust doesn't want to
     // listen to me
     } else if !Path::new(&output_location).is_dir() {
-        Error::normal("Please enter a directory to generate to.");
+        error("Please enter a directory to generate to.");
     }
 
     output_location = format!("{output_location}/spf_template");
 
     // Write the contents
-    fs::write(&output_location, TEMPLATE_CONTENTS).unwrap_or_else(|err| {
-        Error::fatal(
-            SOURCE_FILE,
-            "gen_meta_template()",
-            66,
-            &format!("Failed to generate template to \"{output_location}\": {err}"),
-        )
-    });
+    fs::write(&output_location, TEMPLATE_CONTENTS)
+        .unwrap_or_else(|_| panic!("Failed to generate template to \"{output_location}\""));
 
     println!(
         "Generated template at: {}",

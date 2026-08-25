@@ -15,10 +15,8 @@ use glob::glob;
 use crate::{
     fs::{FileProperty, extract_archive},
     metadata::{PACKAGE_INSTALL_PATH, get_meta_value},
-    sys::{Error, is_root},
+    sys::{error, is_root},
 };
-
-static SOURCE_FILE: &str = "src/install.rs";
 
 /// Installs a .spf package.
 /// The path of the .spf package (`spf_package_path`) must be provided
@@ -28,17 +26,16 @@ static SOURCE_FILE: &str = "src/install.rs";
 pub fn spf_install(mut spf_package_path: String) {
     // Root is required for this command
     if !is_root() {
-        Error::normal("To execute this action, please run spf as root.")
+        error("To execute this action, please run spf as root.")
     }
 
     // If a package isn't provided, or provided package isn't a `.spf`
     // package, prompt user to do so.
-    if spf_package_path.is_empty() || !spf_package_path.ends_with(".spf") {
-        Error::normal("Please provide a .spf package")
-
-    // If the file straight up doesn't exist, let them know
-    } else if !Path::new(&spf_package_path).exists() {
-        Error::normal(&format!("File not found: {spf_package_path}"))
+    if spf_package_path.is_empty()
+        || !spf_package_path.ends_with(".spf")
+        || !Path::new(&spf_package_path).exists()
+    {
+        error("Please provide a .spf package")
     }
 
     println!("Loading package: {spf_package_path}\n");
@@ -109,13 +106,8 @@ pub fn spf_install(mut spf_package_path: String) {
     println!("Cleaning up...");
 
     // Clean up by removing the extracted package
-    fs::remove_dir_all(&extracted_package_path).unwrap_or_else(|err| {
-        Error::fatal(
-            SOURCE_FILE,
-            "spf_install()",
-            113,
-            &format!("Failed to clean up and remove directory \"{extracted_package_path}\": {err}"),
-        )
+    fs::remove_dir_all(&extracted_package_path).unwrap_or_else(|_| {
+        panic!("Failed to clean up and remove directory \"{extracted_package_path}\"")
     });
 
     println!("\nSuccessfully installed {packaged_project_name}-{packaged_project_version}!");
@@ -148,27 +140,13 @@ fn ask_user_to_install(
     let mut proceed_to_install = String::new();
     io::stdin()
         .read_line(&mut proceed_to_install)
-        .unwrap_or_else(|err| {
-            Error::fatal(
-                SOURCE_FILE,
-                "ask_user_to_install()",
-                152,
-                &format!("Failed to readline: {err}"),
-            )
-        });
+        .expect("Failed to readline");
 
     println!();
 
     if proceed_to_install.trim().to_lowercase() != "y" {
-        fs::remove_dir_all(&extracted_package_path).unwrap_or_else(|err| {
-            Error::fatal(
-                SOURCE_FILE,
-                "ask_user_to_install()",
-                164,
-                &format!(
-                    "Failed to clean up and remove directory \"{extracted_package_path}\": {err}"
-                ),
-            )
+        fs::remove_dir_all(&extracted_package_path).unwrap_or_else(|_| {
+            panic!("Failed to clean up and remove directory \"{extracted_package_path}\"")
         });
 
         println!("Aborted.");
@@ -191,14 +169,7 @@ fn check_version(
         .split('\n')
         // Find the line that contains the `VERSION` metadata tag
         .find(|entry| entry.contains("VERSION"))
-        .unwrap_or_else(|| {
-            Error::fatal(
-                SOURCE_FILE,
-                "check_version()",
-                195,
-                "Failed to retrieve project name from metadata!",
-            )
-        })
+        .expect("Failed to retrieve project name from metadata")
         // Retrieve the version
         .replace("VERSION = ", "");
 
@@ -219,12 +190,7 @@ fn check_version(
 
         // Make sure that the versions were parsed correctly.
         if project_version_num == 0 || installed_version_num == 0 {
-            Error::fatal(
-                SOURCE_FILE,
-                "check_version()",
-                222,
-                &format!("Failed to parse version in the installed package {package_meta_path}"),
-            )
+            panic!("Failed to parse version in the installed package \"{package_meta_path}\"")
         }
 
         // Prompt the user if they actually want to update
@@ -250,14 +216,7 @@ fn check_version(
     let mut proceed_to_install = String::new();
     io::stdin()
         .read_line(&mut proceed_to_install)
-        .unwrap_or_else(|err| {
-            Error::fatal(
-                SOURCE_FILE,
-                "check_version()",
-                254,
-                &format!("Failed to readline: {err}"),
-            )
-        });
+        .expect("Failed to readline");
 
     println!();
 
@@ -265,18 +224,12 @@ fn check_version(
 
     // If user declines, clean up and exit. Otherwise, proceed and end function
     if proceed_to_install.trim().to_lowercase() != "y" {
-        fs::remove_dir_all(&extracted_package_path).unwrap_or_else(|err| {
-            Error::fatal(
-                SOURCE_FILE,
-                "check_version()",
-                269,
-                &format!(
-                    "Failed to clean up and remove directory \"{extracted_package_path}\": {err}"
-                ),
-            )
+        fs::remove_dir_all(&extracted_package_path).unwrap_or_else(|_| {
+            panic!("Failed to clean up and remove directory \"{extracted_package_path}\"")
         });
 
-        Error::normal("Aborted");
+        println!("Aborted");
+        exit(0)
     }
 }
 
@@ -328,24 +281,11 @@ fn install_files(
     extracted_package_path: String,
 ) {
     // Copy the packaged metadata file to its install location
-    fs::copy(&packaged_metadata_file, &package_meta_path_install_location).unwrap_or_else(|err| {
-        Error::fatal(
-            SOURCE_FILE,
-            "install_files()",
-            332,
-            &format!("Failed to copy file \"{packaged_metadata_file}\" -> \"{package_meta_path_install_location}\": {err}"),
-        )
-    });
+    fs::copy(&packaged_metadata_file, &package_meta_path_install_location).
+        unwrap_or_else(|_| panic!("Failed to copy file \"{packaged_metadata_file}\" -> \"{package_meta_path_install_location}\""));
 
     // Remove the metadata file that was packaged
-    fs::remove_file(&packaged_metadata_file).unwrap_or_else(|err| {
-        Error::fatal(
-            SOURCE_FILE,
-            "install_files()",
-            342,
-            &format!("Failed to delete metadata file: {err}"),
-        )
-    });
+    fs::remove_file(&packaged_metadata_file).expect("Failed to delete metadata file");
 
     // Get the location to look for the paths to copy
     let path_to_search = &format!("./{extracted_package_path}/**/*");
@@ -365,14 +305,9 @@ fn install_files(
         .unwrap();
 
     // Go through and install packaged paths
-    for found_path in glob(path_to_search).unwrap_or_else(|err| {
-        Error::fatal(
-            SOURCE_FILE,
-            "install_files()",
-            369,
-            &format!("Failed to collect directories at \"{path_to_search}\": {err}"),
-        )
-    }) {
+    for found_path in glob(path_to_search)
+        .unwrap_or_else(|_| panic!("Failed to collect directories at \"{path_to_search}\""))
+    {
         // File/folder to be copied
         let file_from_archive = found_path.unwrap().to_str().unwrap().to_string().clone();
 
@@ -391,15 +326,8 @@ fn install_files(
 
         println!("    Copying \"{file_from_archive}\" -> \"{file_destination}\"");
 
-        fs::copy(&file_from_archive, &file_destination).unwrap_or_else(|err| {
-            Error::fatal(
-                SOURCE_FILE,
-                "install_files()",
-                395,
-                &format!(
-                    "Failed to copy file \"{file_from_archive}\" -> \"{file_destination}\": {err}"
-                ),
-            )
+        fs::copy(&file_from_archive, &file_destination).unwrap_or_else(|_| {
+            panic!("Failed to copy file \"{file_from_archive}\" -> \"{file_destination}\"")
         });
 
         // Write the path of the file to later be removed when uninstalled.
@@ -410,12 +338,7 @@ fn install_files(
 
         // Check that the path was copied/created correctly
         if !path_to_create.exists() {
-            Error::fatal(
-                SOURCE_FILE,
-                "install_files()",
-                413,
-                &format!("Failed to copy file: \"{file_destination}\""),
-            )
+            panic!("Failed to copy file: \"{file_destination}\"")
         }
     }
 }

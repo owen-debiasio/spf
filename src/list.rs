@@ -9,11 +9,9 @@ use std::process::exit;
 use glob::glob;
 
 use crate::{
-    Error,
     metadata::{PACKAGE_INSTALL_PATH, get_meta_value},
+    sys::error,
 };
-
-static SOURCE_FILE: &str = "src/list.rs";
 
 /// Lists packages that are be installed. You can optionally provide
 /// a string of text to match (`optional_string`).
@@ -35,21 +33,16 @@ pub fn list_packages(optional_string: String) {
     // If there are no paths found, that means no packages are installed.
     // Throw an error.
     if packages_to_list.is_empty() {
-        Error::normal("No packages are installed.")
+        error("No packages are installed.")
     }
 
     // Clear the vec to be used for its main purpose
     packages_to_list.clear();
 
     // Go through the package metadata install directory
-    for package_path_raw in glob(path_to_search).unwrap_or_else(|err| {
-        Error::fatal(
-            SOURCE_FILE,
-            "list_packages()",
-            46,
-            &format!("Failed to collect directories at \"{PACKAGE_INSTALL_PATH}\": {err}"),
-        )
-    }) {
+    for package_path_raw in glob(path_to_search)
+        .unwrap_or_else(|_| panic!("Failed to collect directories at \"{PACKAGE_INSTALL_PATH}\""))
+    {
         // The path of the package metadata. The name of the metadata file is the name
         // of the package.
         let package_path = package_path_raw.unwrap().to_str().unwrap().to_string();
@@ -79,7 +72,7 @@ pub fn list_packages(optional_string: String) {
         if optional_string.is_empty() {
             "Installed"
         } else if packages_to_list.is_empty() {
-            Error::normal(&format!("No packages match or contain: {optional_string}"))
+            error(&format!("No packages match or contain: {optional_string}"))
         } else {
             "Matching installed"
         }

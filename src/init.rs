@@ -7,10 +7,8 @@ use std::{fs::create_dir_all, path::Path};
 
 use crate::{
     metadata::PACKAGE_INSTALL_PATH,
-    sys::{Error, is_root},
+    sys::{error, is_root},
 };
-
-static SOURCE_FILE: &str = "src/init.rs";
 
 /// Initializes what spf needs to function properly.
 ///
@@ -26,18 +24,11 @@ pub fn init() {
         if !Path::new(path).exists() {
             // Make sure user is running as root
             if !is_root() {
-                Error::normal("In order to initialize the filesystem, you must run spf as root")
+                error("In order to initialize the filesystem, you must run spf as root")
             }
 
             // Create the needed directory
-            create_dir_all(path).unwrap_or_else(|err| {
-                Error::fatal(
-                    SOURCE_FILE,
-                    "init()",
-                    34,
-                    &format!("Failed init spf: Failed to create directory \"{path}\": {err}"),
-                )
-            });
+            create_dir_all(path).unwrap_or_else(|_| panic!("Failed to extract archive \"{path}\""));
         }
     }
 }

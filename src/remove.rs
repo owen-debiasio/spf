@@ -5,7 +5,7 @@
 
 use crate::{
     metadata::{PACKAGE_INSTALL_PATH, get_meta_value},
-    sys::{Error, get_binary_path, is_root},
+    sys::{error, get_binary_path, is_root},
 };
 use std::{
     fs::{self, remove_dir_all, remove_file},
@@ -14,19 +14,17 @@ use std::{
     process::exit,
 };
 
-static SOURCE_FILE: &str = "src/remove.rs";
-
 pub fn remove_spf_package(packages_to_list: Vec<String>) {
     if !is_root() {
-        Error::normal("To execute this action, please run spf as root.")
+        error("To execute this action, please run spf as root.")
     }
 
     if packages_to_list.is_empty() {
-        Error::normal("Provide the package(s) you want to remove.")
+        error("Provide the package(s) you want to remove.")
 
     // Restrict the ability to uninstall spf with spf to avoid conflicts
     } else if packages_to_list.contains(&"spf".to_string()) && get_binary_path() == "/usr/bin/spf" {
-        Error::normal("If you want to remove spf using spf, please use the standalone binary.")
+        error("If you want to remove spf using spf, please use the standalone binary.")
     }
 
     // Keeps track of when the ability to list packages
@@ -42,7 +40,7 @@ pub fn remove_spf_package(packages_to_list: Vec<String>) {
 
         // Check if packages are installed
         if !Path::new(&package_meta_path).exists() {
-            Error::normal(&format!("Package not installed: {package}"))
+            error(&format!("Package not installed: {package}"))
         }
 
         // Retrieves the package version
@@ -65,17 +63,12 @@ pub fn remove_spf_package(packages_to_list: Vec<String>) {
             let mut proceed_to_remove = String::new();
             io::stdin()
                 .read_line(&mut proceed_to_remove)
-                .unwrap_or_else(|err| {
-                    Error::fatal(
-                        SOURCE_FILE,
-                        "remove_spf_package()",
-                        69,
-                        &format!("Failed to readline: {err}"),
-                    )
-                });
+                .expect("Failed to readline");
 
             if proceed_to_remove.trim().to_lowercase() != "y" {
-                Error::normal("Aborted.")
+                println!("Aborted");
+
+                exit(0)
             }
 
             // Disable package listing
@@ -102,14 +95,7 @@ fn remove_package(package_formatted: String, package_meta_path: String) {
 
     // Cycle through the lines of the metadata file
     for entry in fs::read_to_string(package_meta_path.clone())
-        .unwrap_or_else(|err| {
-            Error::fatal(
-                SOURCE_FILE,
-                "remove_package()",
-                106,
-                &format!("Failed to retrieve contents of \"{package_meta_path}\": {err}"),
-            )
-        })
+        .unwrap_or_else(|_| panic!("Failed to retrieve contents of \"{package_meta_path}\""))
         .lines()
     {
         // If the entry isn't an obvious path, skip to next line.
@@ -124,23 +110,9 @@ fn remove_package(package_formatted: String, package_meta_path: String) {
         // Whether the path is a file or directory is detected through
         // `.is_file()`
         if Path::new(entry).is_file() {
-            remove_file(entry).unwrap_or_else(|err| {
-                Error::fatal(
-                    SOURCE_FILE,
-                    "remove_package()",
-                    128,
-                    &format!("Failed to remove \"{entry}\": {err}"),
-                )
-            })
+            remove_file(entry).unwrap_or_else(|_| panic!("Failed to remove file \"{entry}\""))
         } else {
-            remove_dir_all(entry).unwrap_or_else(|err| {
-                Error::fatal(
-                    SOURCE_FILE,
-                    "remove_package()",
-                    137,
-                    &format!("Failed to remove \"{entry}\": {err}"),
-                )
-            })
+            remove_dir_all(entry).unwrap_or_else(|_| panic!("Failed to remove \"{entry}\""))
         }
 
         // Recreate the status of the path to properly detect if the file
@@ -149,14 +121,9 @@ fn remove_package(package_formatted: String, package_meta_path: String) {
 
         // Check if the path has been removed
         if path_to_remove_check.exists() {
-            Error::fatal(
-                SOURCE_FILE,
-                "remove_package()",
-                152,
-                &format!(
-                    "Failed to remove \"{}\": Path still remains",
-                    path_to_remove_check.to_str().unwrap()
-                ),
+            panic!(
+                "Failed to remove \"{}\": Path still remains",
+                path_to_remove_check.to_str().unwrap()
             )
         }
     }
@@ -164,22 +131,11 @@ fn remove_package(package_formatted: String, package_meta_path: String) {
     println!("    Removing package entry...");
 
     // Removes the metadata file
-    remove_file(&package_meta_path).unwrap_or_else(|err| {
-        Error::fatal(
-            SOURCE_FILE,
-            "remove_package()",
-            168,
-            &format!("Failed to remove \"{package_meta_path}\": {err}"),
-        )
-    });
+    remove_file(&package_meta_path)
+        .unwrap_or_else(|_| panic!("Failed to remove \"{package_meta_path}\""));
 
     if Path::new(&package_meta_path).exists() {
-        Error::fatal(
-            SOURCE_FILE,
-            "remove_package()",
-            177,
-            &format!("Failed to remove \"{package_meta_path}\": File still remains"),
-        )
+        panic!("Failed to remove \"{package_meta_path}\": File still remains")
     }
 
     println!("Successfully removed {package_formatted}!");

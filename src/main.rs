@@ -2,7 +2,7 @@ use std::process::exit;
 
 use crate::{
     inspect::inspect, install::spf_install, list::list_packages, package::create_spf_package,
-    remove::remove_spf_package, sys::Error, template::gen_meta_template,
+    remove::remove_spf_package, sys::error, template::gen_meta_template,
 };
 
 // Shared
@@ -25,9 +25,6 @@ static VERSION: &str = "v0.3.1";
 
 fn main() {
     init::init();
-
-    // Keep this inside `main()` to prevent conflicts with other files
-    static _SOURCE_FILE: &str = "src/main.rs";
 
     // Intro
     println!("spf-{VERSION}\n");
@@ -103,7 +100,7 @@ fn main() {
         "" => available_commands(),
 
         // If the arg provided isn't provided, throw error
-        _ => Error::normal(&format!("Invalid command: {root_arg}")),
+        _ => error(&format!("Invalid command: {root_arg}")),
     }
 
     exit(0)

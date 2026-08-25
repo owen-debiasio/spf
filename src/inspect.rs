@@ -13,16 +13,14 @@ use std::{
 use crate::{
     fs::{FileProperty, extract_archive},
     metadata::PACKAGE_INSTALL_PATH,
-    sys::Error,
+    sys::error,
 };
-
-static SOURCE_FILE: &str = "src/inspect.rs";
 
 /// You can inspect a .spf package you downloaded, or a package
 /// you have already installed.
 pub fn inspect(package: String) {
     if package.is_empty() {
-        Error::normal("Please provide a .spf package or a package that is already installed.")
+        error("Please provide a .spf package or a package that is already installed.")
     }
 
     if package.ends_with(".spf") {
@@ -38,7 +36,7 @@ pub fn inspect(package: String) {
 /// the contents to the output.
 fn inspect_spf_package(package_path: String) {
     if !Path::new(&package_path).exists() {
-        Error::normal(&format!(".spf package not found: {package_path}"))
+        error(&format!(".spf package not found: {package_path}"))
     }
 
     extract_archive(&package_path);
@@ -46,23 +44,12 @@ fn inspect_spf_package(package_path: String) {
     let metadata_path = FileProperty::name(&package_path).replace(".spf", "/META");
 
     if !Path::new(&metadata_path).exists() {
-        Error::fatal(
-            SOURCE_FILE,
-            "inspect_spf_package()",
-            49,
-            &format!("Metadata file not found: {metadata_path}"),
-        )
+        panic!("Extracted metadata file \"{metadata_path}\" not found")
     }
 
     // Retrieve the contents of the metadata file (`metadata_path`)
-    let meta_contents = fs::read_to_string(&metadata_path).unwrap_or_else(|err| {
-        Error::fatal(
-            SOURCE_FILE,
-            "inspect_spf_package()",
-            59,
-            &format!("Failed to retrieve contents of \"{metadata_path}\": {err}"),
-        )
-    });
+    let meta_contents = fs::read_to_string(&metadata_path)
+        .unwrap_or_else(|_| panic!("Failed to retrieve contents of \"{metadata_path}\""));
 
     // Shows the inspected contents
     println!(
@@ -75,14 +62,8 @@ fn inspect_spf_package(package_path: String) {
     let extracted_contents = metadata_path.trim_end_matches("/META");
 
     // Clean up by removing extracted directory (`extracted_contents`)
-    remove_dir_all(extracted_contents).unwrap_or_else(|err| {
-        Error::fatal(
-            SOURCE_FILE,
-            "inspect_spf_package()",
-            79,
-            &format!("Failed to remove \"{extracted_contents}\": {err}"),
-        )
-    });
+    remove_dir_all(extracted_contents)
+        .unwrap_or_else(|_| panic!("Failed to remove \"{extracted_contents}\""));
 
     exit(0)
 }
@@ -97,23 +78,12 @@ fn inspect_installed_package(package: String) {
 
     // Check if the file exists
     if !Path::new(package_meta_path).exists() {
-        Error::fatal(
-            SOURCE_FILE,
-            "inspect_installed_package()",
-            100,
-            &format!("Metadata file not found: {package_meta_path}"),
-        )
+        panic!("Metadata file not found: {package_meta_path}")
     }
 
     // Retrieve the contents of the metadata file (`package_meta_path`)
-    let meta_contents = fs::read_to_string(package_meta_path).unwrap_or_else(|err| {
-        Error::fatal(
-            SOURCE_FILE,
-            "inspect_installed_package()",
-            110,
-            &format!("Failed to retrieve contents of \"{package_meta_path}\": {err}"),
-        )
-    });
+    let meta_contents = fs::read_to_string(package_meta_path)
+        .unwrap_or_else(|_| panic!("Failed to retrieve contents of \"{package_meta_path}\""));
 
     // Display the contents.
     println!(
