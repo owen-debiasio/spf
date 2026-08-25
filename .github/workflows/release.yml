@@ -51,7 +51,7 @@ jobs:
 
       - name: Run Main Packaging Script
         run: |
-          echo -e "#!/bin/bash\necho '> Skipping format in CI'\nexit 0" > ./dev/format.sh
+          echo -e "#!/bin/bash\necho '> Skipping format in CI'\nexit 0" > ./dev/format.bash
           chmod +x ./dev/format.bash
 
           chmod +x ./dev/package.bash
