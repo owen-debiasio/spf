@@ -1,6 +1,6 @@
 [package]
 name = "spf"
-version = "0.3.1"
+version = "0.4.0"
 description = "Simple package format"
 edition = "2024"
 authors = ["Owen Debiasio <owen.debiasio@gmail.com>"]
@@ -8,6 +8,7 @@ license = "GPL-3.0-or-later"
 
 [dependencies]
 glob = "0.3.4"
+self-replace = "1.5.0"
 
 [package.metadata.deb]
 assets = [
