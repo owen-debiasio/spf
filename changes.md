@@ -39,3 +39,4 @@
 - Enhanced and optimized errors.
   - Use native functions like `panic!()` or `.expect()` instead of custom
       error handlers to avoid complexity and improve code readability
+- Add logo to readme, located at `assets/logo.png`
