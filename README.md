@@ -1,6 +1,7 @@
-# spf
+# spf - Simple package format
 
-Simple package format
+spf is my small side project where I aim to create a packaging format similar to
+`.deb` or `.rpm` packages.
 
 ## Prerequisites
 
@@ -63,14 +64,62 @@ inspect    <package to inspect>                 Inspect metadata of a package
 
 ## Install
 
-Currently the only ways to install spf are:
+> [!IMPORTANT]  
+> Right now, binaries and packages for spf are built for `x86_64` systems. Look
+> at
+> [Building from source](https://github.com/owen-debiasio/spf#build-from-source)
 
-- The following in the
-  [Releases Page](https://github.com/owen-debiasio/spf/releases/latest)
-  - Standalone binary (**x86_64 only** at the moment)
-  - .spf package
-- Building from source
-  - Requires linux (unless if developing), rustup/cargo
+### Debian/Ubuntu
+
+You can find the `.deb` package here:
+[Releases Page](https://github.com/owen-debiasio/spf/releases/latest)
+
+### Fedora/SUSE
+
+You can find the `.rpm` package here:
+[Releases Page](https://github.com/owen-debiasio/spf/releases/latest)
+
+### Universal
+
+Here are ways that you can install spf on any distro
+
+#### Standalone Binary
+
+You can find the standalone binary here:
+[Releases Page](https://github.com/owen-debiasio/spf/releases/latest)
+
+#### .spf Installer package
+
+> [!IMPORTANT]  
+> You will need to use the standalone binary to install/update the spf
+> installation
+
+You can find the `.rpm` package here:
+[Releases Page](https://github.com/owen-debiasio/spf/releases/latest)
+
+#### Build from source
+
+You can build from source if you wish, like if you want to use the latest git
+build
+
+##### Build prerequisites
+
+- Rust (Cargo, Rustup, Rustc)
+  - I recommend using the most recent stable release
+- Git
+
+##### Building
+
+Simply run:
+
+```bash
+git clone --depth=1 https://github.com/owen-debiasio/spf.git # Clone repo
+cd spf # Navigate into cloned repo
+cargo build --release # Build spf
+sudo cp target/release/spf /usr/bin/spf # Install to location (like /usr/local/bin/spf)
+# Optional: Clean up
+# cd .. && rm -rf ./spf
+```
 
 ## Disclaimers/Non-goals
 
@@ -81,4 +130,5 @@ Currently the only ways to install spf are:
 
   ## Credits
 
-- [Glob](https://github.com/rust-lang/glob) by rust-lang
+- [Glob](https://github.com/rust-lang/glob) by
+  [rust-lang](https://github.com/rust-lang)
