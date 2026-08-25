@@ -7,7 +7,7 @@ use std::{fs::create_dir_all, path::Path};
 
 use crate::{
     metadata::PACKAGE_INSTALL_PATH,
-    sys::{error, is_root},
+    sys::{error, get_binary_path, is_root},
 };
 
 /// Initializes what spf needs to function properly.
@@ -17,6 +17,12 @@ use crate::{
 pub fn init() {
     // Packages that spf needs to check so it can function
     let paths_to_check = vec![PACKAGE_INSTALL_PATH];
+
+    // Check if the current build is a debug build or non-release build. Bypasses
+    // root requirement.
+    if get_binary_path().contains("/target/") {
+        return;
+    }
 
     // Go through the paths and make sure they exist. Otherwise, create them.
     for path in paths_to_check {
