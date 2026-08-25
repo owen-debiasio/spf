@@ -58,6 +58,8 @@ jobs:
 
           chmod +x ./dev/package.sh
 
+          ls
+
           ./dev/package.sh "$VERSION_RAW"
 
       - name: Create GitHub Release
