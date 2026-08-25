@@ -36,3 +36,6 @@
 - Improve output when listing commands to now let you know that a command
   doesn't match the input string
 - Code optimizations
+- Enhanced and optimized errors.
+  - Use native functions like `panic!()` or `.expect()` instead of custom
+      error handlers to avoid complexity and improve code readability
