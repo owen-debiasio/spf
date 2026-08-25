@@ -56,9 +56,8 @@ jobs:
 
           VERSION_RAW=$(echo "${{ github.ref_name }}" | sed 's/^v//')
 
-          chmod +x ./dev/package.sh
-
           ls
+          chmod +x ./dev/package.sh
 
           ./dev/package.sh "$VERSION_RAW"
 
