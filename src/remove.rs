@@ -5,7 +5,7 @@
 
 use crate::{
     metadata::{PACKAGE_INSTALL_PATH, get_meta_value},
-    sys::{error, get_binary_path, is_root},
+    sys::{error, is_root},
 };
 use std::{
     fs::{self, remove_dir_all, remove_file},
@@ -21,11 +21,12 @@ pub fn remove_spf_package(packages_to_list: Vec<String>) {
 
     if packages_to_list.is_empty() {
         error("Provide the package(s) you want to remove.")
+    }
 
     // Restrict the ability to uninstall spf with spf to avoid conflicts
-    } else if packages_to_list.contains(&"spf".to_string()) && get_binary_path() == "/usr/bin/spf" {
-        error("If you want to remove spf using spf, please use the standalone binary.")
-    }
+    // } else if packages_to_list.contains(&"spf".to_string()) && get_binary_path() == "/usr/bin/spf" {
+    //     error("If you want to remove spf using spf, please use the standalone binary.")
+    // }
 
     // Keeps track of when the ability to list packages
     // is allowed.
