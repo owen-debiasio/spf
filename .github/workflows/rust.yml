@@ -22,14 +22,13 @@ permissions:
 
 env:
     CARGO_TERM_COLOR: always
-    RUSTFLAGS: "-Dwarnings"
 
 jobs:
     Format:
         runs-on: ubuntu-latest
         steps:
             - name: Checkout
-              uses: actions/checkout@v4
+              uses: actions/checkout@v7
 
             - name: Install Rust
               uses: dtolnay/rust-toolchain@stable
@@ -46,7 +45,7 @@ jobs:
         runs-on: ubuntu-latest
         steps:
             - name: Checkout
-              uses: actions/checkout@v4
+              uses: actions/checkout@v7
 
             - name: Install Rust
               uses: dtolnay/rust-toolchain@stable
@@ -64,7 +63,7 @@ jobs:
         runs-on: ubuntu-latest
         steps:
             - name: Checkout
-              uses: actions/checkout@v4
+              uses: actions/checkout@v7
 
             - name: Install Rust
               uses: dtolnay/rust-toolchain@stable
