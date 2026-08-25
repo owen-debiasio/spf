@@ -92,10 +92,6 @@ You can find the standalone binary here:
 
 #### .spf Installer package
 
-> [!IMPORTANT]  
-> You will need to use the standalone binary to install/update the spf
-> installation
-
 You can find the `.rpm` package here:
 [Releases Page](https://github.com/owen-debiasio/spf/releases/latest)
 
@@ -134,3 +130,5 @@ sudo cp target/release/spf /usr/bin/spf # Install to location (like /usr/local/b
 
 - [Glob](https://github.com/rust-lang/glob) by
   [rust-lang](https://github.com/rust-lang)
+- [self-replace](https://github.com/mitsuhiko/self-replace) by
+  [mitsuhiko](https://github.com/mitsuhiko)
