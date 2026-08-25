@@ -4,7 +4,7 @@
 //! SPDX-License-Identifier: GPL-3.0-or-later
 
 use std::{
-    fs::{self, OpenOptions, create_dir_all},
+    fs::{self, OpenOptions, create_dir_all, remove_dir_all},
     io::{self, Write},
     path::Path,
     process::exit,
@@ -15,7 +15,7 @@ use glob::glob;
 use crate::{
     fs::{FileProperty, extract_archive},
     metadata::{PACKAGE_INSTALL_PATH, get_meta_value},
-    sys::{error, is_root},
+    sys::{error, get_binary_path, is_root},
 };
 
 /// Installs a .spf package.
@@ -280,9 +280,14 @@ fn install_files(
     package_meta_path_install_location: String,
     extracted_package_path: String,
 ) {
+    // Clean up by removing the extracted package (only used on errors)
+    let cleanup = || -> () {
+        remove_dir_all(&extracted_package_path).expect("Failed to clean up extracted package");
+    };
+
     // Copy the packaged metadata file to its install location
     fs::copy(&packaged_metadata_file, &package_meta_path_install_location).
-        unwrap_or_else(|_| panic!("Failed to copy file \"{packaged_metadata_file}\" -> \"{package_meta_path_install_location}\""));
+        unwrap_or_else(|err| panic!("Failed to copy file \"{packaged_metadata_file}\" -> \"{package_meta_path_install_location}\": {err}"));
 
     // Remove the metadata file that was packaged
     fs::remove_file(&packaged_metadata_file).expect("Failed to delete metadata file");
@@ -302,7 +307,9 @@ fn install_files(
     // Write the header for defining installed paths
     project_meta_file
         .write_all(b"\n:::PATH DEFINE START:::\n")
-        .unwrap();
+        .unwrap_or_else(|_| {
+            panic!("Failed to write path define header to \"{project_meta_file:#?}\"")
+        });
 
     // Go through and install packaged paths
     for found_path in glob(path_to_search)
@@ -320,14 +327,24 @@ fn install_files(
 
         // If the path to be copied is a directory, simply create it instead of copying it.
         if Path::new(&file_from_archive).is_dir() {
-            create_dir_all(path_to_create).unwrap();
+            create_dir_all(path_to_create).unwrap_or_else(|err| {
+                panic!("Failed to create directory \"{path_to_create:#?}\": {err}")
+            });
             continue;
         }
 
         println!("    Copying \"{file_from_archive}\" -> \"{file_destination}\"");
 
-        fs::copy(&file_from_archive, &file_destination).unwrap_or_else(|_| {
-            panic!("Failed to copy file \"{file_from_archive}\" -> \"{file_destination}\"")
+        // Check if the file being copied `file_destination` is spf itself. If so,
+        // replace the old binary (current binary path) with the new binary
+        // (`file_from_archive`/`file_destination`)
+        if file_destination == get_binary_path() {
+            self_replace::self_replace(&file_from_archive).unwrap();
+        }
+
+        fs::copy(&file_from_archive, &file_destination).unwrap_or_else(|err| {
+            cleanup();
+            panic!("Failed to copy file \"{file_from_archive}\" -> \"{file_destination}\": {err}")
         });
 
         // Write the path of the file to later be removed when uninstalled.
@@ -338,6 +355,7 @@ fn install_files(
 
         // Check that the path was copied/created correctly
         if !path_to_create.exists() {
+            cleanup();
             panic!("Failed to copy file: \"{file_destination}\"")
         }
     }
