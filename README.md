@@ -126,7 +126,7 @@ sudo cp target/release/spf /usr/bin/spf # Install to location (like /usr/local/b
 - This project is 100% human-written code. Either by me or from some forum or 10
   year old Stack Overflow post.
 
-  ## Credits
+## Credits
 
 - [Glob](https://github.com/rust-lang/glob) by
   [rust-lang](https://github.com/rust-lang)
