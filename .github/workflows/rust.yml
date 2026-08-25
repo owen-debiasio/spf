@@ -57,7 +57,7 @@ jobs:
             - name: Cache cargo
               uses: Swatinem/rust-cache@v2
 
-            - name: x86_64
+            - name: Clippy
               run: cargo clippy --all-targets --all-features
 
     Builds:
