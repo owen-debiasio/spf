@@ -52,14 +52,14 @@ jobs:
       - name: Run Main Packaging Script
         run: |
           echo -e "#!/bin/bash\necho '> Skipping format in CI'\nexit 0" > ./dev/format.sh
-          chmod +x ./dev/format.sh
+          chmod +x ./dev/format.bash
 
           VERSION_RAW=$(echo "${{ github.ref_name }}" | sed 's/^v//')
 
           ls
-          chmod +x ./dev/package.sh
+          chmod +x ./dev/package.bash
 
-          ./dev/package.sh "$VERSION_RAW"
+          ./dev/package.bash "$VERSION_RAW"
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
