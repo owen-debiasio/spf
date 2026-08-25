@@ -37,9 +37,10 @@
   doesn't match the input string
 - Code optimizations
 - Enhanced and optimized errors.
-  - Use native functions like `panic!()` or `.expect()` instead of custom
-      error handlers to avoid complexity and improve code readability
+  - Use native functions like `panic!()` or `.expect()` instead of custom error
+    handlers to avoid complexity and improve code readability
 - Add logo to readme, located at `assets/logo.png`
 - You can now easily update spf from a `.spf` package
 - `./dev/install.bash` now runs `./dev/format.bash`
 - You can now remove spf using spf
+- Add Github workflows for Bash scripts, Rust code, and Markdown files
