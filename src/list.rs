@@ -15,18 +15,18 @@ use crate::{
 
 /// Lists packages that are be installed. You can optionally provide
 /// a string of text to match (`optional_string` ([`String`])).
-/// 
+///
 /// Example with no optional string:
 /// ```
 /// list_packages(String::new());
-/// 
+///
 /// // Every package installed is listed
 /// ```
 /// Example with an optional string:
 /// ```
 /// let optional = String::from("sp");
 /// list_packages(optional);
-/// 
+///
 /// // Every package installed that contains `spf` is listed
 /// ```
 pub fn list_packages(optional_string: String) {
