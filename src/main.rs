@@ -1,8 +1,13 @@
 use std::process::exit;
 
 use crate::{
-    inspect::inspect, install::spf_install, list::list_packages, package::create_spf_package,
-    remove::remove_spf_package, sys::error, template::gen_meta_template,
+    inspect::inspect,
+    install::spf_install,
+    list::list_packages,
+    package::create_spf_package,
+    remove::remove_spf_package,
+    sys::{error, return_args},
+    template::gen_meta_template,
 };
 
 // Shared
@@ -30,19 +35,19 @@ fn main() {
     println!("spf-{VERSION}\n");
 
     // Collect user args
-    let mut user_args: Vec<String> = Vec::new();
-    for arg in std::env::args().skip(1) {
-        user_args.push(arg);
-    }
+    let mut collected_args = return_args();
+    collected_args.retain(|arg| !arg.starts_with("-"));
 
-    let get_arg =
-        |arg: usize| -> String { user_args.get(arg).unwrap_or(&String::new()).to_string() };
+    /*
+    The first action after running `spf` in a cli:
+    $ spf <root arg> <other actions>
 
-    // The first action after running `spf` in a cli:
-    // $ spf <root arg> <other actions>
-    let root_arg = get_arg(0);
-    let secondary_arg = get_arg(1);
-    let tertiary_arg = get_arg(2);
+    Note: I'm not sure why `.map_or` works, but it
+    does so I'm keeping it.
+    */
+    let root_arg = collected_args.first().map_or("", |a| a).to_string();
+    let secondary_arg = collected_args.get(1).map_or("", |a| a).to_string();
+    let tertiary_arg = collected_args.get(2).map_or("", |a| a).to_string();
 
     // Parse args
     // If there are more args than the root arg, pass them on to the desired function
@@ -64,7 +69,7 @@ fn main() {
 
             // The first two args that are skipped are `spf remove`. Everything
             // else after that is a package to check.
-            for package_arg in std::env::args().skip(2) {
+            for package_arg in collected_args.into_iter().skip(1) {
                 // Don't process args
                 if package_arg.starts_with('-') {
                     continue;
@@ -121,7 +126,8 @@ fn available_commands() {
               inspect    <package to inspect>                 Inspect metadata of a package
             \n\
             Available options:\n\
-              --version   Display spf version"
+              --version       Display spf version\n\
+              --ignore-args   Force the installation of a package with a different architecture"
         )
     )
 }

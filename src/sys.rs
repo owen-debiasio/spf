@@ -4,7 +4,7 @@
 //! SPDX-License-Identifier: GPL-3.0-or-later
 
 use std::{
-    env::{current_exe, var},
+    env::{args, current_exe, var},
     process::exit,
 };
 
@@ -120,4 +120,76 @@ pub fn get_binary_path() -> String {
         .to_str()
         .unwrap()
         .to_string()
+}
+
+/// Determine if the args that have been retrieved from [`args_contains`] contains
+/// what the user wants to find (`arg` (as [`str`])).
+///
+/// Returns as bool.
+///
+/// Example: Arg list contains matching input arg:
+/// ```
+/// // Arg list: --arga, argb, -c
+///
+/// let arg_to_find = "argb";
+///
+/// let does_arg_contain = args_contains(arg_to_find);
+///
+/// // Output should be `true`
+/// println!("{does_arg_contain}");
+/// ```
+///
+/// Example: Arg list does not contain input arg:
+/// ```
+/// // Arg list: --arga, argb, -c
+///
+/// let arg_to_find = "abcd";
+///
+/// let does_arg_contain = args_contains(arg_to_find);
+///
+/// // Output should be `false`
+/// println!("{does_arg_contain}");
+/// ```
+pub fn args_contains(arg: &str) -> bool {
+    return_args().contains(&arg.to_string())
+}
+
+/// Returns collected args that have been supplied.
+///
+/// Returns the following types of args:
+///     - "-a"
+///     - "--arg"
+///     - "arg"
+///
+/// Allows you to combine args like this:
+///     `$ spf -a --ard arg -bcd`
+///
+/// Returns as this:
+///     `[spf, -a, -ard, arg, -b, -c, -d]`
+///
+/// Returns as [`Vec<String>`].
+///
+/// ```
+/// let collected_args = return_args();
+/// ```
+pub fn return_args() -> Vec<String> {
+    let mut collected_args = Vec::new();
+
+    for given_arg in args().skip(1) {
+        // If the arg is a normal arg (`--arg`)
+        if given_arg.starts_with("--") {
+            collected_args.push(given_arg);
+
+        // If the arg is a small arg (`-a`)
+        } else if given_arg.starts_with('-') && given_arg != "-" {
+            for character in given_arg.chars().skip(1) {
+                collected_args.push(format!("-{character}"));
+            }
+        // If the arg is a normal arg (`arg`)
+        } else {
+            collected_args.push(given_arg);
+        }
+    }
+
+    collected_args
 }
