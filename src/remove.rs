@@ -4,7 +4,7 @@
 //! SPDX-License-Identifier: GPL-3.0-or-later
 
 use crate::{
-    metadata::{PACKAGE_INSTALL_PATH, get_meta_value},
+    metadata::{Meta, PACKAGE_INSTALL_PATH},
     sys::{error, is_root},
 };
 use std::{
@@ -14,6 +14,22 @@ use std::{
     process::exit,
 };
 
+/// Starts the process of removing `.spf` packages.
+///
+/// The list of packages to be removed is stored in `packages_to_list` as [`Vec<String>`].
+///
+/// Cycles through the packages in `packages_to_list` and removes the metadata file, and
+/// the installed files/directories found within its package metadata (found in [`PACKAGE_INSTALL_PATH`]).
+///
+/// ```
+/// let packages_to_remove = vec![
+///     String::from("package_a"),
+///     String::from("package_b"),
+///     String::from("package_c")
+/// ];
+///
+/// remove_spf_package(packages_to_remove)
+/// ```
 pub fn remove_spf_package(packages_to_list: Vec<String>) {
     if !is_root() {
         error("To execute this action, please run spf as root.")
@@ -22,11 +38,6 @@ pub fn remove_spf_package(packages_to_list: Vec<String>) {
     if packages_to_list.is_empty() {
         error("Provide the package(s) you want to remove.")
     }
-
-    // Restrict the ability to uninstall spf with spf to avoid conflicts
-    // } else if packages_to_list.contains(&"spf".to_string()) && get_binary_path() == "/usr/bin/spf" {
-    //     error("If you want to remove spf using spf, please use the standalone binary.")
-    // }
 
     // Keeps track of when the ability to list packages
     // is allowed.
@@ -45,7 +56,7 @@ pub fn remove_spf_package(packages_to_list: Vec<String>) {
         }
 
         // Retrieves the package version
-        let package_version = get_meta_value(package_meta_path.clone(), "VERSION");
+        let package_version = Meta::from(&package_meta_path).load_value("VERSION");
 
         // The pretty-print of the package to be removed. Shows the package name
         // and the version.
@@ -88,9 +99,17 @@ pub fn remove_spf_package(packages_to_list: Vec<String>) {
 /// Removes an installed spf package (entries and metadata file).
 ///
 /// Requires:
-///     - `package_formatted`: To list that the package has been removed
-///     - `package_meta_path`: for retrieving paths to delete and to have itself
+///     - `package_formatted` ([`String`]): To list that the package has been removed
+///     - `package_meta_path`([`String`]): for retrieving paths to delete and to have itself
 ///     deleted.
+///
+/// ```
+/// // The formatted package name includes the version at the end, such as "-v0.2.0".
+/// let package_formatted = "package-v0.2.0";
+/// let package_meta_path = "/usr/share/spf/packages/package";
+///
+/// remove_package(package_formatted, package_meta_path)
+/// ```
 fn remove_package(package_formatted: String, package_meta_path: String) {
     println!("\nRemoving: {package_formatted}");
 
@@ -147,7 +166,40 @@ fn remove_package(package_formatted: String, package_meta_path: String) {
 /// `package_meta_path` is used to retrieve the version of those
 /// packages.
 ///
-/// It also lists them dynamically (see below).
+/// ```
+/// // NOTE: This is only if 5 or less packages are being listed
+///
+/// let packages = vec![
+///     String::from("package1"),
+///     String::from("package2"),
+///     String::from("package3")
+/// ];
+///
+/// list_packages(packages, package_meta_path);
+///
+/// // Output:
+/// // package1-v0.0.1 package2-v0.0.2 package3-v0.0.3 ...
+/// ```
+///
+/// It also lists them dynamically:
+/// ```
+/// let packages = vec![
+///     String::from("package1"),
+///     String::from("package2"),
+///     String::from("package3"),
+///     String::from("package4"),
+///     String::from("package5"),
+///     String::from("package6"),
+/// ];
+///
+/// list_packages(packages, package_meta_path);
+///
+/// // Output:
+/// // package1-v0.0.1
+/// // package2-v0.0.2
+/// // package3-v0.0.3
+/// // ...
+/// ```
 fn list_packages(packages: Vec<String>, package_meta_path: String) {
     println!("You are about to remove the following package(s):\n");
 
@@ -165,7 +217,7 @@ fn list_packages(packages: Vec<String>, package_meta_path: String) {
         // Cycle through packages
         for package in &packages {
             // Retrieve package version
-            let listed_package_version = get_meta_value(package_meta_path.clone(), "VERSION");
+            let listed_package_version = Meta::from(&package_meta_path).load_value("VERSION");
 
             // List package
             print!("{package}-{listed_package_version}")
@@ -175,7 +227,7 @@ fn list_packages(packages: Vec<String>, package_meta_path: String) {
         // Cycle through packages
         for package in &packages {
             // Retrieve package version
-            let listed_package_version = get_meta_value(package_meta_path.clone(), "VERSION");
+            let listed_package_version = Meta::from(&package_meta_path).load_value("VERSION");
 
             // List package
             println!("{package}-{listed_package_version}")

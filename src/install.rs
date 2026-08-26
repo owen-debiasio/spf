@@ -14,15 +14,25 @@ use glob::glob;
 
 use crate::{
     fs::{FileProperty, extract_archive},
-    metadata::{PACKAGE_INSTALL_PATH, get_meta_value},
+    metadata::{Meta, PACKAGE_INSTALL_PATH},
     sys::{error, get_binary_path, is_root},
 };
 
 /// Installs a .spf package.
-/// The path of the .spf package (`spf_package_path`) must be provided
 ///
-/// Goes through checking the version of the package or a potential
-/// already-installed version
+/// The path of the .spf package (`spf_package_path` (as [`String`]))
+/// must be provided
+///
+/// To install, the .spf package is extracted to the cwd using [`extract_archive`].
+/// The metadata file stored inside is read for the various details.
+///
+/// The versions are compared using [`check_version`] and
+/// [`parse_installed_and_packaged_versions`] before installation.
+///
+/// When it actually gets to installing the files using [`install_files`],
+/// the tree inside the extracted package contains the directories and files
+/// that are written to their new metadata file located in [`PACKAGE_INSTALL_PATH`],
+/// and are copied to their respective locations.
 pub fn spf_install(mut spf_package_path: String) {
     // Root is required for this command
     if !is_root() {
@@ -48,14 +58,15 @@ pub fn spf_install(mut spf_package_path: String) {
     // Get location of the package path (`spf_package_path`)
     let packaged_metadata_file = spf_package_path.replace(".spf", "/META");
 
+    let package_metadata = Meta::from(&packaged_metadata_file);
+
     // Retrieve the metadata. Wish there was a better way to do this
-    let packaged_project_name = get_meta_value(packaged_metadata_file.clone(), "PROJECT_NAME");
-    let packaged_project_version = get_meta_value(packaged_metadata_file.clone(), "VERSION");
-    let packaged_project_description =
-        get_meta_value(packaged_metadata_file.clone(), "DESCRIPTION");
-    let packaged_project_license = get_meta_value(packaged_metadata_file.clone(), "LICENSE");
-    let packaged_project_authors = get_meta_value(packaged_metadata_file.clone(), "AUTHORS");
-    let packaged_project_packaged_arch = get_meta_value(packaged_metadata_file.clone(), "ARCH");
+    let packaged_project_name = package_metadata.clone().load_value("PROJECT_NAME");
+    let packaged_project_version = package_metadata.clone().load_value("VERSION");
+    let packaged_project_description = package_metadata.clone().load_value("DESCRIPTION");
+    let packaged_project_license = package_metadata.clone().load_value("LICENSE");
+    let packaged_project_authors = package_metadata.clone().load_value("AUTHORS");
+    let packaged_project_packaged_arch = package_metadata.clone().load_value("ARCH");
 
     // The formatted package name looks something like:
     //
@@ -118,7 +129,15 @@ pub fn spf_install(mut spf_package_path: String) {
 /// Take loaded metadata and display it as package information, before asking the
 /// user if they want to install the package.
 ///
-/// If user aborts, clean up by deleting `extracted_package_path`
+/// The following are used as identifying information for the package:
+///     - `package_name_formatted` ([`str`])
+///     - `packaged_project_description` ([`String`])
+///     - `packaged_project_license` ([`String`])
+///     - `packaged_project_authors` ([`String`])
+///     - `packaged_project_packaged_arch` ([`String`])
+///     - `extracted_package_path` ([`String`])
+///
+/// If user aborts, clean up by deleting `extracted_package_path` (stored as [`String`])
 fn ask_user_to_install(
     package_name_formatted: &str,
     packaged_project_description: String,
@@ -156,22 +175,34 @@ fn ask_user_to_install(
 
 /// Compares versions if the package is already installed. User can
 /// abort/proceed as they wish.
+///
+/// Unfortunately, you need to provide:
+///     - A metadata path (`package_meta_path`),
+///     - The packaged project name (`packaged_project_name`)
+///     - The packaged project version (`packaged_project_version`)
+///     - The path of the `.spf` package (`spf_package_path`)
+///
+/// All are provided as [`str`].
+///
+/// [`check_version`] checks the version by comparing the version of
+/// the installed package (if installed), and the version of the package.
+/// The versions themselves are actually parsed in [`parse_installed_and_packaged_versions`].
+///
+/// The two versions retrieved look like normal numbers, and their sizes are compared to see
+/// what version is the newest.
+/// Examples: `v0.2.0` is retrieved as `020` (`20`), and `v1.4.2` is retrieved as `142`. `142`
+/// is larger than `20` which shows that `v1.4.2 is the newest version
+///
+/// It then asks you if you want to update or downgrade the package, where
+/// you have to enter `y` in user input.
 fn check_version(
     package_meta_path: &str,
     packaged_project_name: &str,
     packaged_project_version: &str,
     spf_package_path: &str,
 ) {
-    // Reads the package meta, then rips the value from `VERSION`.
-    let installed_version = fs::read_to_string(package_meta_path)
-        .unwrap()
-        // Separate the lines
-        .split('\n')
-        // Find the line that contains the `VERSION` metadata tag
-        .find(|entry| entry.contains("VERSION"))
-        .expect("Failed to retrieve project name from metadata")
-        // Retrieve the version
-        .replace("VERSION = ", "");
+    // Loads package version
+    let installed_version = Meta::from(package_meta_path).load_value("VERSION");
 
     // Check for version differences
     if packaged_project_version == installed_version {
@@ -235,9 +266,13 @@ fn check_version(
 
 /// Takes the installed and packaged versions, then formats them to
 /// remove special characters and `v`. It also converts them to
-/// `usize`.
+/// [`usize`].
 ///
 /// Returns modified versions of `packaged_project_version` and `installed_version`
+///
+/// ```
+/// let (project_version_num, installed_version_num) = parse_installed_and_packaged_versions(packaged_project_version, &installed_version);
+/// ```
 fn parse_installed_and_packaged_versions(
     packaged_project_version: &str,
     installed_version: &str,
@@ -271,10 +306,10 @@ fn parse_installed_and_packaged_versions(
 /// to also be installed.
 ///
 /// The files are copied from files from `path_to_search`
-/// (part of `extracted_package_path`).
+/// (part of `extracted_package_path` (as [`String`])).
 ///
 /// The paths that are modified are then marked/inscribed into
-/// the project metadata file (`project_meta_file`)
+/// the project metadata file (`project_meta_file` (as [`String`]))
 fn install_files(
     packaged_metadata_file: String,
     package_meta_path_install_location: String,

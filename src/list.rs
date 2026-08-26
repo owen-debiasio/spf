@@ -9,12 +9,26 @@ use std::process::exit;
 use glob::glob;
 
 use crate::{
-    metadata::{PACKAGE_INSTALL_PATH, get_meta_value},
+    metadata::{Meta, PACKAGE_INSTALL_PATH},
     sys::error,
 };
 
 /// Lists packages that are be installed. You can optionally provide
-/// a string of text to match (`optional_string`).
+/// a string of text to match (`optional_string` ([`String`])).
+/// 
+/// Example with no optional string:
+/// ```
+/// list_packages(String::new());
+/// 
+/// // Every package installed is listed
+/// ```
+/// Example with an optional string:
+/// ```
+/// let optional = String::from("sp");
+/// list_packages(optional);
+/// 
+/// // Every package installed that contains `spf` is listed
+/// ```
 pub fn list_packages(optional_string: String) {
     // where to search for packages
     let path_to_search = &format!("{PACKAGE_INSTALL_PATH}/*");
@@ -45,10 +59,12 @@ pub fn list_packages(optional_string: String) {
     {
         // The path of the package metadata. The name of the metadata file is the name
         // of the package.
-        let package_path = package_path_raw.unwrap().to_str().unwrap().to_string();
+        let package_metadata_path = package_path_raw.unwrap().to_str().unwrap().to_string();
 
         // Name of the package to be listed
-        let package_name = get_meta_value(package_path.clone(), "PROJECT_NAME");
+        let package_meta = Meta::from(&package_metadata_path);
+
+        let package_name = package_meta.clone().load_value("PROJECT_NAME").clone();
 
         // Checks if the entered optional string is in the package name.
         // If not, move to next package.
@@ -57,8 +73,8 @@ pub fn list_packages(optional_string: String) {
         }
 
         // Retrieve the package version and description
-        let package_version = get_meta_value(package_path.clone(), "VERSION");
-        let package_desc = get_meta_value(package_path, "DESCRIPTION");
+        let package_version = package_meta.clone().load_value("VERSION");
+        let package_desc = package_meta.load_value("DESCRIPTION").clone();
 
         // Add the package name, version, and description
         packages_to_list.push(format!(
