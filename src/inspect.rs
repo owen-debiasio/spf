@@ -18,6 +18,9 @@ use crate::{
 
 /// You can inspect a .spf package you downloaded, or a package
 /// you have already installed.
+///
+/// If the package to inspect (`package` (as [`String`])) is a .spf package,
+/// send it to [`inspect_spf_package`]. Otherwise, send it to [`inspect_installed_package`].
 pub fn inspect(package: String) {
     if package.is_empty() {
         error("Please provide a .spf package or a package that is already installed.")
@@ -30,10 +33,16 @@ pub fn inspect(package: String) {
     }
 }
 
-/// Inspects the metadata of a .spf package.
+/// Inspects the metadata of a .spf package (`package_path` as [`String`]).
 ///
-/// It extracts the package, reads the META file, then prints
-/// the contents to the output.
+/// It extracts the package, reads the `META` file, then prints the contents to the output.
+///
+/// ```
+/// let package_to_search = "package.spf";
+/// inspect_spf_package(package_to_search);
+///
+/// // The output is the contents of the `META` file
+/// ```
 fn inspect_spf_package(package_path: String) {
     if !Path::new(&package_path).exists() {
         error(&format!(".spf package not found: {package_path}"))
@@ -68,10 +77,16 @@ fn inspect_spf_package(package_path: String) {
     exit(0)
 }
 
-/// Inspects the metadata of an installed spf package.
+/// Inspects the metadata of an installed spf package (`package` as [`String`]).
 ///
-/// It reads the contents of the file to the string, then
-/// displays it to the output.
+/// It reads the contents of the file to the string, then displays it to the output.
+///
+/// ```
+/// let package_to_search = "installed_package";
+/// inspect_installed_package(package_to_search);
+///
+/// // The output is the contents of the `META` file
+/// ```
 fn inspect_installed_package(package: String) {
     // The package metadata file to look/inspect
     let package_meta_path = &format!("{PACKAGE_INSTALL_PATH}{package}");

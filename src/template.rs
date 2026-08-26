@@ -13,7 +13,10 @@ use std::{
 
 use crate::sys::error;
 
-/// Sample metadata contents to be printed
+/// Sample metadata contents to be printed. Every possible feature
+/// of the metadata is included.
+///
+/// Stored as [`str`]
 static TEMPLATE_CONTENTS: &str = "\
 # Header for project meta
 # NOTE: META MUST BE DEFINED BEFORE PATHS
@@ -36,6 +39,20 @@ target/debug/spf:/usr/bin/spf
 
 /// Generate template to chosen directory.
 /// By default, file is generated to current directory
+///
+/// The template itself is stored in [`TEMPLATE_CONTENTS`] as [`str`].
+///
+/// `output_location`, stored as [`String`], must be a directory. If
+/// the output location isn't a directory, [`gen_meta_template`] will
+/// panic.
+///
+/// ```
+/// let location_to_send_template = "~/Documents/"
+///
+/// gen_meta_template(location_to_send_template)
+///
+/// // Output location is `~/Documents/spf_template`
+/// ```
 pub fn gen_meta_template(mut output_location: String) {
     if output_location.is_empty() {
         output_location = env::current_dir()

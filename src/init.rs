@@ -14,6 +14,9 @@ use crate::{
 ///
 /// What it does currently:
 ///     - Check if needed paths exist (see `paths_to_check`)
+///
+/// If the build of spf is a debug build (located in `./target/`), skip.
+/// Useful for github workflows.
 pub fn init() {
     // Packages that spf needs to check so it can function
     let paths_to_check = vec![PACKAGE_INSTALL_PATH];

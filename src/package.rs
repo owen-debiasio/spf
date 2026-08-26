@@ -16,9 +16,23 @@ use crate::{
     sys::error,
 };
 
-/// Create .spf package
+/// Starts the process of creating a `.spf` package.
 ///
-/// See the example config in spf/samples/example_config
+/// It starts by you loading the package config file as `package_config`, which is
+/// stored as [`str`].
+///
+/// Then it goes through and parses metadata with [`write_project_meta_config`].
+///
+/// Next, it goes onto copying the files found in the metadata using [`copy_package_paths`].
+/// The files are copied into the directory that is initially created, and are later zipped
+/// and packaged using [`package_to_spf`].
+///
+/// Once the packaging the finished, the package is moved to the chosen destination
+/// `output_location`, which is stored as [`str`]
+///
+/// A `.spf` package is packaged as a `.spf` archive, and inside, there is a metadata file
+/// (`META`) stored in the root directory. Every other file/directory is placed there by the
+/// user.
 pub fn create_spf_package(package_config: &str, mut output_location: &str) {
     // Check if the package config file name is valid, whether it
     // has extension or if it's empty.
@@ -84,12 +98,26 @@ pub fn create_spf_package(package_config: &str, mut output_location: &str) {
 }
 
 /// Write to `project_meta_file`. The metadata written could be one of the following:
+///
 /// - PROJECT_NAME (name of the package/project that is being packaged)
-/// - VERSION     (version of release)
-/// - DESCRIPTION (description of the contents, package or project)
-/// - LICENSE     (license of the package)
-/// - AUTHORS     (authors behind the project/package)
-/// - ARCH        (packaged architecture)
+/// - VERSION      (version of release)
+/// - DESCRIPTION  (description of the contents, package or project)
+/// - LICENSE      (license of the package)
+/// - AUTHORS      (authors behind the project/package)
+/// - ARCH         (packaged architecture)
+///
+/// Requires:
+/// - Contents of the package meta (`package_config_contents` ([`str`]))
+/// - Meta file to write contents to (`project_meta_file` ([`File`]))
+///
+/// ```
+/// let package_config_contents = "<meta file contents>";
+/// let project_meta_file = "path_to_meta_file";
+///
+/// write_project_meta_config(package_config_contents, project_meta_file);
+///
+/// // The metadata should be written to `project_meta_file`
+/// ```
 fn write_project_meta_config(package_config_contents: &str, mut project_meta_file: &File) {
     // Lets users know if a package was packaged using an older spf version. Only stored
     // internally.
@@ -165,14 +193,21 @@ fn write_project_meta_config(package_config_contents: &str, mut project_meta_fil
         })
 }
 
-/// Parse defined paths in `package_config_contents` that are located under
+/// Parse defined paths in `package_config_contents` ([`str`]) that are located under
 /// ":::PATH DEFINE START:::".
 ///
 /// The defined paths are formatted as such:
 /// `original/file/path:/location/to/install`
 ///
-/// These paths are copied to their respective locations. `output_location`
+/// These paths are copied to their respective locations. `output_location` ([`str`])
 /// is treated as the "root" of the filesystem, such as "/".
+///
+/// ```
+/// let package_config_contents = "<package metadata>";
+/// let output_location = "package";
+///
+/// copy_package_paths(package_config_contents, output_location);
+/// ```
 fn copy_package_paths(package_config_contents: &str, output_location: &str) {
     // This easily allows the parser to skip the project metadata, which
     // has already been parsed thanks to `write_project_meta_config()`.
@@ -256,8 +291,17 @@ fn copy_package_paths(package_config_contents: &str, output_location: &str) {
     }
 }
 
-/// Take the copied directories located in `output_location` and compress
-/// them to what was provided as `archive_name`
+/// Take the copied directories located in `output_location` ([`str`]) and compress
+/// them to what was provided as `archive_name` ([`str`]).
+///
+/// ```
+/// let output_location = "./package";
+/// let archive_name = "package.spf";
+///
+/// package_to_spf(output_location, archive_name)
+///
+/// // Archive `package.spf` should be located where `output_location` is
+/// ```
 fn package_to_spf(output_location: &str, archive_name: &str) {
     // Get parent directory
     let parent_directories = &Path::new(output_location)
@@ -281,6 +325,19 @@ fn package_to_spf(output_location: &str, archive_name: &str) {
 /// 1. original file is mentioned
 /// 2. file destination is mentioned
 /// 3. entry is formatted correctly
+///
+/// Requires:
+/// - Full path entry (`entry` ([`str`]))
+/// - The name of the original file name (`original` ([`String`]))
+/// - Destination of the original file (`destination` ([`String`]))
+///
+/// ```
+/// let entry = "original/file:file/destination";
+/// let original = "original/file";
+/// let destination = "file/destination";
+///
+/// check_path_entry(entry, original, destination)
+/// ```
 fn check_path_entry(entry: &str, original: String, destination: String) {
     let paths_are_included = !original.is_empty() && !destination.is_empty();
 
@@ -297,9 +354,17 @@ fn check_path_entry(entry: &str, original: String, destination: String) {
 /// the `.spf` package.
 ///
 /// Requires:
-/// - Output location of package
-/// - Destination of the path to be copied
-/// - The name of the original file name
+/// - Output location of package (`output_location` ([`str`]))
+/// - Destination of the path to be copied (`destination_of_file` ([`String`]))
+/// - The name of the original file name (`original_file_name` ([`str`]))
+///
+/// ```
+/// let output_location = "package";
+/// let destination_of_file = "dest/package/dest/package";
+/// let original_file_name = "package";
+///
+/// get_dirs_to_create(output_location, destination_of_file, original_file_name);
+/// ```
 fn get_dirs_to_create(
     output_location: &str,
     destination_of_file: String,
