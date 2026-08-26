@@ -14,7 +14,7 @@ permissions:
   contents: read
 
 jobs:
-  lint:
+  shfmt:
     runs-on: ubuntu-latest
 
     steps:
@@ -24,11 +24,22 @@ jobs:
       - name: Install tools
         run: |
           sudo apt update
-          sudo apt install -y shfmt shellcheck
+          sudo apt install -y shfmt
 
       - name: shfmt
         run: |
-          shfmt -d -i 4 -ci -sr .
+          shfmt -d -i 4 -ci -sr .)
+  shellcheck:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+
+      - name: Install tools
+        run: |
+          sudo apt update
+          sudo apt install -y shellcheck
 
       - name: shellcheck
         run: |
