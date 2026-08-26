@@ -74,6 +74,11 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v7
 
+      - name: Install aarch64
+        run: |
+          sudo apt update
+          sudo apt install gcc-aarch64-linux-gnu
+
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
         with:
