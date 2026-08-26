@@ -58,12 +58,12 @@ jobs:
       - name: Cache cargo
         uses: Swatinem/rust-cache@v2
 
-      - name: Clippy (x86_64)
+      - name: Clippy (Linux x86_64)
         run:
           cargo clippy --all-targets --all-features --target
           x86_64-unknown-linux-gnu --release
 
-      - name: Clippy (aarch64)
+      - name: Clippy (Linux aarch64)
         run:
           cargo clippy --all-targets --all-features --target
           aarch64-unknown-linux-gnu --release
@@ -77,10 +77,15 @@ jobs:
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
         with:
-          targets: x86_64-unknown-linux-gnu
+          targets: |
+            x86_64-unknown-linux-gnu
+            aarch64-unknown-linux-gnu
 
       - name: Cache cargo
         uses: Swatinem/rust-cache@v2
 
-      - name: Build
-        run: cargo build --release
+      - name: Build (Linux x86_64)
+        run: cargo build --release --target x86_64-unknown-linux-gnu
+
+      - name: Build (Linux aarch64)
+        run: cargo build --release --target aarch64-unknown-linux-gnu
