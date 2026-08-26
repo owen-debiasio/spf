@@ -2,6 +2,11 @@
 
 Some stuff to help with development
 
+## Target(s)
+
+- x86_64-unknown-linux-gnu
+- aarch64-unknown-linux-gnu
+
 ## Linters
 
 - `Clippy` For linting Rust code
