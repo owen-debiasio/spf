@@ -67,8 +67,8 @@ inspect    <package to inspect>                 Inspect metadata of a package
 ## Install
 
 > [!IMPORTANT]  
-> Right now, binaries and packages for spf are built for `x86_64` systems. Look
-> at
+> Right now, binaries and packages for spf are built for `x86_64` and `aarch64`
+> systems. Look at
 > [Building from source](https://github.com/owen-debiasio/spf#build-from-source)
 
 ### Debian/Ubuntu
