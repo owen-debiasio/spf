@@ -49,3 +49,8 @@
 
 - Improve code documentation
 - Improve how metadata is retrieved using a more efficient method
+- Add support for Linux aarch64 systems
+- Add flag `--ignore-args`: Allows you to the installation of a package with
+  architecture
+- You will be blocked from installing a `.spf` package with a different
+  architecture unless you pass `--ignore-args`.
