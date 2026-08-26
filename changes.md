@@ -44,3 +44,8 @@
 - `./dev/install.bash` now runs `./dev/format.bash`
 - You can now remove spf using spf
 - Add Github workflows for Bash scripts, Rust code, and Markdown files
+
+## v0.4.1
+
+- Improve code documentation
+- Improve how metadata is retrieved using a more efficient method
