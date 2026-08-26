@@ -28,7 +28,7 @@ jobs:
 
       - name: shfmt
         run: |
-          shfmt -d -i 4 -ci -sr .)
+          shfmt -d -i 4 -ci -sr .
   shellcheck:
     runs-on: ubuntu-latest
 
