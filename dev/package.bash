@@ -75,7 +75,7 @@ ARCH = aarch64
 :::META DEFINE END:::
 
 :::PATH DEFINE START:::
-./target/release/spf:/usr/bin/spf
+./target/aarch64-unknown-linux-gnu/release/spf:/usr/bin/spf
 changes.md:/usr/share/doc/spf/changes.md
 README.md:/usr/share/doc/spf/README.md
 LICENSE:/usr/share/licenses/spf/LICENSE
@@ -94,6 +94,5 @@ cargo-deb --target aarch64-unknown-linux-gnu -o "./packages/$PACKAGE.deb"
 cargo-generate-rpm --target aarch64-unknown-linux-gnu -o "./packages/$PACKAGE.rpm"
 
 # Copy binary
-cp ./target/release/spf "./packages/$PACKAGE"
-
+cp ./target/aarch64-unknown-linux-gnu/release/spf "./packages/$PACKAGE"
 echo "done"
