@@ -4,6 +4,7 @@
 //! SPDX-License-Identifier: GPL-3.0-or-later
 
 use std::{
+    env::consts::ARCH,
     fs::{self, OpenOptions, create_dir_all, remove_dir_all},
     io::{self, Write},
     path::Path,
@@ -15,7 +16,7 @@ use glob::glob;
 use crate::{
     fs::{FileProperty, extract_archive},
     metadata::{Meta, PACKAGE_INSTALL_PATH},
-    sys::{error, get_binary_path, is_root},
+    sys::{args_contains, error, get_binary_path, is_root},
 };
 
 /// Installs a .spf package.
@@ -25,6 +26,8 @@ use crate::{
 ///
 /// To install, the .spf package is extracted to the cwd using [`extract_archive`].
 /// The metadata file stored inside is read for the various details.
+///
+/// If architecture in the metadata file doesn't match the current system arch, exit.
 ///
 /// The versions are compared using [`check_version`] and
 /// [`parse_installed_and_packaged_versions`] before installation.
@@ -61,51 +64,57 @@ pub fn spf_install(mut spf_package_path: String) {
     let package_metadata = Meta::from(&packaged_metadata_file);
 
     // Retrieve the metadata. Wish there was a better way to do this
-    let packaged_project_name = package_metadata.clone().load_value("PROJECT_NAME");
-    let packaged_project_version = package_metadata.clone().load_value("VERSION");
-    let packaged_project_description = package_metadata.clone().load_value("DESCRIPTION");
-    let packaged_project_license = package_metadata.clone().load_value("LICENSE");
-    let packaged_project_authors = package_metadata.clone().load_value("AUTHORS");
-    let packaged_project_packaged_arch = package_metadata.clone().load_value("ARCH");
+    let package_name = package_metadata.clone().load_value("PROJECT_NAME");
+    let package_version = package_metadata.clone().load_value("VERSION");
+    let package_desc = package_metadata.clone().load_value("DESCRIPTION");
+    let package_license = package_metadata.clone().load_value("LICENSE");
+    let package_authors = package_metadata.clone().load_value("AUTHORS");
+    let package_arch = package_metadata.clone().load_value("ARCH");
+
+    // The extracted path has no extension, so remove it
+    let extracted_package_path = spf_package_path.replace(".spf", "");
+
+    if package_arch != ARCH && !args_contains("--ignore-arch") {
+        remove_dir_all(extracted_package_path).expect("Failed to cleanup");
+
+        error(&format!(
+            "Package architecture: {package_arch} doesn't match current system architecture ({ARCH}).\n\
+            Bypass by passing: `--ignore-arch`"
+        ))
+    }
 
     // The formatted package name looks something like:
     //
     // spf-v0.1.0, or my_project-v0.0.1
     //
     // Formatted by <project name>-<project_ version>
-    let package_name_formatted = &format!("{packaged_project_name}-{packaged_project_version}");
-
-    // The extracted path has no extension, so remove it
-    let extracted_package_path = spf_package_path.replace(".spf", "");
+    let package_name_formatted = &format!("{package_name}-{package_version}");
 
     ask_user_to_install(
         package_name_formatted,
-        packaged_project_description,
-        packaged_project_license,
-        packaged_project_authors,
-        packaged_project_packaged_arch,
+        package_desc,
+        package_license,
+        package_authors,
+        package_arch,
         extracted_package_path.clone(),
     );
 
     // To be safe, move the metadata file. But check if it's already installed first.
-    let package_meta_path_install_location =
-        format!("{PACKAGE_INSTALL_PATH}{packaged_project_name}");
+    let package_meta_path_install_location = format!("{PACKAGE_INSTALL_PATH}{package_name}");
 
     // Check if the package is already installed. If so, proceed to check version conflicts.
     // Otherwise, skip and proceed to copying files.
     if Path::new(&package_meta_path_install_location).exists() {
         check_version(
             &package_meta_path_install_location,
-            &packaged_project_name,
-            &packaged_project_version,
+            &package_name,
+            &package_version,
             &spf_package_path,
         );
     }
 
     // Start creating directories and copying files
-    println!(
-        "Installing: {packaged_project_name}-{packaged_project_version} from ./{spf_package_path}"
-    );
+    println!("Installing: {package_name}-{package_version} from ./{spf_package_path}");
 
     // Install all the necessary paths, including the metadata file.
     install_files(
@@ -121,7 +130,7 @@ pub fn spf_install(mut spf_package_path: String) {
         panic!("Failed to clean up and remove directory \"{extracted_package_path}\"")
     });
 
-    println!("\nSuccessfully installed {packaged_project_name}-{packaged_project_version}!");
+    println!("\nSuccessfully installed {package_name}-{package_version}!");
 
     exit(0)
 }
