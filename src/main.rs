@@ -36,7 +36,7 @@ fn main() {
 
     // Collect user args
     let mut collected_args = return_args();
-    collected_args.retain(|arg| !arg.starts_with("-"));
+    collected_args.retain(|arg| !matches!(arg.as_str(), "--ignore-args"));
 
     /*
     The first action after running `spf` in a cli:
