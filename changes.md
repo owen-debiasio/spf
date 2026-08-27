@@ -6,6 +6,9 @@
 
 ## v0.2.0
 
+<details>
+<summary>Show details</summary>
+
 - Add script to clean up generated packages in `./packages/`
 - Add command `template`: Used to generate package metadata template
 - Added safeguard when removing spf using spf.
@@ -19,7 +22,12 @@
   that package was packaged with
 - Fix issues with file copying and installing
 
+</details>
+
 ## v0.3.0
+
+<details>
+<summary>Show details</summary>
 
 - Changes to command `list`:
   - If there are no commands installed, an error will now be thrown
@@ -31,7 +39,12 @@
 - Add support for `.deb` and `.rpm` packages
 - Add more suggested tools for linting/formatting
 
+</details>
+
 ## v0.4.0
+
+<details>
+<summary>Show details</summary>
 
 - Improve output when listing commands to now let you know that a command
   doesn't match the input string
@@ -45,12 +58,15 @@
 - You can now remove spf using spf
 - Add Github workflows for Bash scripts, Rust code, and Markdown files
 
-## v0.4.1
+</details>
+
+## v0.5.0
 
 - Improve code documentation
 - Improve how metadata is retrieved using a more efficient method
-- Add support for Linux aarch64 systems
+- Add support for Linux `aarch64` systems
 - Add flag `--ignore-args`: Allows you to the installation of a package with
   architecture
 - You will be blocked from installing a `.spf` package with a different
   architecture unless you pass `--ignore-args`.
+- Allow details to be hidden for older changelog entries
