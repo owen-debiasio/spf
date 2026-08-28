@@ -12,6 +12,7 @@
     "shfmt",
     "softprops",
     "spfbuildcfg",
-    "Swatinem"
+    "Swatinem",
+    "archs"
   ]
 }
