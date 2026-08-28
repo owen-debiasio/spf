@@ -70,3 +70,8 @@
 - You will be blocked from installing a `.spf` package with a different
   architecture unless you pass `--ignore-args`.
 - Allow details to be hidden for older changelog entries
+
+## v0.5.1
+
+- Optimized the listing of packages when you are removing packages
+- Code optimizations
