@@ -53,7 +53,7 @@ pub fn remove_spf_package(mut packages_to_remove: Vec<String>) {
         }
     }
 
-    list_packages(packages_to_remove.clone());
+    list_packages(&packages_to_remove);
 
     // Everything below here is to ask user for confirmation
     // to remove their selected packages
@@ -83,7 +83,7 @@ pub fn remove_spf_package(mut packages_to_remove: Vec<String>) {
         let package_formatted = format!("{package}-{package_version}");
 
         // Finally remove the package
-        remove_package(package_formatted, package_meta_path)
+        remove_package(&package_formatted, &package_meta_path);
     }
 
     println!("\nSuccessfully removed package(s)!");
@@ -105,11 +105,11 @@ pub fn remove_spf_package(mut packages_to_remove: Vec<String>) {
 ///
 /// remove_package(package_formatted, package_meta_path)
 /// ```
-fn remove_package(package_formatted: String, package_meta_path: String) {
+fn remove_package(package_formatted: &str, package_meta_path: &str) {
     println!("\nRemoving: {package_formatted}");
 
     // Cycle through the lines of the metadata file
-    for entry in fs::read_to_string(package_meta_path.clone())
+    for entry in fs::read_to_string(package_meta_path)
         .unwrap_or_else(|_| panic!("Failed to retrieve contents of \"{package_meta_path}\""))
         .lines()
     {
@@ -125,9 +125,9 @@ fn remove_package(package_formatted: String, package_meta_path: String) {
         // Whether the path is a file or directory is detected through
         // `.is_file()`
         if Path::new(entry).is_file() {
-            remove_file(entry).unwrap_or_else(|_| panic!("Failed to remove file \"{entry}\""))
+            remove_file(entry).unwrap_or_else(|_| panic!("Failed to remove file \"{entry}\""));
         } else {
-            remove_dir_all(entry).unwrap_or_else(|_| panic!("Failed to remove \"{entry}\""))
+            remove_dir_all(entry).unwrap_or_else(|_| panic!("Failed to remove \"{entry}\""));
         }
 
         // Recreate the status of the path to properly detect if the file
@@ -136,21 +136,23 @@ fn remove_package(package_formatted: String, package_meta_path: String) {
 
         // Check if the path has been removed
         if path_to_remove_check.exists() {
-            panic!(
+            error(&format!(
                 "Failed to remove \"{}\": Path still remains",
-                path_to_remove_check.to_str().unwrap()
-            )
+                path_to_remove_check.display()
+            ))
         }
     }
 
     println!("    Removing package entry...");
 
     // Removes the metadata file
-    remove_file(&package_meta_path)
+    remove_file(package_meta_path)
         .unwrap_or_else(|_| panic!("Failed to remove \"{package_meta_path}\""));
 
     if Path::new(&package_meta_path).exists() {
-        panic!("Failed to remove \"{package_meta_path}\": File still remains")
+        error(&format!(
+            "Failed to remove \"{package_meta_path}\": File still remains"
+        ))
     }
 
     println!("Successfully removed {package_formatted}!");
@@ -198,7 +200,7 @@ fn remove_package(package_formatted: String, package_meta_path: String) {
 /// // package3-v0.0.3
 /// // ...
 /// ```
-fn list_packages(packages_to_list: Vec<String>) {
+fn list_packages(packages_to_list: &[String]) {
     println!("You are about to remove the following package(s):\n");
 
     let mut package_list: Vec<String> = Vec::new();
@@ -206,7 +208,7 @@ fn list_packages(packages_to_list: Vec<String>) {
     // Goes through and collect the package names and versions from their metadata
     // file located in `PACKAGE_INSTALL_PATH`. Then it writes the formatted name:
     // `package-version` to the buffer.
-    for package in &packages_to_list {
+    for package in packages_to_list {
         let package_meta_path = format!("{PACKAGE_INSTALL_PATH}{package}");
         let package_version = Meta::from(&package_meta_path).load_value("VERSION");
 
@@ -222,5 +224,5 @@ fn list_packages(packages_to_list: Vec<String>) {
     };
 
     // Display the collected packages and their versions
-    println!("{package_list_buffer}")
+    println!("{package_list_buffer}");
 }

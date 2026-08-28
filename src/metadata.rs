@@ -12,7 +12,7 @@ pub static PACKAGE_INSTALL_PATH: &str = "/usr/share/spf/packages/";
 /// [`Meta`] refers to the metadata found within either a .spf package or an already installed
 /// package that has its metadata stored at `/usr/share/spf/packages/` ([`PACKAGE_INSTALL_PATH`]).
 ///
-/// - 'meta_file_contents` refers to the actually text (the metadata itself) inside the file.
+/// - `meta_file_contents` refers to the actually text (the metadata itself) inside the file.
 /// - `meta_file` refers to the file to observe and search for metadata
 ///
 /// You can load package metadata by using [`Meta::from`], and then you can extract a value from
@@ -66,7 +66,7 @@ impl Meta {
 
     /// Extracts the desired value from the metadata loaded by [`Meta::from`].
     ///
-    /// Returned as [`String`]`.
+    /// Returned as [`String`].
     ///
     /// ```
     /// // Metadata file to load

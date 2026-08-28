@@ -55,12 +55,12 @@ fn main() {
         // Create package
         "create" | "-c" => {
             // `secondary_arg` is the file with the list of paths to package
-            create_spf_package(&secondary_arg, &tertiary_arg)
+            create_spf_package(&secondary_arg, &tertiary_arg);
         }
         // Install package
         "install" | "-i" => {
             // `secondary_arg` is the package to install
-            spf_install(secondary_arg)
+            spf_install(secondary_arg);
         }
         "remove" | "-r" => {
             // Manually supply args because I hate this. Allows you to
@@ -82,7 +82,7 @@ fn main() {
         }
         "list" | "-l" => {
             // `secondary_arg` is the optional string to search
-            list_packages(secondary_arg);
+            list_packages(&secondary_arg);
         }
 
         "template" | "-t" => {
@@ -92,7 +92,7 @@ fn main() {
 
         "inspect" | "-is" => {
             // `secondary_arg` is the package to inspect
-            inspect(secondary_arg);
+            inspect(&secondary_arg);
         }
 
         // Version is already mentioned at the top of this file
@@ -129,5 +129,5 @@ fn available_commands() {
               --version       Display spf version\n\
               --ignore-args   Force the installation of a package with a different architecture"
         )
-    )
+    );
 }

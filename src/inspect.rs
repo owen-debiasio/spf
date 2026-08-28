@@ -21,12 +21,15 @@ use crate::{
 ///
 /// If the package to inspect (`package` (as [`String`])) is a .spf package,
 /// send it to [`inspect_spf_package`]. Otherwise, send it to [`inspect_installed_package`].
-pub fn inspect(package: String) {
+pub fn inspect(package: &str) {
     if package.is_empty() {
         error("Please provide a .spf package or a package that is already installed.")
     }
 
-    if package.ends_with(".spf") {
+    if Path::new(&package)
+        .extension()
+        .is_some_and(|ext| ext.eq_ignore_ascii_case("spf"))
+    {
         inspect_spf_package(package);
     } else {
         inspect_installed_package(package);
@@ -43,17 +46,19 @@ pub fn inspect(package: String) {
 ///
 /// // The output is the contents of the `META` file
 /// ```
-fn inspect_spf_package(package_path: String) {
+fn inspect_spf_package(package_path: &str) {
     if !Path::new(&package_path).exists() {
         error(&format!(".spf package not found: {package_path}"))
     }
 
-    extract_archive(&package_path);
+    extract_archive(package_path);
 
-    let metadata_path = FileProperty::name(&package_path).replace(".spf", "/META");
+    let metadata_path = FileProperty::name(package_path).replace(".spf", "/META");
 
     if !Path::new(&metadata_path).exists() {
-        panic!("Extracted metadata file \"{metadata_path}\" not found")
+        error(&format!(
+            "Extracted metadata file \"{metadata_path}\" not found"
+        ))
     }
 
     // Retrieve the contents of the metadata file (`metadata_path`)
@@ -87,13 +92,13 @@ fn inspect_spf_package(package_path: String) {
 ///
 /// // The output is the contents of the `META` file
 /// ```
-fn inspect_installed_package(package: String) {
+fn inspect_installed_package(package: &str) {
     // The package metadata file to look/inspect
     let package_meta_path = &format!("{PACKAGE_INSTALL_PATH}{package}");
 
     // Check if the file exists
     if !Path::new(package_meta_path).exists() {
-        panic!("Metadata file not found: {package_meta_path}")
+        error(&format!("Metadata file not found: {package_meta_path}"))
     }
 
     // Retrieve the contents of the metadata file (`package_meta_path`)

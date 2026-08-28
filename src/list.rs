@@ -29,7 +29,7 @@ use crate::{
 ///
 /// // Every package installed that contains `spf` is listed
 /// ```
-pub fn list_packages(optional_string: String) {
+pub fn list_packages(optional_string: &str) {
     // where to search for packages
     let path_to_search = &format!("{PACKAGE_INSTALL_PATH}/*");
 
@@ -68,7 +68,7 @@ pub fn list_packages(optional_string: String) {
 
         // Checks if the entered optional string is in the package name.
         // If not, move to next package.
-        if !package_name.contains(&optional_string) {
+        if !package_name.contains(optional_string) {
             continue;
         }
 
@@ -96,7 +96,7 @@ pub fn list_packages(optional_string: String) {
 
     // List the packages collected
     for package in packages_to_list {
-        println!("{package}")
+        println!("{package}");
     }
 
     exit(0)

@@ -57,7 +57,7 @@ pub fn create_spf_package(package_config: &str, mut output_location: &str) {
     // file extension.
     output_location = output_location.trim_end_matches(".spf");
 
-    fs::create_dir_all(output_location)
+    create_dir_all(output_location)
         .unwrap_or_else(|_| panic!("Failed to create directory \"{output_location}\""));
 
     println!("Compiling files and directories...\n");
@@ -79,7 +79,10 @@ pub fn create_spf_package(package_config: &str, mut output_location: &str) {
     // Otherwise, append extension.
     let archive_name = &format!(
         "{output_location}{}",
-        if output_location.ends_with(".spf") {
+        if Path::new(output_location)
+            .extension()
+            .is_some_and(|ext| ext.eq_ignore_ascii_case("spf"))
+        {
             ""
         } else {
             ".spf"
@@ -99,12 +102,12 @@ pub fn create_spf_package(package_config: &str, mut output_location: &str) {
 
 /// Write to `project_meta_file`. The metadata written could be one of the following:
 ///
-/// - PROJECT_NAME (name of the package/project that is being packaged)
-/// - VERSION      (version of release)
-/// - DESCRIPTION  (description of the contents, package or project)
-/// - LICENSE      (license of the package)
-/// - AUTHORS      (authors behind the project/package)
-/// - ARCH         (packaged architecture)
+/// - `PROJECT_NAME` (name of the package/project that is being packaged)
+/// - `VERSION`      (version of release)
+/// - `DESCRIPTION`  (description of the contents, package or project)
+/// - `LICENSE`      (license of the package)
+/// - `AUTHORS`      (authors behind the project/package)
+/// - `ARCH`         (packaged architecture)
 ///
 /// Requires:
 /// - Contents of the package meta (`package_config_contents` ([`str`]))
@@ -135,6 +138,7 @@ fn write_project_meta_config(package_config_contents: &str, mut project_meta_fil
         //
         // Skip that entry. Otherwise, if the entry is the meta define closer,
         // stop parsing the metadata and skip to writing the buffer.
+        #[allow(clippy::needless_continue)]
         if entry == ":::META DEFINE START:::" || entry.is_empty() || entry.starts_with('#') {
             continue;
         } else if entry == ":::META DEFINE END:::" {
@@ -172,10 +176,10 @@ fn write_project_meta_config(package_config_contents: &str, mut project_meta_fil
         // - The metadata category found is not a valid category.
         panic!(
             "Failed to parse entry \"{entry}\": {}",
-            if !entry.contains(" = ") {
-                "Invalid entry formatting"
-            } else {
+            if entry.contains(" = ") {
                 "Invalid metadata category"
+            } else {
+                "Invalid entry formatting"
             }
         );
     }
@@ -190,11 +194,11 @@ fn write_project_meta_config(package_config_contents: &str, mut project_meta_fil
         .write_all(processed_meta_buffer.as_bytes())
         .unwrap_or_else(|_| {
             panic!("Failed to write package config metadata buffer to \"{project_meta_file:#?}\"")
-        })
+        });
 }
 
 /// Parse defined paths in `package_config_contents` ([`str`]) that are located under
-/// ":::PATH DEFINE START:::".
+/// `:::PATH DEFINE START:::`.
 ///
 /// The defined paths are formatted as such:
 /// `original/file/path:/location/to/install`
@@ -236,6 +240,7 @@ fn copy_package_paths(package_config_contents: &str, output_location: &str) {
         //
         // Skip that entry. Otherwise, if the entry is the meta define closer,
         // stop copying the paths then later proceed to packaging the copied files.
+        #[allow(clippy::needless_continue)]
         if path_start_header_is_read || entry.is_empty() || entry.starts_with('#') {
             continue;
         } else if entry == ":::PATH DEFINE END:::" {
@@ -250,11 +255,13 @@ fn copy_package_paths(package_config_contents: &str, output_location: &str) {
         // `file_destination` needs to start with '/' so the file destination has
         // a clearly defined root path.
         if !file_destination.starts_with('/') {
-            panic!("Path destination \"{file_destination}\" must start from the root")
+            error(&format!(
+                "Path destination \"{file_destination}\" must start from the root"
+            ))
         }
 
         // Double check that the entry is formatted correctly
-        check_path_entry(entry, original_file_path.clone(), file_destination.clone());
+        check_path_entry(entry, &original_file_path, &file_destination);
 
         // Get the file name of the path
         let original_file_name = FileProperty::name(&original_file_path);
@@ -265,13 +272,13 @@ fn copy_package_paths(package_config_contents: &str, output_location: &str) {
             continue;
         }
 
-        // Cleans up duplicate "/"'s to clean up the path string
+        // Cleans up duplicate `/`'s to clean up the path string
         let destination_of_file =
             format!("{output_location}/{file_destination}").replace("//", "/");
 
         // Get the directories that will be created
         let dirs_to_create =
-            get_dirs_to_create(output_location, destination_of_file, &original_file_name);
+            get_dirs_to_create(output_location, &destination_of_file, &original_file_name);
 
         // The missing directories that need to be created
         let destination_directories = &format!("{output_location}/{}", dirs_to_create.join("/"));
@@ -317,7 +324,9 @@ fn package_to_spf(output_location: &str, archive_name: &str) {
 
     // Check if the package actually exists.
     if !Path::new(archive_name).exists() {
-        panic!("Failed to package to \"{output_location}\": File not found")
+        error(&format!(
+            "Failed to package to \"{output_location}\": File not found"
+        ))
     }
 }
 
@@ -338,7 +347,7 @@ fn package_to_spf(output_location: &str, archive_name: &str) {
 ///
 /// check_path_entry(entry, original, destination)
 /// ```
-fn check_path_entry(entry: &str, original: String, destination: String) {
+fn check_path_entry(entry: &str, original: &str, destination: &str) {
     let paths_are_included = !original.is_empty() && !destination.is_empty();
 
     let entry_formatting_is_preserved = format!("{original}:{destination}") == entry;
@@ -346,7 +355,13 @@ fn check_path_entry(entry: &str, original: String, destination: String) {
     let paths_are_split = entry.contains(':');
 
     if !(paths_are_included && entry_formatting_is_preserved && paths_are_split) {
-        panic!("Failed to parse entry: {entry}")
+        // Due to the multiple reasons this could go wrong, display the status of all 3 checks
+        error(&format!(
+            "Failed to parse entry: {entry}: \
+            paths_are_included={paths_are_included}, \
+            entry_formatting_is_preserved={entry_formatting_is_preserved}, \
+            paths_are_split={paths_are_split}"
+        ))
     }
 }
 
@@ -367,7 +382,7 @@ fn check_path_entry(entry: &str, original: String, destination: String) {
 /// ```
 fn get_dirs_to_create(
     output_location: &str,
-    destination_of_file: String,
+    destination_of_file: &str,
     original_file_name: &str,
 ) -> Vec<String> {
     let mut dirs_to_create = vec![];
@@ -381,7 +396,7 @@ fn get_dirs_to_create(
         if dir == original_file_name {
             break;
         }
-        dirs_to_create.push(dir.to_string())
+        dirs_to_create.push(dir.to_string());
     }
 
     dirs_to_create

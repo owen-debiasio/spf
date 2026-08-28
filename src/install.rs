@@ -42,11 +42,15 @@ pub fn spf_install(mut spf_package_path: String) {
         error("To execute this action, please run spf as root.")
     }
 
+    let package_path_check = Path::new(&spf_package_path);
+
     // If a package isn't provided, or provided package isn't a `.spf`
     // package, prompt user to do so.
     if spf_package_path.is_empty()
-        || !spf_package_path.ends_with(".spf")
-        || !Path::new(&spf_package_path).exists()
+        || !package_path_check
+            .extension()
+            .is_some_and(|ext| ext.eq_ignore_ascii_case("spf"))
+        || !package_path_check.exists()
     {
         error("Please provide a .spf package")
     }
@@ -69,7 +73,7 @@ pub fn spf_install(mut spf_package_path: String) {
     let package_desc = package_metadata.clone().load_value("DESCRIPTION");
     let package_license = package_metadata.clone().load_value("LICENSE");
     let package_authors = package_metadata.clone().load_value("AUTHORS");
-    let package_arch = package_metadata.clone().load_value("ARCH");
+    let package_arch = package_metadata.load_value("ARCH");
 
     // The extracted path has no extension, so remove it
     let extracted_package_path = spf_package_path.replace(".spf", "");
@@ -92,11 +96,11 @@ pub fn spf_install(mut spf_package_path: String) {
 
     ask_user_to_install(
         package_name_formatted,
-        package_desc,
-        package_license,
-        package_authors,
-        package_arch,
-        extracted_package_path.clone(),
+        &package_desc,
+        &package_license,
+        &package_authors,
+        &package_arch,
+        &extracted_package_path,
     );
 
     // To be safe, move the metadata file. But check if it's already installed first.
@@ -118,15 +122,15 @@ pub fn spf_install(mut spf_package_path: String) {
 
     // Install all the necessary paths, including the metadata file.
     install_files(
-        packaged_metadata_file,
+        &packaged_metadata_file,
         package_meta_path_install_location,
-        extracted_package_path.clone(),
+        &extracted_package_path,
     );
 
     println!("Cleaning up...");
 
     // Clean up by removing the extracted package
-    fs::remove_dir_all(&extracted_package_path).unwrap_or_else(|_| {
+    remove_dir_all(&extracted_package_path).unwrap_or_else(|_| {
         panic!("Failed to clean up and remove directory \"{extracted_package_path}\"")
     });
 
@@ -149,11 +153,11 @@ pub fn spf_install(mut spf_package_path: String) {
 /// If user aborts, clean up by deleting `extracted_package_path` (stored as [`String`])
 fn ask_user_to_install(
     package_name_formatted: &str,
-    packaged_project_description: String,
-    packaged_project_license: String,
-    packaged_project_authors: String,
-    packaged_project_packaged_arch: String,
-    extracted_package_path: String,
+    packaged_project_description: &str,
+    packaged_project_license: &str,
+    packaged_project_authors: &str,
+    packaged_project_packaged_arch: &str,
+    extracted_package_path: &str,
 ) {
     // Display project info/metadata
     println!(
@@ -173,7 +177,7 @@ fn ask_user_to_install(
     println!();
 
     if proceed_to_install.trim().to_lowercase() != "y" {
-        fs::remove_dir_all(&extracted_package_path).unwrap_or_else(|_| {
+        remove_dir_all(extracted_package_path).unwrap_or_else(|_| {
             panic!("Failed to clean up and remove directory \"{extracted_package_path}\"")
         });
 
@@ -200,7 +204,7 @@ fn ask_user_to_install(
 /// The two versions retrieved look like normal numbers, and their sizes are compared to see
 /// what version is the newest.
 /// Examples: `v0.2.0` is retrieved as `020` (`20`), and `v1.4.2` is retrieved as `142`. `142`
-/// is larger than `20` which shows that `v1.4.2 is the newest version
+/// is larger than `20` which shows that `v1.4.2` is the newest version
 ///
 /// It then asks you if you want to update or downgrade the package, where
 /// you have to enter `y` in user input.
@@ -230,7 +234,9 @@ fn check_version(
 
         // Make sure that the versions were parsed correctly.
         if project_version_num == 0 || installed_version_num == 0 {
-            panic!("Failed to parse version in the installed package \"{package_meta_path}\"")
+            error(&format!(
+                "Failed to parse version in the installed package \"{package_meta_path}\""
+            ))
         }
 
         // Prompt the user if they actually want to update
@@ -320,21 +326,21 @@ fn parse_installed_and_packaged_versions(
 /// The paths that are modified are then marked/inscribed into
 /// the project metadata file (`project_meta_file` (as [`String`]))
 fn install_files(
-    packaged_metadata_file: String,
+    packaged_metadata_file: &str,
     package_meta_path_install_location: String,
-    extracted_package_path: String,
+    extracted_package_path: &str,
 ) {
     // Clean up by removing the extracted package (only used on errors)
     let cleanup = || -> () {
-        remove_dir_all(&extracted_package_path).expect("Failed to clean up extracted package");
+        remove_dir_all(extracted_package_path).expect("Failed to clean up extracted package");
     };
 
     // Copy the packaged metadata file to its install location
-    fs::copy(&packaged_metadata_file, &package_meta_path_install_location).
+    fs::copy(packaged_metadata_file, &package_meta_path_install_location).
         unwrap_or_else(|err| panic!("Failed to copy file \"{packaged_metadata_file}\" -> \"{package_meta_path_install_location}\": {err}"));
 
     // Remove the metadata file that was packaged
-    fs::remove_file(&packaged_metadata_file).expect("Failed to delete metadata file");
+    fs::remove_file(packaged_metadata_file).expect("Failed to delete metadata file");
 
     // Get the location to look for the paths to copy
     let path_to_search = &format!("./{extracted_package_path}/**/*");
@@ -364,7 +370,7 @@ fn install_files(
 
         // Path where `file_from_archive` will be copied to
         // `extracted_package_path` is removed to prevent conflicts
-        let file_destination = file_from_archive.replacen(&extracted_package_path, "", 1);
+        let file_destination = file_from_archive.replacen(extracted_package_path, "", 1);
 
         // `file_destination` as `Path`
         let path_to_create = Path::new(&file_destination);
@@ -372,8 +378,12 @@ fn install_files(
         // If the path to be copied is a directory, simply create it instead of copying it.
         if Path::new(&file_from_archive).is_dir() {
             create_dir_all(path_to_create).unwrap_or_else(|err| {
-                panic!("Failed to create directory \"{path_to_create:#?}\": {err}")
+                panic!(
+                    "Failed to create directory \"{}\": {err}",
+                    path_to_create.display()
+                )
             });
+
             continue;
         }
 
