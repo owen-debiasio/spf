@@ -8,6 +8,7 @@ use crate::{
     sys::{error, is_root},
 };
 use std::{
+    collections::HashSet,
     fs::{self, remove_dir_all, remove_file},
     io,
     path::Path,
@@ -30,30 +31,49 @@ use std::{
 ///
 /// remove_spf_package(packages_to_remove)
 /// ```
-pub fn remove_spf_package(packages_to_list: Vec<String>) {
+pub fn remove_spf_package(mut packages_to_remove: Vec<String>) {
     if !is_root() {
         error("To execute this action, please run spf as root.")
     }
 
-    if packages_to_list.is_empty() {
+    if packages_to_remove.is_empty() {
         error("Provide the package(s) you want to remove.")
     }
 
-    // Keeps track of when the ability to list packages
-    // is allowed.
-    //
-    // Once the packages finish listing, disable.
-    let mut enable_list_packages = true;
+    // Remove duplicate package entries
+    let package_set: HashSet<_> = packages_to_remove.drain(..).collect();
+    packages_to_remove.extend(package_set);
 
-    // Cycle through the packages
-    for package in &packages_to_list {
-        // The marker of where the package is installed. Also removed.
+    // Check if packages are installed
+    for package in &packages_to_remove {
         let package_meta_path = format!("{PACKAGE_INSTALL_PATH}{package}");
 
-        // Check if packages are installed
         if !Path::new(&package_meta_path).exists() {
             error(&format!("Package not installed: {package}"))
         }
+    }
+
+    list_packages(packages_to_remove.clone());
+
+    // Everything below here is to ask user for confirmation
+    // to remove their selected packages
+    println!("\nProceed?\n(Y/N)");
+
+    let mut proceed_to_remove = String::new();
+    io::stdin()
+        .read_line(&mut proceed_to_remove)
+        .expect("Failed to readline");
+
+    if proceed_to_remove.trim().to_lowercase() != "y" {
+        println!("Aborted");
+
+        exit(0)
+    }
+
+    // Cycle through the packages, and remove them
+    for package in packages_to_remove {
+        // The marker of where the package is installed. Also removed.
+        let package_meta_path = format!("{PACKAGE_INSTALL_PATH}{package}");
 
         // Retrieves the package version
         let package_version = Meta::from(&package_meta_path).load_value("VERSION");
@@ -61,31 +81,6 @@ pub fn remove_spf_package(packages_to_list: Vec<String>) {
         // The pretty-print of the package to be removed. Shows the package name
         // and the version.
         let package_formatted = format!("{package}-{package_version}");
-
-        // Check if the ability to list packages is enabled, and do such
-        // if so.
-        if enable_list_packages {
-            // Handles listing packages.
-            list_packages(packages_to_list.clone(), package_meta_path.clone());
-
-            // Everything below here is to ask user for confirmation
-            // to remove their selected packages
-            println!("\nProceed?\n(Y/N)");
-
-            let mut proceed_to_remove = String::new();
-            io::stdin()
-                .read_line(&mut proceed_to_remove)
-                .expect("Failed to readline");
-
-            if proceed_to_remove.trim().to_lowercase() != "y" {
-                println!("Aborted");
-
-                exit(0)
-            }
-
-            // Disable package listing
-            enable_list_packages = false
-        }
 
         // Finally remove the package
         remove_package(package_formatted, package_meta_path)
@@ -167,7 +162,7 @@ fn remove_package(package_formatted: String, package_meta_path: String) {
 /// packages.
 ///
 /// ```
-/// // NOTE: This is only if 5 or less packages are being listed
+/// // This is if 5 or less packages are being listed
 ///
 /// let packages = vec![
 ///     String::from("package1"),
@@ -175,13 +170,15 @@ fn remove_package(package_formatted: String, package_meta_path: String) {
 ///     String::from("package3")
 /// ];
 ///
-/// list_packages(packages, package_meta_path);
+/// list_packages(packages);
 ///
 /// // Output:
 /// // package1-v0.0.1 package2-v0.0.2 package3-v0.0.3 ...
 /// ```
 ///
-/// It also lists them dynamically:
+/// This is how the packages are listed if there are 5 or more
+/// packages.
+///
 /// ```
 /// let packages = vec![
 ///     String::from("package1"),
@@ -192,45 +189,38 @@ fn remove_package(package_formatted: String, package_meta_path: String) {
 ///     String::from("package6"),
 /// ];
 ///
-/// list_packages(packages, package_meta_path);
+/// list_packages(packages);
 ///
 /// // Output:
+///
 /// // package1-v0.0.1
 /// // package2-v0.0.2
 /// // package3-v0.0.3
 /// // ...
 /// ```
-fn list_packages(packages: Vec<String>, package_meta_path: String) {
+fn list_packages(packages_to_list: Vec<String>) {
     println!("You are about to remove the following package(s):\n");
 
-    // If there are less than 5 or less packages, list packages like this:
-    //
-    // package1-v0.0.1 package2-v0.0.2 package3-v0.0.3 ...
-    //
-    // Otherwise list them like this:
-    //
-    // package1-v0.0.1
-    // package2-v0.0.2
-    // package3-v0.0.3
-    // ...
-    if packages.len() > 6 {
-        // Cycle through packages
-        for package in &packages {
-            // Retrieve package version
-            let listed_package_version = Meta::from(&package_meta_path).load_value("VERSION");
+    let mut package_list: Vec<String> = Vec::new();
 
-            // List package
-            print!("{package}-{listed_package_version}")
-        }
-        println!();
-    } else {
-        // Cycle through packages
-        for package in &packages {
-            // Retrieve package version
-            let listed_package_version = Meta::from(&package_meta_path).load_value("VERSION");
+    // Goes through and collect the package names and versions from their metadata
+    // file located in `PACKAGE_INSTALL_PATH`. Then it writes the formatted name:
+    // `package-version` to the buffer.
+    for package in &packages_to_list {
+        let package_meta_path = format!("{PACKAGE_INSTALL_PATH}{package}");
+        let package_version = Meta::from(&package_meta_path).load_value("VERSION");
 
-            // List package
-            println!("{package}-{listed_package_version}")
-        }
+        package_list.push(format!("{package}-{package_version}"));
     }
+
+    // If there are more than 6 packages, separate them with `\n`. Otherwise,
+    // keep them aligned next to each other with ` `.
+    let package_list_buffer: String = if packages_to_list.len() > 5 {
+        package_list.join("\n")
+    } else {
+        package_list.join(" ")
+    };
+
+    // Display the collected packages and their versions
+    println!("{package_list_buffer}")
 }
