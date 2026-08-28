@@ -1,0 +1,4 @@
+* text=auto
+
+*.rs eol=lf
+*.bash eol=lf
