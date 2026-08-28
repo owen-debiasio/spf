@@ -193,3 +193,29 @@ pub fn return_args() -> Vec<String> {
 
     collected_args
 }
+
+/// A list of architectures that exist.
+///
+/// Stored as [[`str`]; 20]
+pub static LIST_OF_ARCHS: [&str; 20] = [
+    "x86",
+    "x86_64",
+    "arm",
+    "aarch64",
+    "m68k",
+    "mips",
+    "mips32r6",
+    "mips64",
+    "mips64r6",
+    "csky",
+    "powerpc",
+    "powerpc64",
+    "riscv32",
+    "riscv64",
+    "s390x",
+    "sparc",
+    "sparc64",
+    "hexagon",
+    "loongarch32",
+    "loongarch64",
+];
