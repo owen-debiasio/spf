@@ -30,6 +30,8 @@ It only contains the metadata categories, like as seen above.
 
 [See the available categories](#metadata-categories)
 
+### Sample .spf package metadata
+
 It looks like this:
 
 ```none
@@ -63,7 +65,7 @@ The first half contains the metadata categories, like as seen above.
 The defined paths are initialized by the header `:::PATH DEFINE START:::`.
 Anything below it is a path to a copied file.
 
-### Sample
+### Sample package marker metadata
 
 Here is a sample metadata marker file:
 
@@ -90,4 +92,4 @@ mentions which version of spf it was packaged with. It looks like this:
 
 ---
 
-Last Updated: `August 29, 2026 @ 3:10 PM EST`
+Last Updated: `August 29, 2026 @ 3:14 PM EST`
