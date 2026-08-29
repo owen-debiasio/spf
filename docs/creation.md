@@ -6,7 +6,29 @@ file to it's own directory.
 If copying finishes, it moves on to creating the actual `.spf` package, which is
 basically a renamed `.tar` file.
 
-## Structure of a .spf package
+## Initializing the Creation
+
+To create a `.spf` package you need a
+[package configuration file](package_config.md).
+
+If the format of the config file is correct, you will be able to run the
+creation command:
+
+`create <metadata file> <output directory>`
+
+### Example Packaging Command
+
+This loads the configuration file `package_config`, and the output package name
+will be `package_linux_x86_64.spf`.
+
+```bash
+spf create package_config package_linux_x86_64.spf
+```
+
+If created correctly, you should be able to find the file named:
+`package_linux_x86_64.spf`
+
+## Structure of a .spf Package
 
 The only file that is absolutely needed by spf is the metadata file, named as
 `META`.
@@ -14,7 +36,7 @@ The only file that is absolutely needed by spf is the metadata file, named as
 Otherwise, the package root is like the root of the filesystem. It can contain
 directories such as `/var`, `/usr`, and others.
 
-### Sample package contents
+### Sample Package Contents
 
 A basic graph or a `.spf` package is shown below
 
@@ -30,7 +52,7 @@ package_name-v0.1.0-x86_64
     L META
 ```
 
-## Recording the installation
+## Recording the Installation
 
 Once installed, the packages metadata is stored at a special local repository
 containing the metadata of installed packages.
@@ -43,4 +65,4 @@ You can read more about the package metadata at
 
 ---
 
-Last Updated: `August 29, 2026 @ 3:10 PM EST`
+Last Updated: `August 29, 2026 @ 3:45 PM EST`
