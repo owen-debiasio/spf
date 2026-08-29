@@ -76,3 +76,4 @@
 - Optimized the listing of packages when you are removing packages
 - Code optimizations
 - A list of supported architectures must be fulfilled when packaging.
+- The existence of command `tar` is checked during the init process
