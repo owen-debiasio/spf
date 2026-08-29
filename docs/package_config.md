@@ -71,7 +71,9 @@ LICENSE:/usr/share/licenses/package_name/LICENSE
 
 Here is a complete package config you are able to use as a template.
 
-> [!TIP] You can also generate a package config by running
+> [!TIP]  
+> You can also generate a package config by running:
+>
 > `$ template <(optional) output location>`
 
 ```none
