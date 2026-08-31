@@ -3,11 +3,9 @@
 //! Copyright (C) 2026 Owen Debiasio <owen.debiasio@gmail.com>
 //! SPDX-License-Identifier: GPL-3.0-or-later
 
-use std::{
-    fs::create_dir_all,
-    path::Path,
-    process::{Command, Stdio},
-};
+use std::{fs::create_dir_all, path::Path};
+
+use cmd_exists::cmd_exists;
 
 use crate::{
     metadata::PACKAGE_INSTALL_PATH,
@@ -45,14 +43,9 @@ pub fn init() {
         }
     }
 
-    // Check if `tar` is installed. Needed to extract/create archives.
-    if !Command::new("which")
-        .arg("tar")
-        .stdout(Stdio::null())
-        .status()
-        .expect("Failed to run `which` to detect program `tar`")
-        .success()
-    {
-        error("Command \"tar\" not found, please install it.")
+    // Check if command `tar is installed`
+    match cmd_exists("tar") {
+        Ok(()) => (),
+        Err(_) => error("Command \"tar\" not found! Please install it!"),
     }
 }
