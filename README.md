@@ -132,3 +132,5 @@ sudo cp target/release/spf /usr/bin/spf # Install to location (like /usr/local/b
   [rust-lang](https://github.com/rust-lang)
 - [self-replace](https://github.com/mitsuhiko/self-replace) by
   [mitsuhiko](https://github.com/mitsuhiko)
+- [cmd-exists](https://github.com/ejsch03/cmd-exists) by
+  [ejsch03](https://github.com/ejsch03)
