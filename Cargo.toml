@@ -21,6 +21,12 @@ redundant_clone = "warn"
 unnecessary_join = "warn"
 
 [package.metadata.deb]
+maintainer = "Owen DeBiasio <owen.debiasio@gmail.com>"
+copyright = "2026, Owen DeBiasio"
+license-file = ["LICENSE", "4"]
+depends = "$auto"
+section = "utility"
+priority = "optional"
 assets = [
     ["target/release/spf", "usr/bin/spf", "755"],
     ["LICENSE", "usr/share/doc/spf/copyright", "644"],
@@ -29,6 +35,9 @@ assets = [
 ]
 
 [package.metadata.generate-rpm]
+auto-req = "auto" 
+group = "Applications/Utilities"
+release = "1"
 assets = [
     { source = "target/release/spf", dest = "/usr/bin/spf", mode = "755" },
     { source = "LICENSE", dest = "/usr/share/doc/spf/copyright", mode = "644" },
