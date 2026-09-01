@@ -62,6 +62,9 @@
 
 ## v0.5.0
 
+<details>
+<summary>Show details</summary>
+
 - Improve code documentation
 - Improve how metadata is retrieved using a more efficient method
 - Add support for Linux `aarch64` systems
@@ -70,6 +73,8 @@
 - You will be blocked from installing a `.spf` package with a different
   architecture unless you pass `--ignore-args`.
 - Allow details to be hidden for older changelog entries
+
+</details>
 
 ## v0.5.1
 
