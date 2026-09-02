@@ -88,3 +88,4 @@
 
 - Optimized error handling
 - Code optimizations
+- Made command example output in `available_commands` look nicer
