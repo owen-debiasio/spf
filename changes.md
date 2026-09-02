@@ -83,3 +83,8 @@
 - A list of supported architectures must be fulfilled when packaging.
 - The existence of command `tar` is checked during the init process
 - Add better `.deb` and `.rpm` package metadata
+
+## v0.5.2
+
+- Optimized error handling
+- Code optimizations
