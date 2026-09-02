@@ -1,6 +1,6 @@
 [package]
 name = "spf"
-version = "0.5.1"
+version = "0.5.2"
 description = "Simple package format"
 edition = "2024"
 authors = ["Owen DeBiasio <owen.debiasio@gmail.com>"]
@@ -11,14 +11,9 @@ cmd-exists = "0.1.2"
 glob = "0.3.4"
 self-replace = "1.5.0"
 
-[lints.clippy]
-perf = { level = "deny", priority = -1 }
-pedantic = "warn"
-implicit_clone = "warn"
-inefficient_to_string = "warn"
-map_flatten = "warn"
-redundant_clone = "warn"
-unnecessary_join = "warn"
+[profile.release]
+lto = true
+codegen-units = 1
 
 [package.metadata.deb]
 maintainer = "Owen DeBiasio <owen.debiasio@gmail.com>"
@@ -35,7 +30,7 @@ assets = [
 ]
 
 [package.metadata.generate-rpm]
-auto-req = "auto" 
+auto-req = "auto"
 group = "Applications/Utilities"
 release = "1"
 assets = [
