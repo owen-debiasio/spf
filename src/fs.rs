@@ -48,12 +48,9 @@ impl FileProperty {
     /// println!("{file_ext}");
     /// ```
     pub fn extension(path: &str) -> Result<String, std::io::Error> {
-        Ok(PathBuf::from(path)
-            .extension()
-            .unwrap_or_default()
-            .to_str()
-            .unwrap_or_default()
-            .to_string())
+        let file_extension = PathBuf::from(path).display().to_string();
+
+        Ok(file_extension)
     }
 
     /// Get file name.
@@ -68,12 +65,9 @@ impl FileProperty {
     /// println!("{file_name}");
     /// ```
     pub fn name(path: &str) -> Result<String, std::io::Error> {
-        Ok(PathBuf::from(path)
-            .file_name()
-            .unwrap_or_default()
-            .to_str()
-            .unwrap()
-            .to_string())
+        let file_name = PathBuf::from(path).display().to_string();
+
+        Ok(file_name)
     }
 }
 

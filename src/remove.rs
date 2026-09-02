@@ -60,9 +60,7 @@ pub fn remove_spf_package(mut packages_to_remove: Vec<String>) -> Result<(), std
     println!("\nProceed?\n(Y/N)");
 
     let mut proceed_to_remove = String::new();
-    io::stdin()
-        .read_line(&mut proceed_to_remove)
-        .expect("Failed to readline");
+    io::stdin().read_line(&mut proceed_to_remove)?;
 
     if proceed_to_remove.trim().to_lowercase() != "y" {
         println!("Aborted");
@@ -83,7 +81,7 @@ pub fn remove_spf_package(mut packages_to_remove: Vec<String>) -> Result<(), std
         let package_formatted = format!("{package}-{package_version}");
 
         // Finally remove the package
-        remove_package(&package_formatted, &package_meta_path);
+        remove_package(&package_formatted, &package_meta_path)?;
     }
 
     println!("\nSuccessfully removed package(s)!");
@@ -105,14 +103,11 @@ pub fn remove_spf_package(mut packages_to_remove: Vec<String>) -> Result<(), std
 ///
 /// remove_package(package_formatted, package_meta_path)
 /// ```
-fn remove_package(package_formatted: &str, package_meta_path: &str) {
+fn remove_package(package_formatted: &str, package_meta_path: &str) -> Result<(), std::io::Error> {
     println!("\nRemoving: {package_formatted}");
 
     // Cycle through the lines of the metadata file
-    for entry in fs::read_to_string(package_meta_path)
-        .unwrap_or_else(|_| panic!("Failed to retrieve contents of \"{package_meta_path}\""))
-        .lines()
-    {
+    for entry in fs::read_to_string(package_meta_path)?.lines() {
         // If the entry isn't an obvious path, skip to next line.
         if !entry.starts_with('/') {
             continue;
@@ -125,9 +120,9 @@ fn remove_package(package_formatted: &str, package_meta_path: &str) {
         // Whether the path is a file or directory is detected through
         // `.is_file()`
         if Path::new(entry).is_file() {
-            remove_file(entry).unwrap_or_else(|_| panic!("Failed to remove file \"{entry}\""));
+            remove_file(entry)?;
         } else {
-            remove_dir_all(entry).unwrap_or_else(|_| panic!("Failed to remove \"{entry}\""));
+            remove_dir_all(entry)?;
         }
 
         // Recreate the status of the path to properly detect if the file
@@ -146,8 +141,7 @@ fn remove_package(package_formatted: &str, package_meta_path: &str) {
     println!("    Removing package entry...");
 
     // Removes the metadata file
-    remove_file(package_meta_path)
-        .unwrap_or_else(|_| panic!("Failed to remove \"{package_meta_path}\""));
+    remove_file(package_meta_path)?;
 
     if Path::new(&package_meta_path).exists() {
         error(&format!(
@@ -156,6 +150,8 @@ fn remove_package(package_formatted: &str, package_meta_path: &str) {
     }
 
     println!("Successfully removed {package_formatted}!");
+
+    Ok(())
 }
 
 /// Lists the packages that are going to be removed (`packages`).

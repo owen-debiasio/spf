@@ -60,8 +60,7 @@ pub fn create_spf_package(
     // file extension.
     output_location = output_location.trim_end_matches(".spf");
 
-    create_dir_all(output_location)
-        .unwrap_or_else(|_| panic!("Failed to create directory \"{output_location}\""));
+    create_dir_all(output_location)?;
 
     println!("Compiling files and directories...\n");
 
@@ -332,13 +331,14 @@ fn copy_package_paths(
 /// // Archive `package.spf` should be located where `output_location` is
 /// ```
 fn package_to_spf(output_location: &str, archive_name: &str) -> Result<(), std::io::Error> {
+    let directory_to_compress = &FileProperty::name(archive_name)?.replace(".spf", "");
+
     // Get parent directory
     let parent_directories = &Path::new(output_location)
         .parent()
-        .unwrap()
-        .to_string_lossy();
-
-    let directory_to_compress = &FileProperty::name(archive_name)?.replace(".spf", "");
+        .expect("Failed to retrieve parent directories")
+        .display()
+        .to_string();
 
     // Take the directories (`parent_directories`) inside `directory_to_compress`,
     // then package them to whatever `archive_name` is.

@@ -137,9 +137,7 @@ pub fn spf_install(mut spf_package_path: String) -> Result<(), std::io::Error> {
     println!("Cleaning up...");
 
     // Clean up by removing the extracted package
-    remove_dir_all(&extracted_package_path).unwrap_or_else(|_| {
-        panic!("Failed to clean up and remove directory \"{extracted_package_path}\"")
-    });
+    remove_dir_all(&extracted_package_path)?;
 
     println!("\nSuccessfully installed {package_name}-{package_version}!");
 
@@ -333,8 +331,7 @@ fn install_files(
     extracted_package_path: &str,
 ) -> Result<(), std::io::Error> {
     // Copy the packaged metadata file to its install location
-    fs::copy(packaged_metadata_file, &package_meta_path_install_location).
-        unwrap_or_else(|err| panic!("Failed to copy file \"{packaged_metadata_file}\" -> \"{package_meta_path_install_location}\": {err}"));
+    fs::copy(packaged_metadata_file, &package_meta_path_install_location)?;
 
     // Remove the metadata file that was packaged
     fs::remove_file(packaged_metadata_file)?;
@@ -354,11 +351,9 @@ fn install_files(
     project_meta_file.write_all(b"\n:::PATH DEFINE START:::\n")?;
 
     // Go through and install packaged paths
-    for found_path in glob(path_to_search)
-        .unwrap_or_else(|_| panic!("Failed to collect directories at \"{path_to_search}\""))
-    {
+    for found_path in glob(path_to_search).expect("Failed to collect directories") {
         // File/folder to be copied
-        let file_from_archive = found_path?.to_str().unwrap().to_string().clone();
+        let file_from_archive = found_path?.display().to_string();
 
         // Path where `file_from_archive` will be copied to
         // `extracted_package_path` is removed to prevent conflicts
