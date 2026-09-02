@@ -5,8 +5,8 @@ Some stuff to help with development
 ## Target(s)
 
 > [!NOTE]  
-> You'll need to install the needed linkers.
-> See [.cargo/config.toml](.cargo/config.toml) if you are using an `x86_64` system
+> You'll need to install the needed linkers. See
+> [.cargo/config.toml](.cargo/config.toml) if you are using an `x86_64` system
 
 - x86_64-unknown-linux-gnu
 - aarch64-unknown-linux-gnu
