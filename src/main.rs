@@ -114,20 +114,17 @@ fn main() -> Result<(), std::io::Error> {
 /// All this does is list the available commands, flags, and args for spf. Does nothing else.
 fn available_commands() {
     println!(
-        "{}",
-        format_args!(
-            "\
-            Available Commands:\n\n\
-              create     <metadata file> <output directory>   Create package\n\
-              install    <.spf package location>              Install package\n\
-              remove     <package to uninstall>               Uninstall package\n\
-              list       <(optional) string to match>         List installed packages\n\
-              template   <(optional) output location>         Generate package metadata template\n\
-              inspect    <package to inspect>                 Inspect metadata of a package
-            \n\
-            Available options:\n\
-              --version       Display spf version\n\
-              --ignore-args   Force the installation of a package with a different architecture"
-        )
+        "\
+        Available Commands:\n\n  \
+          create     <metadata file> <output directory>   Create package\n  \
+          install    <.spf package location>              Install package\n  \
+          remove     <package to uninstall>               Uninstall package\n  \
+          list       <(optional) string to match>         List installed packages\n  \
+          template   <(optional) output location>         Generate package metadata template\n  \
+          inspect    <package to inspect>                 Inspect metadata of a package
+        \n\
+        Available options:\n\n \
+          --version       Display spf version\n \
+          --ignore-args   Force the installation of a package with a different architecture"
     );
 }
