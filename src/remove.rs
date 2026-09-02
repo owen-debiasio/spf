@@ -31,8 +31,8 @@ use std::{
 ///
 /// remove_spf_package(packages_to_remove)
 /// ```
-pub fn remove_spf_package(mut packages_to_remove: Vec<String>) {
-    if !is_root() {
+pub fn remove_spf_package(mut packages_to_remove: Vec<String>) -> Result<(), std::io::Error> {
+    if !is_root()? {
         error("To execute this action, please run spf as root.")
     }
 
@@ -53,7 +53,7 @@ pub fn remove_spf_package(mut packages_to_remove: Vec<String>) {
         }
     }
 
-    list_packages(&packages_to_remove);
+    list_packages(&packages_to_remove)?;
 
     // Everything below here is to ask user for confirmation
     // to remove their selected packages
@@ -76,7 +76,7 @@ pub fn remove_spf_package(mut packages_to_remove: Vec<String>) {
         let package_meta_path = format!("{PACKAGE_INSTALL_PATH}{package}");
 
         // Retrieves the package version
-        let package_version = Meta::from(&package_meta_path).load_value("VERSION");
+        let package_version = Meta::from(&package_meta_path)?.load_value("VERSION")?;
 
         // The pretty-print of the package to be removed. Shows the package name
         // and the version.
@@ -200,7 +200,7 @@ fn remove_package(package_formatted: &str, package_meta_path: &str) {
 /// // package3-v0.0.3
 /// // ...
 /// ```
-fn list_packages(packages_to_list: &[String]) {
+fn list_packages(packages_to_list: &[String]) -> Result<(), std::io::Error> {
     println!("You are about to remove the following package(s):\n");
 
     let mut package_list: Vec<String> = Vec::new();
@@ -210,7 +210,7 @@ fn list_packages(packages_to_list: &[String]) {
     // `package-version` to the buffer.
     for package in packages_to_list {
         let package_meta_path = format!("{PACKAGE_INSTALL_PATH}{package}");
-        let package_version = Meta::from(&package_meta_path).load_value("VERSION");
+        let package_version = Meta::from(&package_meta_path)?.load_value("VERSION")?;
 
         package_list.push(format!("{package}-{package_version}"));
     }
@@ -225,4 +225,6 @@ fn list_packages(packages_to_list: &[String]) {
 
     // Display the collected packages and their versions
     println!("{package_list_buffer}");
+
+    Ok(())
 }

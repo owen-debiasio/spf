@@ -33,12 +33,15 @@ use crate::{
 /// A `.spf` package is packaged as a `.spf` archive, and inside, there is a metadata file
 /// (`META`) stored in the root directory. Every other file/directory is placed there by the
 /// user.
-pub fn create_spf_package(package_config: &str, mut output_location: &str) {
+pub fn create_spf_package(
+    package_config: &str,
+    mut output_location: &str,
+) -> Result<(), std::io::Error> {
     // Check if the package config file name is valid, whether it
     // has extension or if it's empty.
     // If the file has an extension or is not provided / is empty,
     // exit.
-    if !FileProperty::extension(package_config).is_empty() || package_config.is_empty() {
+    if !FileProperty::extension(package_config)?.is_empty() || package_config.is_empty() {
         error("Please provide a text file with no file extension!")
 
     // Check if package config exists
@@ -47,7 +50,7 @@ pub fn create_spf_package(package_config: &str, mut output_location: &str) {
     }
 
     // Make sure the output file is a .spf file
-    if !FileProperty::extension(output_location).ends_with("spf") {
+    if !FileProperty::extension(output_location)?.ends_with("spf") {
         error(&format!(
             "Your provided output location (\"{output_location}\") must be a .spf file."
         ))
@@ -62,15 +65,14 @@ pub fn create_spf_package(package_config: &str, mut output_location: &str) {
 
     println!("Compiling files and directories...\n");
 
-    let package_config_contents = &*fs::read_to_string(package_config)
-        .unwrap_or_else(|_| panic!("Failed to open file \"{package_config}\""));
+    let package_config_contents = &*fs::read_to_string(package_config)?;
 
-    let project_meta_file_path = File::create(format!("{output_location}/META")).unwrap();
+    let project_meta_file_path = File::create(format!("{output_location}/META"))?;
 
     // Collect the package metadata, and write them to the packages metadata file (`project_meta_file_path`)
-    write_project_meta_config(package_config_contents, &project_meta_file_path);
+    write_project_meta_config(package_config_contents, &project_meta_file_path)?;
 
-    copy_package_paths(package_config_contents, output_location);
+    copy_package_paths(package_config_contents, output_location)?;
 
     // Zip the output folder into a .spf package
     println!("Packaging...");
@@ -89,11 +91,10 @@ pub fn create_spf_package(package_config: &str, mut output_location: &str) {
         }
     );
 
-    package_to_spf(output_location, archive_name);
+    package_to_spf(output_location, archive_name)?;
 
     // Cleanup directory that was compressed
-    fs::remove_dir_all(output_location)
-        .unwrap_or_else(|_| panic!("Failed to clean up packaging at \"{output_location}\""));
+    fs::remove_dir_all(output_location)?;
 
     println!("\nDone! Packaged to: \"./{archive_name}\"");
 
@@ -121,7 +122,10 @@ pub fn create_spf_package(package_config: &str, mut output_location: &str) {
 ///
 /// // The metadata should be written to `project_meta_file`
 /// ```
-fn write_project_meta_config(package_config_contents: &str, mut project_meta_file: &File) {
+fn write_project_meta_config(
+    package_config_contents: &str,
+    mut project_meta_file: &File,
+) -> Result<(), std::io::Error> {
     // Lets users know if a package was packaged using an older spf version. Only stored
     // internally.
     let spf_packager_header = &format!("### PACKAGED WITH SPF {VERSION} ###\n");
@@ -138,7 +142,6 @@ fn write_project_meta_config(package_config_contents: &str, mut project_meta_fil
         //
         // Skip that entry. Otherwise, if the entry is the meta define closer,
         // stop parsing the metadata and skip to writing the buffer.
-        #[allow(clippy::needless_continue)]
         if entry == ":::META DEFINE START:::" || entry.is_empty() || entry.starts_with('#') {
             continue;
         } else if entry == ":::META DEFINE END:::" {
@@ -147,10 +150,7 @@ fn write_project_meta_config(package_config_contents: &str, mut project_meta_fil
 
         // Get the category of metadata. Could be "PROJECT_NAME", "VERSION", "LICENSE",
         // and others.
-        let meta_category = entry
-            .split(" = ")
-            .next()
-            .unwrap_or_else(|| panic!("Failed to parse entry \"{entry}\""));
+        let meta_category = entry.split(" = ").next().unwrap_or_default();
 
         // Verify that the detected metadata category is valid. You can see the
         // available categories in the `matches!` block.
@@ -173,7 +173,11 @@ fn write_project_meta_config(package_config_contents: &str, mut project_meta_fil
             //
             // An architecture like `x86_` is disallowed.
             if meta_category == "ARCH" {
-                let detected_arch = entry.split('=').next_back().unwrap().trim_start();
+                let detected_arch = entry
+                    .split('=')
+                    .next_back()
+                    .unwrap_or_default()
+                    .trim_start();
 
                 if !LIST_OF_ARCHS.contains(&detected_arch) {
                     error(&format!(
@@ -209,11 +213,9 @@ fn write_project_meta_config(package_config_contents: &str, mut project_meta_fil
     let processed_meta_buffer = project_meta_buffer.join("\n");
 
     // Finally write the buffer to `project_meta_file`
-    project_meta_file
-        .write_all(processed_meta_buffer.as_bytes())
-        .unwrap_or_else(|_| {
-            panic!("Failed to write package config metadata buffer to \"{project_meta_file:#?}\"")
-        });
+    project_meta_file.write_all(processed_meta_buffer.as_bytes())?;
+
+    Ok(())
 }
 
 /// Parse defined paths in `package_config_contents` ([`str`]) that are located under
@@ -231,7 +233,10 @@ fn write_project_meta_config(package_config_contents: &str, mut project_meta_fil
 ///
 /// copy_package_paths(package_config_contents, output_location);
 /// ```
-fn copy_package_paths(package_config_contents: &str, output_location: &str) {
+fn copy_package_paths(
+    package_config_contents: &str,
+    output_location: &str,
+) -> Result<(), std::io::Error> {
     // This easily allows the parser to skip the project metadata, which
     // has already been parsed thanks to `write_project_meta_config()`.
     let mut enable_skipping_project_meta = true;
@@ -259,7 +264,6 @@ fn copy_package_paths(package_config_contents: &str, output_location: &str) {
         //
         // Skip that entry. Otherwise, if the entry is the meta define closer,
         // stop copying the paths then later proceed to packaging the copied files.
-        #[allow(clippy::needless_continue)]
         if path_start_header_is_read || entry.is_empty() || entry.starts_with('#') {
             continue;
         } else if entry == ":::PATH DEFINE END:::" {
@@ -268,8 +272,8 @@ fn copy_package_paths(package_config_contents: &str, output_location: &str) {
 
         // Split the parsed path configs into their respective values.
         // `original_file_path` will be copied to `file_destination`
-        let original_file_path = entry.split(':').next().unwrap().to_string();
-        let file_destination = entry.split(':').next_back().unwrap().to_string();
+        let original_file_path = entry.split(':').next().unwrap_or_default().to_string();
+        let file_destination = entry.split(':').next_back().unwrap_or_default().to_string();
 
         // `file_destination` needs to start with '/' so the file destination has
         // a clearly defined root path.
@@ -280,10 +284,10 @@ fn copy_package_paths(package_config_contents: &str, output_location: &str) {
         }
 
         // Double check that the entry is formatted correctly
-        check_path_entry(entry, &original_file_path, &file_destination);
+        check_path_entry(entry, &original_file_path, &file_destination)?;
 
         // Get the file name of the path
-        let original_file_name = FileProperty::name(&original_file_path);
+        let original_file_name = FileProperty::name(&original_file_path)?;
 
         // Here to avoid copying files that don't exist to directories
         // that are supposed to be empty
@@ -308,13 +312,12 @@ fn copy_package_paths(package_config_contents: &str, output_location: &str) {
         println!("Copying: {original_file_path} -> {final_file_destination}");
 
         // Create the directories listed in `destination_directory`
-        create_dir_all(destination_directories)
-            .unwrap_or_else(|_| panic!("Failed to create \"{destination_directories}\""));
+        create_dir_all(destination_directories)?;
 
         // Copy `original_file_path` to `final_file_destination`
-        fs::copy(&original_file_path, final_file_destination)
-            .unwrap_or_else(|_| panic!("Failed to copy file \"{original_file_path}\""));
+        fs::copy(&original_file_path, final_file_destination)?;
     }
+    Ok(())
 }
 
 /// Take the copied directories located in `output_location` ([`str`]) and compress
@@ -328,18 +331,18 @@ fn copy_package_paths(package_config_contents: &str, output_location: &str) {
 ///
 /// // Archive `package.spf` should be located where `output_location` is
 /// ```
-fn package_to_spf(output_location: &str, archive_name: &str) {
+fn package_to_spf(output_location: &str, archive_name: &str) -> Result<(), std::io::Error> {
     // Get parent directory
     let parent_directories = &Path::new(output_location)
         .parent()
         .unwrap()
         .to_string_lossy();
 
-    let directory_to_compress = &FileProperty::name(archive_name).replace(".spf", "");
+    let directory_to_compress = &FileProperty::name(archive_name)?.replace(".spf", "");
 
     // Take the directories (`parent_directories`) inside `directory_to_compress`,
     // then package them to whatever `archive_name` is.
-    create_archive_of_dir(parent_directories, archive_name, directory_to_compress);
+    create_archive_of_dir(parent_directories, archive_name, directory_to_compress)?;
 
     // Check if the package actually exists.
     if !Path::new(archive_name).exists() {
@@ -347,6 +350,8 @@ fn package_to_spf(output_location: &str, archive_name: &str) {
             "Failed to package to \"{output_location}\": File not found"
         ))
     }
+
+    Ok(())
 }
 
 /// Check if:
@@ -366,7 +371,7 @@ fn package_to_spf(output_location: &str, archive_name: &str) {
 ///
 /// check_path_entry(entry, original, destination)
 /// ```
-fn check_path_entry(entry: &str, original: &str, destination: &str) {
+fn check_path_entry(entry: &str, original: &str, destination: &str) -> Result<(), std::io::Error> {
     let paths_are_included = !original.is_empty() && !destination.is_empty();
 
     let entry_formatting_is_preserved = format!("{original}:{destination}") == entry;
@@ -382,6 +387,8 @@ fn check_path_entry(entry: &str, original: &str, destination: &str) {
             paths_are_split={paths_are_split}"
         ))
     }
+
+    Ok(())
 }
 
 /// Get a list of the directories that are needed to be created inside

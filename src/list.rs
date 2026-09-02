@@ -29,7 +29,7 @@ use crate::{
 ///
 /// // Every package installed that contains `spf` is listed
 /// ```
-pub fn list_packages(optional_string: &str) {
+pub fn list_packages(optional_string: &str) -> Result<(), std::io::Error> {
     // where to search for packages
     let path_to_search = &format!("{PACKAGE_INSTALL_PATH}/*");
 
@@ -62,9 +62,9 @@ pub fn list_packages(optional_string: &str) {
         let package_metadata_path = package_path_raw.unwrap().to_str().unwrap().to_string();
 
         // Name of the package to be listed
-        let package_meta = Meta::from(&package_metadata_path);
+        let package_meta = Meta::from(&package_metadata_path)?;
 
-        let package_name = package_meta.clone().load_value("PROJECT_NAME").clone();
+        let package_name = package_meta.clone().load_value("PROJECT_NAME")?.clone();
 
         // Checks if the entered optional string is in the package name.
         // If not, move to next package.
@@ -73,8 +73,8 @@ pub fn list_packages(optional_string: &str) {
         }
 
         // Retrieve the package version and description
-        let package_version = package_meta.clone().load_value("VERSION");
-        let package_desc = package_meta.load_value("DESCRIPTION").clone();
+        let package_version = package_meta.clone().load_value("VERSION")?;
+        let package_desc = package_meta.load_value("DESCRIPTION")?.clone();
 
         // Add the package name, version, and description
         packages_to_list.push(format!(

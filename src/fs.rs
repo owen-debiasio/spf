@@ -18,7 +18,7 @@ use std::{path::PathBuf, process::Command};
 ///
 /// ```
 /// let file_path = "file.extension"
-/// let file_ext = FileProperty::extension(file_path);
+/// let file_ext = FileProperty::extension(file_path)?;
 ///
 /// // Output should be `extension`
 /// println!("{file_ext}");
@@ -28,7 +28,7 @@ use std::{path::PathBuf, process::Command};
 ///
 /// ```
 /// let file_path = "file.extension"
-/// let file_name = FileProperty::name(file_path);
+/// let file_name = FileProperty::name(file_path)?;
 ///
 /// // Output should be `file`
 /// println!("{file_name}");
@@ -42,18 +42,18 @@ impl FileProperty {
     ///
     /// ```
     /// let file_path = "file.extension"
-    /// let file_ext = FileProperty::extension(file_path);
+    /// let file_ext = FileProperty::extension(file_path)?;
     ///
     /// // Output should be `extension`
     /// println!("{file_ext}");
     /// ```
-    pub fn extension(path: &str) -> String {
-        PathBuf::from(path)
+    pub fn extension(path: &str) -> Result<String, std::io::Error> {
+        Ok(PathBuf::from(path)
             .extension()
             .unwrap_or_default()
             .to_str()
-            .unwrap_or_else(|| panic!("Failed to retrieve file extension from \"{path}\""))
-            .to_string()
+            .unwrap_or_default()
+            .to_string())
     }
 
     /// Get file name.
@@ -62,18 +62,18 @@ impl FileProperty {
     ///
     /// ```
     /// let file_path = "file.extension"
-    /// let file_name = FileProperty::name(file_path);
+    /// let file_name = FileProperty::name(file_path)?;
     ///
     /// // Output should be `file`
     /// println!("{file_name}");
     /// ```
-    pub fn name(path: &str) -> String {
-        PathBuf::from(path)
+    pub fn name(path: &str) -> Result<String, std::io::Error> {
+        Ok(PathBuf::from(path)
             .file_name()
-            .unwrap_or_else(|| panic!("Failed to get name of file \"{path}\""))
+            .unwrap_or_default()
             .to_str()
             .unwrap()
-            .to_string()
+            .to_string())
     }
 }
 
@@ -95,17 +95,20 @@ impl FileProperty {
 ///
 /// create_archive_of_dir(parent_directories, archive, folder_to_compress)
 /// ```
-pub fn create_archive_of_dir(parent_directories: &str, output: &str, directory: &str) {
+pub fn create_archive_of_dir(
+    parent_directories: &str,
+    output: &str,
+    directory: &str,
+) -> Result<(), std::io::Error> {
     // You gotta make this because if `parent_directories` it will prob shit itself smh
     if parent_directories.is_empty() {
         Command::new("tar")
             .arg("-cf")
             .arg(output)
             .arg(directory)
-            .output()
-            .unwrap_or_else(|_| {
-                panic!("Failed to create archive of dir \"{directory}\" to \"{output}\"")
-            });
+            .output()?;
+
+        Ok(())
     } else {
         Command::new("tar")
             .arg("-C")
@@ -113,10 +116,9 @@ pub fn create_archive_of_dir(parent_directories: &str, output: &str, directory: 
             .arg("-cf")
             .arg(output)
             .arg(directory)
-            .output()
-            .unwrap_or_else(|_| {
-                panic!("Failed to create archive of dir \"{directory}\" to \"{output}\"")
-            });
+            .output()?;
+
+        Ok(())
     }
 }
 
@@ -134,10 +136,8 @@ pub fn create_archive_of_dir(parent_directories: &str, output: &str, directory: 
 /// // Extracted directory `archive` should be located in the current working
 /// // directory
 /// ```
-pub fn extract_archive(path: &str) {
-    Command::new("tar")
-        .arg("-xf")
-        .arg(path)
-        .output()
-        .unwrap_or_else(|_| panic!("Failed to extract archive \"{path}\""));
+pub fn extract_archive(path: &str) -> Result<(), std::io::Error> {
+    Command::new("tar").arg("-xf").arg(path).output()?;
+
+    Ok(())
 }

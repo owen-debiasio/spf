@@ -21,7 +21,7 @@ use crate::{
 ///
 /// If the package to inspect (`package` (as [`String`])) is a .spf package,
 /// send it to [`inspect_spf_package`]. Otherwise, send it to [`inspect_installed_package`].
-pub fn inspect(package: &str) {
+pub fn inspect(package: &str) -> Result<(), std::io::Error> {
     if package.is_empty() {
         error("Please provide a .spf package or a package that is already installed.")
     }
@@ -30,10 +30,12 @@ pub fn inspect(package: &str) {
         .extension()
         .is_some_and(|ext| ext.eq_ignore_ascii_case("spf"))
     {
-        inspect_spf_package(package);
+        inspect_spf_package(package)?;
     } else {
-        inspect_installed_package(package);
+        inspect_installed_package(package)?;
     }
+
+    Ok(())
 }
 
 /// Inspects the metadata of a .spf package (`package_path` as [`String`]).
@@ -46,14 +48,14 @@ pub fn inspect(package: &str) {
 ///
 /// // The output is the contents of the `META` file
 /// ```
-fn inspect_spf_package(package_path: &str) {
+fn inspect_spf_package(package_path: &str) -> Result<(), std::io::Error> {
     if !Path::new(&package_path).exists() {
         error(&format!(".spf package not found: {package_path}"))
     }
 
-    extract_archive(package_path);
+    extract_archive(package_path)?;
 
-    let metadata_path = FileProperty::name(package_path).replace(".spf", "/META");
+    let metadata_path = FileProperty::name(package_path)?.replace(".spf", "/META");
 
     if !Path::new(&metadata_path).exists() {
         error(&format!(
@@ -62,8 +64,7 @@ fn inspect_spf_package(package_path: &str) {
     }
 
     // Retrieve the contents of the metadata file (`metadata_path`)
-    let meta_contents = fs::read_to_string(&metadata_path)
-        .unwrap_or_else(|_| panic!("Failed to retrieve contents of \"{metadata_path}\""));
+    let meta_contents = fs::read_to_string(&metadata_path)?;
 
     // Shows the inspected contents
     println!(
@@ -76,8 +77,7 @@ fn inspect_spf_package(package_path: &str) {
     let extracted_contents = metadata_path.trim_end_matches("/META");
 
     // Clean up by removing extracted directory (`extracted_contents`)
-    remove_dir_all(extracted_contents)
-        .unwrap_or_else(|_| panic!("Failed to remove \"{extracted_contents}\""));
+    remove_dir_all(extracted_contents)?;
 
     exit(0)
 }
@@ -92,7 +92,7 @@ fn inspect_spf_package(package_path: &str) {
 ///
 /// // The output is the contents of the `META` file
 /// ```
-fn inspect_installed_package(package: &str) {
+fn inspect_installed_package(package: &str) -> Result<(), std::io::Error> {
     // The package metadata file to look/inspect
     let package_meta_path = &format!("{PACKAGE_INSTALL_PATH}{package}");
 
@@ -102,8 +102,7 @@ fn inspect_installed_package(package: &str) {
     }
 
     // Retrieve the contents of the metadata file (`package_meta_path`)
-    let meta_contents = fs::read_to_string(package_meta_path)
-        .unwrap_or_else(|_| panic!("Failed to retrieve contents of \"{package_meta_path}\""));
+    let meta_contents = fs::read_to_string(package_meta_path)?;
 
     // Display the contents.
     println!(

@@ -16,7 +16,7 @@ use std::{
 /// Example: Retrieve the user's `HOME` directory
 ///
 /// ```
-/// let home = Env::home();
+/// let home = Env::home()?;
 ///
 /// // Displays whatever your home dir is (something like `/home/username/`)
 /// println!("{home}");
@@ -24,7 +24,7 @@ use std::{
 ///
 /// Example: Retrieve the user's name
 /// ```
-/// let username = Env::name();
+/// let username = Env::name()?;
 ///
 /// // Displays whatever your username is.
 /// println!("{username}");
@@ -35,25 +35,25 @@ impl Env {
     /// Retrieves the user's `HOME` directory
     ///
     /// ```
-    /// let home = Env::home();
+    /// let home = Env::home()?;
     ///
     /// // Displays whatever your home dir is (something like `/home/username/`)
     /// println!("{home}");
     /// ```
-    pub fn home() -> String {
-        var("HOME").expect("Failed to retrieve env var \"USER\"")
+    pub fn home() -> Result<String, std::io::Error> {
+        Ok(var("HOME").unwrap_or_default())
     }
 
     /// Retrieves the user's username
     ///
     /// ```
-    /// let username = Env::name();
+    /// let username = Env::name()?;
     ///
     /// // Displays whatever your username is.
     /// println!("{username}");
     /// ```
-    pub fn name() -> String {
-        var("USER").expect("Failed to retrieve env var \"USER\"")
+    pub fn name() -> Result<String, std::io::Error> {
+        Ok(var("USER").unwrap_or_default())
     }
 }
 
@@ -67,21 +67,21 @@ impl Env {
 ///
 /// ```
 /// // User is root (username is `root` or home dir contains `root`)
-/// if is_root() {
+/// if is_root()? {
 ///     println!("I am root")
 /// }
 ///
 /// // User isn't root (user is not associated with root)
-/// if !is_root() {
+/// if !is_root()? {
 ///     println!("I am not root")
 /// }
 /// ```
-pub fn is_root() -> bool {
-    if Env::name() == "root" || Env::home().contains("/root") {
-        return true;
+pub fn is_root() -> Result<bool, std::io::Error> {
+    if Env::name()? == "root" || Env::home()?.contains("/root") {
+        return Ok(true);
     }
 
-    false
+    Ok(false)
 }
 
 /// Basic non-fatal error.
@@ -107,19 +107,17 @@ pub fn error(message: &str) -> ! {
 /// `spf` binary. Returns as [`String`].
 ///
 /// ```
-/// let binary_path = get_binary_path();
+/// let binary_path = get_binary_path()?;
 ///
 /// println!("{binary_path}")
 ///
 /// // From a proper installation of spf, the output should be:
 /// // `/usr/bin/spf`
 /// ```
-pub fn get_binary_path() -> String {
-    current_exe()
-        .expect("Failed to get binary path")
-        .to_str()
-        .unwrap()
-        .to_string()
+pub fn get_binary_path() -> Result<String, std::io::Error> {
+    let path = current_exe()?.to_str().unwrap_or_default().to_string();
+
+    Ok(path)
 }
 
 /// Determine if the args that have been retrieved from [`args_contains`] contains
@@ -150,8 +148,8 @@ pub fn get_binary_path() -> String {
 /// // Output should be `false`
 /// println!("{does_arg_contain}");
 /// ```
-pub fn args_contains(arg: &str) -> bool {
-    return_args().contains(&arg.to_string())
+pub fn args_contains(arg: &str) -> Result<bool, std::io::Error> {
+    Ok(return_args()?.contains(&arg.to_string()))
 }
 
 /// Returns collected args that have been supplied.
@@ -172,7 +170,7 @@ pub fn args_contains(arg: &str) -> bool {
 /// ```
 /// let collected_args = return_args();
 /// ```
-pub fn return_args() -> Vec<String> {
+pub fn return_args() -> Result<Vec<String>, std::io::Error> {
     let mut collected_args = Vec::new();
 
     for given_arg in args().skip(1) {
@@ -191,7 +189,7 @@ pub fn return_args() -> Vec<String> {
         }
     }
 
-    collected_args
+    Ok(collected_args)
 }
 
 /// A list of architectures that exist.

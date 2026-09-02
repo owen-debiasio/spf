@@ -27,15 +27,16 @@ pub static PACKAGE_INSTALL_PATH: &str = "/usr/share/spf/packages/";
 /// let package_metadata_location = "/usr/share/spf/packages/some_package";
 ///
 /// // Load the contents of the metadata file
-/// let metadata_contents = Meta::from(package_metadata_location);
+/// let metadata_contents = Meta::from(package_metadata_location)?;
 ///
 /// // The category to extract the value from
 /// let category_to_extract = "PROJECT_NAME";
 ///
 /// // The extracted project name
-/// let extracted_value = metadata_contents.load_value(category_to_extract);
+/// let extracted_value = metadata_contents.load_value(category_to_extract)?;
 /// ```
 #[derive(Clone)]
+#[allow(unused)]
 pub struct Meta {
     meta_file_contents: String,
     meta_file: String,
@@ -52,16 +53,15 @@ impl Meta {
     ///
     /// // `metadata_contents` contains the loaded metadata from desired location
     /// // (`metadata_file` in this case).
-    /// let metadata_contents = Meta::from(metadata_file);
+    /// let metadata_contents = Meta::from(metadata_file)?;
     /// ```
-    pub fn from(loaded_meta_file: &str) -> Meta {
-        let meta_file_contents =
-            fs::read_to_string(loaded_meta_file).expect("Failed to retrieve project metadata");
+    pub fn from(loaded_meta_file: &str) -> Result<Meta, std::io::Error> {
+        let meta_file_contents = fs::read_to_string(loaded_meta_file)?;
 
-        Meta {
+        Ok(Meta {
             meta_file: loaded_meta_file.to_string(),
             meta_file_contents,
-        }
+        })
     }
 
     /// Extracts the desired value from the metadata loaded by [`Meta::from`].
@@ -74,31 +74,33 @@ impl Meta {
     ///
     /// // `metadata_contents` contains the loaded metadata from desired location
     /// // (`metadata_file` in this case).
-    /// let metadata_contents = Meta::from(metadata_file);
+    /// let metadata_contents = Meta::from(metadata_file)?;
     ///
     /// // For example, load from the package architecture
     /// let category_to_extract_value = "ARCH";
     ///
     /// // Retrieved the stored architecture
-    /// let extracted_value = metadata_contents.load_value(category_to_extract_value)
+    /// let extracted_value = metadata_contents.load_value(category_to_extract_value)?
     /// ```
     ///
     /// NOTE: You may need to use `clone`
-    pub fn load_value(self, category_to_find: &'static str) -> String {
+    pub fn load_value(self, category_to_find: &'static str) -> Result<String, std::io::Error> {
         let string_prior_to_value = &format!("{category_to_find} =");
 
-        self.meta_file_contents.split('\n')
-        // Find the line that contains the category.
-        //
-        // Must not be a comment, and it must start with the
-        // category + the value identifier (`string_prior_to_value`)
-        .find(|entry| entry.starts_with(string_prior_to_value) && !entry.starts_with('#'))
-        .unwrap_or_else(|| panic!(
-            "Failed to retrieve metadata value from category \"{category_to_find}\" in file \"{}\"", self.meta_file
-        ))
-        // Return the value of the category by stripping out the category name
-        .trim_start_matches(string_prior_to_value)
-        .trim()
-        .to_string()
+        let meta_contents = self
+            .meta_file_contents
+            .split('\n')
+            // Find the line that contains the category.
+            //
+            // Must not be a comment, and it must start with the
+            // category + the value identifier (`string_prior_to_value`)
+            .find(|entry| entry.starts_with(string_prior_to_value) && !entry.starts_with('#'))
+            .unwrap_or_default()
+            // Return the value of the category by stripping out the category name
+            .trim_start_matches(string_prior_to_value)
+            .trim()
+            .to_string();
+
+        Ok(meta_contents)
     }
 }

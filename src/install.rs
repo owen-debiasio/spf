@@ -36,9 +36,9 @@ use crate::{
 /// the tree inside the extracted package contains the directories and files
 /// that are written to their new metadata file located in [`PACKAGE_INSTALL_PATH`],
 /// and are copied to their respective locations.
-pub fn spf_install(mut spf_package_path: String) {
+pub fn spf_install(mut spf_package_path: String) -> Result<(), std::io::Error> {
     // Root is required for this command
-    if !is_root() {
+    if !is_root()? {
         error("To execute this action, please run spf as root.")
     }
 
@@ -58,29 +58,29 @@ pub fn spf_install(mut spf_package_path: String) {
     println!("Loading package: {spf_package_path}\n");
 
     // Extract the provided package
-    extract_archive(&spf_package_path);
+    extract_archive(&spf_package_path)?;
 
-    spf_package_path = FileProperty::name(&spf_package_path);
+    spf_package_path = FileProperty::name(&spf_package_path)?;
 
     // Get location of the package path (`spf_package_path`)
     let packaged_metadata_file = spf_package_path.replace(".spf", "/META");
 
-    let package_metadata = Meta::from(&packaged_metadata_file);
+    let package_metadata = Meta::from(&packaged_metadata_file)?;
 
     // Retrieve the metadata. Wish there was a better way to do this
-    let package_name = package_metadata.clone().load_value("PROJECT_NAME");
-    let package_version = package_metadata.clone().load_value("VERSION");
-    let package_desc = package_metadata.clone().load_value("DESCRIPTION");
-    let package_license = package_metadata.clone().load_value("LICENSE");
-    let package_authors = package_metadata.clone().load_value("AUTHORS");
-    let package_arch = package_metadata.load_value("ARCH");
+    let package_name = package_metadata.clone().load_value("PROJECT_NAME")?;
+    let package_version = package_metadata.clone().load_value("VERSION")?;
+    let package_desc = package_metadata.clone().load_value("DESCRIPTION")?;
+    let package_license = package_metadata.clone().load_value("LICENSE")?;
+    let package_authors = package_metadata.clone().load_value("AUTHORS")?;
+    let package_arch = package_metadata.load_value("ARCH")?;
 
     // The extracted path has no extension, so remove it
     let extracted_package_path = spf_package_path.replace(".spf", "");
 
     // Check to make sure the system architecture matches or is compatible the package architecture
-    if package_arch != ARCH && !args_contains("--ignore-arch") {
-        remove_dir_all(extracted_package_path).expect("Failed to cleanup");
+    if package_arch != ARCH && !args_contains("--ignore-arch")? {
+        remove_dir_all(extracted_package_path)?;
 
         error(&format!(
             "Package architecture: {package_arch} doesn't match current system architecture ({ARCH}).\n\
@@ -95,14 +95,17 @@ pub fn spf_install(mut spf_package_path: String) {
     // Formatted by <project name>-<project_ version>
     let package_name_formatted = &format!("{package_name}-{package_version}");
 
-    ask_user_to_install(
+    match ask_user_to_install(
         package_name_formatted,
         &package_desc,
         &package_license,
         &package_authors,
         &package_arch,
         &extracted_package_path,
-    );
+    ) {
+        Ok(()) => (),
+        Err(_) => remove_dir_all(&spf_package_path)?,
+    }
 
     // To be safe, move the metadata file. But check if it's already installed first.
     let package_meta_path_install_location = format!("{PACKAGE_INSTALL_PATH}{package_name}");
@@ -110,12 +113,15 @@ pub fn spf_install(mut spf_package_path: String) {
     // Check if the package is already installed. If so, proceed to check version conflicts.
     // Otherwise, skip and proceed to copying files.
     if Path::new(&package_meta_path_install_location).exists() {
-        check_version(
+        match check_version(
             &package_meta_path_install_location,
             &package_name,
             &package_version,
             &spf_package_path,
-        );
+        ) {
+            Ok(_) => (),
+            Err(err) => error(&format!("Failed to check version: {err}")),
+        }
     }
 
     // Start creating directories and copying files
@@ -126,7 +132,7 @@ pub fn spf_install(mut spf_package_path: String) {
         &packaged_metadata_file,
         package_meta_path_install_location,
         &extracted_package_path,
-    );
+    )?;
 
     println!("Cleaning up...");
 
@@ -159,7 +165,7 @@ fn ask_user_to_install(
     packaged_project_authors: &str,
     packaged_project_packaged_arch: &str,
     extracted_package_path: &str,
-) {
+) -> Result<(), std::io::Error> {
     // Display project info/metadata
     println!(
         "Do you want to proceed to install {package_name_formatted}?\n\n\
@@ -171,20 +177,17 @@ fn ask_user_to_install(
     );
 
     let mut proceed_to_install = String::new();
-    io::stdin()
-        .read_line(&mut proceed_to_install)
-        .expect("Failed to readline");
+    io::stdin().read_line(&mut proceed_to_install)?;
 
     println!();
 
     if proceed_to_install.trim().to_lowercase() != "y" {
-        remove_dir_all(extracted_package_path).unwrap_or_else(|_| {
-            panic!("Failed to clean up and remove directory \"{extracted_package_path}\"")
-        });
+        remove_dir_all(extracted_package_path)?;
 
         println!("Aborted.");
         exit(0)
     }
+    Ok(())
 }
 
 /// Compares versions if the package is already installed. User can
@@ -214,9 +217,9 @@ fn check_version(
     packaged_project_name: &str,
     packaged_project_version: &str,
     spf_package_path: &str,
-) {
+) -> Result<(), std::io::Error> {
     // Loads package version
-    let installed_version = Meta::from(package_meta_path).load_value("VERSION");
+    let installed_version = Meta::from(package_meta_path)?.load_value("VERSION")?;
 
     // Check for version differences
     if packaged_project_version == installed_version {
@@ -231,7 +234,7 @@ fn check_version(
         // `project_version_num` is the version in the package, `installed_version_num`
         // is what's already installed.
         let (project_version_num, installed_version_num) =
-            parse_installed_and_packaged_versions(packaged_project_version, &installed_version);
+            parse_installed_and_packaged_versions(packaged_project_version, &installed_version)?;
 
         // Make sure that the versions were parsed correctly.
         if project_version_num == 0 || installed_version_num == 0 {
@@ -261,9 +264,7 @@ fn check_version(
 
     // Take in the user input
     let mut proceed_to_install = String::new();
-    io::stdin()
-        .read_line(&mut proceed_to_install)
-        .expect("Failed to readline");
+    io::stdin().read_line(&mut proceed_to_install)?;
 
     println!();
 
@@ -271,13 +272,13 @@ fn check_version(
 
     // If user declines, clean up and exit. Otherwise, proceed and end function
     if proceed_to_install.trim().to_lowercase() != "y" {
-        fs::remove_dir_all(&extracted_package_path).unwrap_or_else(|_| {
-            panic!("Failed to clean up and remove directory \"{extracted_package_path}\"")
-        });
+        fs::remove_dir_all(&extracted_package_path)?;
 
         println!("Aborted");
         exit(0)
     }
+
+    Ok(())
 }
 
 /// Takes the installed and packaged versions, then formats them to
@@ -292,7 +293,7 @@ fn check_version(
 fn parse_installed_and_packaged_versions(
     packaged_project_version: &str,
     installed_version: &str,
-) -> (usize, usize) {
+) -> Result<(usize, usize), std::io::Error> {
     // Removes `v`, any special characters, and converts to usize.
     // Returns `0` is something fails.
     let remove_chars_and_to_usize = |version: &str| -> usize {
@@ -313,7 +314,7 @@ fn parse_installed_and_packaged_versions(
     let project_version_num = remove_chars_and_to_usize(packaged_project_version);
     let installed_version_num = remove_chars_and_to_usize(installed_version);
 
-    (project_version_num, installed_version_num)
+    Ok((project_version_num, installed_version_num))
 }
 
 /// Copy files or create directories needed to install a program.
@@ -330,18 +331,13 @@ fn install_files(
     packaged_metadata_file: &str,
     package_meta_path_install_location: String,
     extracted_package_path: &str,
-) {
-    // Clean up by removing the extracted package (only used on errors)
-    let cleanup = || -> () {
-        remove_dir_all(extracted_package_path).expect("Failed to clean up extracted package");
-    };
-
+) -> Result<(), std::io::Error> {
     // Copy the packaged metadata file to its install location
     fs::copy(packaged_metadata_file, &package_meta_path_install_location).
         unwrap_or_else(|err| panic!("Failed to copy file \"{packaged_metadata_file}\" -> \"{package_meta_path_install_location}\": {err}"));
 
     // Remove the metadata file that was packaged
-    fs::remove_file(packaged_metadata_file).expect("Failed to delete metadata file");
+    fs::remove_file(packaged_metadata_file)?;
 
     // Get the location to look for the paths to copy
     let path_to_search = &format!("./{extracted_package_path}/**/*");
@@ -352,22 +348,17 @@ fn install_files(
     let mut project_meta_file = OpenOptions::new()
         .append(true)
         .create(true)
-        .open(package_meta_path_install_location)
-        .unwrap();
+        .open(package_meta_path_install_location)?;
 
     // Write the header for defining installed paths
-    project_meta_file
-        .write_all(b"\n:::PATH DEFINE START:::\n")
-        .unwrap_or_else(|_| {
-            panic!("Failed to write path define header to \"{project_meta_file:#?}\"")
-        });
+    project_meta_file.write_all(b"\n:::PATH DEFINE START:::\n")?;
 
     // Go through and install packaged paths
     for found_path in glob(path_to_search)
         .unwrap_or_else(|_| panic!("Failed to collect directories at \"{path_to_search}\""))
     {
         // File/folder to be copied
-        let file_from_archive = found_path.unwrap().to_str().unwrap().to_string().clone();
+        let file_from_archive = found_path?.to_str().unwrap().to_string().clone();
 
         // Path where `file_from_archive` will be copied to
         // `extracted_package_path` is removed to prevent conflicts
@@ -378,13 +369,7 @@ fn install_files(
 
         // If the path to be copied is a directory, simply create it instead of copying it.
         if Path::new(&file_from_archive).is_dir() {
-            create_dir_all(path_to_create).unwrap_or_else(|err| {
-                panic!(
-                    "Failed to create directory \"{}\": {err}",
-                    path_to_create.display()
-                )
-            });
-
+            create_dir_all(path_to_create)?;
             continue;
         }
 
@@ -393,25 +378,22 @@ fn install_files(
         // Check if the file being copied `file_destination` is spf itself. If so,
         // replace the old binary (current binary path) with the new binary
         // (`file_from_archive`/`file_destination`)
-        if file_destination == get_binary_path() {
-            self_replace::self_replace(&file_from_archive).unwrap();
+        if file_destination == get_binary_path()? {
+            self_replace::self_replace(&file_from_archive)?;
         }
 
-        fs::copy(&file_from_archive, &file_destination).unwrap_or_else(|err| {
-            cleanup();
-            panic!("Failed to copy file \"{file_from_archive}\" -> \"{file_destination}\": {err}")
-        });
+        fs::copy(&file_from_archive, &file_destination)?;
 
         // Write the path of the file to later be removed when uninstalled.
         // Basically shows that the program is installed.
-        project_meta_file
-            .write_all(format!("{file_destination}\n").as_bytes())
-            .unwrap();
+        project_meta_file.write_all(format!("{file_destination}\n").as_bytes())?;
 
         // Check that the path was copied/created correctly
         if !path_to_create.exists() {
-            cleanup();
-            panic!("Failed to copy file: \"{file_destination}\"")
+            remove_dir_all(extracted_package_path)?;
+            error(&format!("Failed to copy file: \"{file_destination}\""))
         }
     }
+
+    Ok(())
 }

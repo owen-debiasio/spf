@@ -53,13 +53,9 @@ target/debug/spf:/usr/bin/spf
 ///
 /// // Output location is `~/Documents/spf_template`
 /// ```
-pub fn gen_meta_template(mut output_location: String) {
+pub fn gen_meta_template(mut output_location: String) -> Result<(), std::io::Error> {
     if output_location.is_empty() {
-        output_location = env::current_dir()
-            .expect("Failed to get current directory")
-            .to_str()
-            .unwrap()
-            .to_string();
+        output_location = env::current_dir()?.to_str().unwrap_or_default().to_string();
 
     // Output location has to be a directory because rust doesn't want to
     // listen to me
@@ -70,8 +66,7 @@ pub fn gen_meta_template(mut output_location: String) {
     output_location = format!("{output_location}/spf_template");
 
     // Write the contents
-    fs::write(&output_location, TEMPLATE_CONTENTS)
-        .unwrap_or_else(|_| panic!("Failed to generate template to \"{output_location}\""));
+    fs::write(&output_location, TEMPLATE_CONTENTS)?;
 
     println!(
         "Generated template at: {}",

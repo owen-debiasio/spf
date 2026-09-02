@@ -26,16 +26,16 @@ mod package;
 mod remove;
 mod template;
 
-static VERSION: &str = "v0.5.1";
+static VERSION: &str = "v0.5.2";
 
-fn main() {
-    init::init();
+fn main() -> Result<(), std::io::Error> {
+    init::init()?;
 
     // Intro
     println!("spf-{VERSION}\n");
 
     // Collect user args
-    let mut collected_args = return_args();
+    let mut collected_args = return_args()?;
     collected_args.retain(|arg| !matches!(arg.as_str(), "--ignore-args"));
 
     /*
@@ -55,12 +55,12 @@ fn main() {
         // Create package
         "create" | "-c" => {
             // `secondary_arg` is the file with the list of paths to package
-            create_spf_package(&secondary_arg, &tertiary_arg);
+            create_spf_package(&secondary_arg, &tertiary_arg)?;
         }
         // Install package
         "install" | "-i" => {
             // `secondary_arg` is the package to install
-            spf_install(secondary_arg);
+            spf_install(secondary_arg)?
         }
         "remove" | "-r" => {
             // Manually supply args because I hate this. Allows you to
@@ -78,21 +78,21 @@ fn main() {
                 packages.push(package_arg);
             }
 
-            remove_spf_package(packages);
+            remove_spf_package(packages)?;
         }
         "list" | "-l" => {
             // `secondary_arg` is the optional string to search
-            list_packages(&secondary_arg);
+            list_packages(&secondary_arg)?;
         }
 
         "template" | "-t" => {
             // `secondary_arg` is the optional output location
-            gen_meta_template(secondary_arg);
+            gen_meta_template(secondary_arg)?;
         }
 
         "inspect" | "-is" => {
             // `secondary_arg` is the package to inspect
-            inspect(&secondary_arg);
+            inspect(&secondary_arg)?;
         }
 
         // Version is already mentioned at the top of this file
