@@ -48,7 +48,11 @@ impl FileProperty {
     /// println!("{file_ext}");
     /// ```
     pub fn extension(path: &str) -> Result<String, std::io::Error> {
-        let file_extension = PathBuf::from(path).display().to_string();
+        let file_extension = PathBuf::from(path)
+            .extension()
+            .expect("Failed to get file extension")
+            .display()
+            .to_string();
 
         Ok(file_extension)
     }
@@ -65,7 +69,11 @@ impl FileProperty {
     /// println!("{file_name}");
     /// ```
     pub fn name(path: &str) -> Result<String, std::io::Error> {
-        let file_name = PathBuf::from(path).display().to_string();
+        let file_name = PathBuf::from(path)
+            .file_name()
+            .expect("Failed to retrieve file name")
+            .display()
+            .to_string();
 
         Ok(file_name)
     }
