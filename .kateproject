@@ -1,0 +1,19 @@
+{
+  "name": "spf",
+  "files": [
+    { "git": 1 }
+  ],
+  "lspclient": {
+    "servers": {
+      "rust": {
+        "command": ["rust-analyzer"],
+        "rootIndicationFileNames": ["Cargo.toml"],
+        "initializationOptions": {
+          "check": {
+            "command": "clippy"
+          }
+        }
+      }
+    }
+  }
+}
