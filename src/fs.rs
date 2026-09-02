@@ -4,7 +4,7 @@
 //! Copyright (C) 2026 Owen Debiasio <owen.debiasio@gmail.com>
 //! SPDX-License-Identifier: GPL-3.0-or-later
 
-use std::{path::PathBuf, process::Command};
+use std::{ffi::OsStr, path::PathBuf, process::Command};
 
 /// Some utilities to retrieve one of the following properties from a path:
 ///     - File extension (using [`FileProperty::extension`])
@@ -50,7 +50,7 @@ impl FileProperty {
     pub fn extension(path: &str) -> Result<String, std::io::Error> {
         let file_extension = PathBuf::from(path)
             .extension()
-            .expect("Failed to get file extension")
+            .unwrap_or(OsStr::new(&String::new()))
             .display()
             .to_string();
 
