@@ -41,6 +41,12 @@ run:
 distrobox assemble create
 ```
 
+And to enter the container,
+
+```bash
+distrobox enter spf
+```
+
 ### Notes
 
 - The default shell is `/bin/bash`
