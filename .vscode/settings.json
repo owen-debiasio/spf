@@ -1,9 +1,12 @@
 {
   "cSpell.words": [
+    "archlinux",
+    "archs",
     "arga",
     "argb",
     "clippy",
     "Debiasio",
+    "distrobox",
     "dtolnay",
     "gplv",
     "replacen",
@@ -12,7 +15,6 @@
     "shfmt",
     "softprops",
     "spfbuildcfg",
-    "Swatinem",
-    "archs"
+    "Swatinem"
   ]
 }
