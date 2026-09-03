@@ -44,5 +44,7 @@ distrobox assemble create
 ### Notes
 
 - The default shell is `/bin/bash`
+- When using Zed, distrobox is opened automatically on integrated terminal
+  startup
 - Rustup is installed automatically from [rustup.rs](rustup.rs)
 - The container is based on the latest Arch Linux release (`archlinux:latest`)

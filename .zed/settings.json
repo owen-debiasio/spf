@@ -7,5 +7,14 @@
         }
       }
     }
+  },
+
+  "terminal": {
+    "shell": {
+      "with_arguments": {
+        "program": "distrobox",
+        "args": ["enter", "spf"]
+      }
+    }
   }
 }
