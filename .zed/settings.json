@@ -7,7 +7,7 @@
         }
       }
     }
-  },
+  }
 
   // Uncomment this if you use distrobox
   // "terminal": {
