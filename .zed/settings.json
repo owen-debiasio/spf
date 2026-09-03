@@ -9,12 +9,13 @@
     }
   },
 
-  "terminal": {
-    "shell": {
-      "with_arguments": {
-        "program": "distrobox",
-        "args": ["enter", "spf"]
-      }
-    }
-  }
+  // Uncomment this if you use distrobox
+  // "terminal": {
+  //   "shell": {
+  //     "with_arguments": {
+  //       "program": "distrobox",
+  //       "args": ["enter", "spf"]
+  //     }
+  //   }
+  // }
 }
