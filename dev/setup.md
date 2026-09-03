@@ -26,3 +26,23 @@ Some stuff to help with development
 
 - `cargo-deb` for packaging .deb file
 - `cargo-generate-rpm` for packaging .rpm file
+
+## Distrobox
+
+If you are using an immutable distro, you can use
+[Distrobox](https://distrobox.it/) to run the development environment.
+
+### Setup
+
+spf already includes [distrobox.ini](distrobox.ini), so to set up the container,
+run:
+
+```bash
+distrobox assemble create
+```
+
+### Notes
+
+- The default shell is `/bin/bash`
+- Rustup is installed automatically from [rustup.rs](rustup.rs)
+- The container is based on the latest Arch Linux release (`archlinux:latest`)
