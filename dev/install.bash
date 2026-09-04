@@ -3,7 +3,6 @@
 set -e
 
 # Update rust
-rustup update
 cargo update
 
 # lint and format
