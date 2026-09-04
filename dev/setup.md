@@ -50,5 +50,4 @@ distrobox enter spf
 ### Notes
 
 - The default shell is `/bin/bash`
-- Rustup is installed automatically from [rustup.rs](rustup.rs)
 - The container is based on the latest Arch Linux release (`archlinux:latest`)
