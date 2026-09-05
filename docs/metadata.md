@@ -18,6 +18,7 @@ Those being:
 | `PROJECT_NAME` | The name of the package or your project     |
 | `VERSION`      | The version of your package                 |
 | `DESCRIPTION`  | Description of your project or package      |
+| `REPOSITORY`   | Displays the source of the program          |
 | `LICENSE`      | What the code is licensed under             |
 | `AUTHORS`      | The people who made the code or packaged it |
 | `ARCH`         | The target system architecture for the code |

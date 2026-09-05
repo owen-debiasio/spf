@@ -71,9 +71,10 @@ pub fn spf_install(mut spf_package_path: String) -> Result<(), std::io::Error> {
     let package_name = package_metadata.clone().load_value("PROJECT_NAME")?;
     let package_version = package_metadata.clone().load_value("VERSION")?;
     let package_desc = package_metadata.clone().load_value("DESCRIPTION")?;
+    let package_repository = package_metadata.clone().load_value("REPOSITORY")?;
     let package_license = package_metadata.clone().load_value("LICENSE")?;
     let package_authors = package_metadata.clone().load_value("AUTHORS")?;
-    let package_arch = package_metadata.load_value("ARCH")?;
+    let package_arch = package_metadata.clone().load_value("ARCH")?;
 
     // The extracted path has no extension, so remove it
     let extracted_package_path = spf_package_path.replace(".spf", "");
@@ -95,16 +96,27 @@ pub fn spf_install(mut spf_package_path: String) -> Result<(), std::io::Error> {
     // Formatted by <project name>-<project_ version>
     let package_name_formatted = &format!("{package_name}-{package_version}");
 
-    match ask_user_to_install(
-        package_name_formatted,
-        &package_desc,
-        &package_license,
-        &package_authors,
-        &package_arch,
-        &extracted_package_path,
-    ) {
-        Ok(()) => (),
-        Err(_) => remove_dir_all(&spf_package_path)?,
+    // Display project info/metadata
+    println!(
+        "Do you want to proceed to install {package_name_formatted}?\n\n\
+        Description: {package_desc}\n\
+        Repository: {package_repository}\n\
+        License(s): {package_license}\n\
+        Author(s): {package_authors}\n\
+        Arch: {package_arch}\n\n\
+        (Y/N)"
+    );
+
+    let mut proceed_to_install = String::new();
+    io::stdin().read_line(&mut proceed_to_install)?;
+
+    println!();
+
+    if proceed_to_install.trim().to_lowercase() != "y" {
+        remove_dir_all(extracted_package_path)?;
+
+        println!("Aborted.");
+        exit(0)
     }
 
     // To be safe, move the metadata file. But check if it's already installed first.
@@ -120,7 +132,10 @@ pub fn spf_install(mut spf_package_path: String) -> Result<(), std::io::Error> {
             &spf_package_path,
         ) {
             Ok(_) => (),
-            Err(err) => error(&format!("Failed to check version: {err}")),
+            Err(err) => {
+                remove_dir_all(extracted_package_path)?;
+                error(&format!("Failed to check for version: {err}"));
+            }
         }
     }
 
@@ -142,50 +157,6 @@ pub fn spf_install(mut spf_package_path: String) -> Result<(), std::io::Error> {
     println!("\nSuccessfully installed {package_name}-{package_version}!");
 
     exit(0)
-}
-
-/// Take loaded metadata and display it as package information, before asking the
-/// user if they want to install the package.
-///
-/// The following are used as identifying information for the package:
-///     - `package_name_formatted` ([`str`])
-///     - `packaged_project_description` ([`String`])
-///     - `packaged_project_license` ([`String`])
-///     - `packaged_project_authors` ([`String`])
-///     - `packaged_project_packaged_arch` ([`String`])
-///     - `extracted_package_path` ([`String`])
-///
-/// If user aborts, clean up by deleting `extracted_package_path` (stored as [`String`])
-fn ask_user_to_install(
-    package_name_formatted: &str,
-    packaged_project_description: &str,
-    packaged_project_license: &str,
-    packaged_project_authors: &str,
-    packaged_project_packaged_arch: &str,
-    extracted_package_path: &str,
-) -> Result<(), std::io::Error> {
-    // Display project info/metadata
-    println!(
-        "Do you want to proceed to install {package_name_formatted}?\n\n\
-        Description: {packaged_project_description}\n\
-        License(s): {packaged_project_license}\n\
-        Author(s): {packaged_project_authors}\n\
-        Arch: {packaged_project_packaged_arch}\n\n\
-        (Y/N)"
-    );
-
-    let mut proceed_to_install = String::new();
-    io::stdin().read_line(&mut proceed_to_install)?;
-
-    println!();
-
-    if proceed_to_install.trim().to_lowercase() != "y" {
-        remove_dir_all(extracted_package_path)?;
-
-        println!("Aborted.");
-        exit(0)
-    }
-    Ok(())
 }
 
 /// Compares versions if the package is already installed. User can

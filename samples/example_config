@@ -2,10 +2,11 @@
 # NOTE: META MUST BE DEFINED BEFORE PATHS
 :::META DEFINE START:::
 PROJECT_NAME = spf
-VERSION = v0.1.0
+VERSION = v0.5.2
 DESCRIPTION = Simple package manager
+REPOSITORY = https://github.com/owen-debiasio/spf
 LICENSE = gplv3
-AUTHORS = Owen Debiasio
+AUTHORS = Owen DeBiasio
 ARCH = x86_64
 :::META DEFINE END:::
 
@@ -13,5 +14,8 @@ ARCH = x86_64
 # Key:
 # original/file/path:location/to/install
 :::PATH DEFINE START:::
-target/debug/spf:/usr/bin/spf
+./target/release/spf:/usr/bin/spf
+changes.md:/usr/share/doc/spf/changes.md
+README.md:/usr/share/doc/spf/README.md
+LICENSE:/usr/share/licenses/spf/LICENSE
 :::PATH DEFINE END:::

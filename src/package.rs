@@ -105,6 +105,7 @@ pub fn create_spf_package(
 /// - `PROJECT_NAME` (name of the package/project that is being packaged)
 /// - `VERSION`      (version of release)
 /// - `DESCRIPTION`  (description of the contents, package or project)
+/// - `REPOSITORY`   (repository URL of the package)
 /// - `LICENSE`      (license of the package)
 /// - `AUTHORS`      (authors behind the project/package)
 /// - `ARCH`         (packaged architecture)
@@ -158,7 +159,13 @@ fn write_project_meta_config(
         // Otherwise, throw an error.
         if matches!(
             meta_category,
-            "PROJECT_NAME" | "VERSION" | "DESCRIPTION" | "LICENSE" | "AUTHORS" | "ARCH"
+            "PROJECT_NAME"
+                | "VERSION"
+                | "DESCRIPTION"
+                | "REPOSITORY"
+                | "LICENSE"
+                | "AUTHORS"
+                | "ARCH"
         ) {
             // Collect the metadata to `project_meta_buffer` if the category is valid
             println!("Collecting metadata: {entry}");

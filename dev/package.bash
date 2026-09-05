@@ -29,6 +29,7 @@ echo -e "
 PROJECT_NAME = spf
 VERSION = $1
 DESCRIPTION = Simple package manager
+REPOSITORY = https://github.com/owen-debiasio/spf
 LICENSE = gplv3
 AUTHORS = Owen DeBiasio
 ARCH = x86_64
@@ -69,6 +70,7 @@ echo -e "
 PROJECT_NAME = spf
 VERSION = $1
 DESCRIPTION = Simple package manager
+REPOSITORY = https://github.com/owen-debiasio/spf
 LICENSE = gplv3
 AUTHORS = Owen DeBiasio
 ARCH = aarch64
