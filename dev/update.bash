@@ -2,6 +2,7 @@
     echo "Provide package version (MUST START WITH v)"
     exit 1
 }
+
 [[ "$1" == v* ]] || {
     echo "Version must start with 'v'"
     exit 1
