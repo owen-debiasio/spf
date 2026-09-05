@@ -89,3 +89,5 @@
 - Optimized error handling
 - Code optimizations
 - Made command example output in `available_commands` look nicer
+- Add support for metadata field `REPOSITORY`, which displays the source of the
+  program
