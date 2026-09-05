@@ -13,7 +13,6 @@ pub static PACKAGE_INSTALL_PATH: &str = "/usr/share/spf/packages/";
 /// package that has its metadata stored at `/usr/share/spf/packages/` ([`PACKAGE_INSTALL_PATH`]).
 ///
 /// - `meta_file_contents` refers to the actually text (the metadata itself) inside the file.
-/// - `meta_file` refers to the file to observe and search for metadata
 ///
 /// You can load package metadata by using [`Meta::from`], and then you can extract a value from
 /// a category by using [`Meta::load_value`].
@@ -36,10 +35,8 @@ pub static PACKAGE_INSTALL_PATH: &str = "/usr/share/spf/packages/";
 /// let extracted_value = metadata_contents.load_value(category_to_extract)?;
 /// ```
 #[derive(Clone)]
-#[allow(unused)]
 pub struct Meta {
     meta_file_contents: String,
-    meta_file: String,
 }
 
 impl Meta {
@@ -58,10 +55,7 @@ impl Meta {
     pub fn from(loaded_meta_file: &str) -> Result<Meta, std::io::Error> {
         let meta_file_contents = fs::read_to_string(loaded_meta_file)?;
 
-        Ok(Meta {
-            meta_file: loaded_meta_file.to_string(),
-            meta_file_contents,
-        })
+        Ok(Meta { meta_file_contents })
     }
 
     /// Extracts the desired value from the metadata loaded by [`Meta::from`].
