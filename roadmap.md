@@ -1,7 +1,7 @@
 # spf Roadmap
 
 > [!IMPORTANT]  
-> Last updated: `September 6, 2026 @ 10:47 AM EST`
+> Last updated: `September 6, 2026 @ 10:52 AM EST`
 
 Here's a todo list that I've thrown together of things I want to add/change over
 time.
@@ -14,3 +14,4 @@ time.
 
 - Pre/Post install/uninstall jobs
   - Such as running scripts, or handling things spf doesn't
+- Intel x86_64 and M-series Apple Silicon (aarch64) Mac support
