@@ -1,6 +1,7 @@
 use std::process::exit;
 
 use crate::{
+    convert::convert,
     inspect::inspect,
     install::spf_install,
     list::list_packages,
@@ -19,6 +20,7 @@ mod sys;
 mod init;
 
 // Commands
+mod convert;
 mod inspect;
 mod install;
 mod list;
@@ -26,7 +28,7 @@ mod package;
 mod remove;
 mod template;
 
-static VERSION: &str = "v0.5.2";
+static VERSION: &str = "v0.6.0";
 
 fn main() -> Result<(), std::io::Error> {
     init::init()?;
@@ -55,6 +57,7 @@ fn main() -> Result<(), std::io::Error> {
         // Create package
         "create" | "-c" => {
             // `secondary_arg` is the file with the list of paths to package
+            // `tertiary_arg` is the output location
             create_spf_package(&secondary_arg, &tertiary_arg)?;
         }
         // Install package
@@ -93,6 +96,12 @@ fn main() -> Result<(), std::io::Error> {
         "inspect" | "-is" => {
             // `secondary_arg` is the package to inspect
             inspect(&secondary_arg)?;
+        }
+
+        "convert" => {
+            // `secondary_arg` is the package to convert
+            // `tertiary_arg` is the output package format
+            convert(&secondary_arg, &tertiary_arg)?;
         }
 
         // Version is already mentioned at the top of this file
