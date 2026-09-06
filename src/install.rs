@@ -58,7 +58,7 @@ pub fn spf_install(mut spf_package_path: String) -> Result<(), std::io::Error> {
     println!("Loading package: {spf_package_path}\n");
 
     // Extract the provided package
-    extract_archive(&spf_package_path)?;
+    extract_archive("tar", &spf_package_path)?;
 
     spf_package_path = FileProperty::name(&spf_package_path)?;
 

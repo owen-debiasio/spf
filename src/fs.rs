@@ -127,19 +127,18 @@ pub fn create_archive_of_dir(
 /// Creates an archive of a directory.
 ///
 /// You just need to input the path of where it outputs to (`path` ([`str`])).
-/// Extracts to the current working directory.
-///
-/// **Requires** `tar` executable (preferably the GNU version)
+/// Extracts it using `archive_exec` ([`str`]) to the current working directory.
 ///
 /// ```
+/// let archive_exec = "tar";
 /// let path_of_archive = "archive.spf";
-/// extract_archive(path_of_archive);
+/// extract_archive(archive_exec, path_of_archive);
 ///
 /// // Extracted directory `archive` should be located in the current working
 /// // directory
 /// ```
-pub fn extract_archive(path: &str) -> Result<(), std::io::Error> {
-    Command::new("tar").arg("-xf").arg(path).output()?;
+pub fn extract_archive(exec: &str, path: &str) -> Result<(), std::io::Error> {
+    Command::new(exec).arg("-xf").arg(path).output()?;
 
     Ok(())
 }

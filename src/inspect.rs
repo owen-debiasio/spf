@@ -53,7 +53,7 @@ fn inspect_spf_package(package_path: &str) -> Result<(), std::io::Error> {
         error(&format!(".spf package not found: {package_path}"))
     }
 
-    extract_archive(package_path)?;
+    extract_archive("tar", package_path)?;
 
     let metadata_path = FileProperty::name(package_path)?.replace(".spf", "/META");
 
