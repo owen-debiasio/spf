@@ -1,2 +1,10 @@
+# Rust junk
 /target
+
+# Spare .deb, .rpm or .spf spf packages or binaries
 spf*
+
+# Spare extracted .deb archive contents
+control.tar.xz
+data.tar.xz
+debian-binary
