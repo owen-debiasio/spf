@@ -5,13 +5,14 @@
 //! SPDX-License-Identifier: GPL-3.0-or-later
 
 use std::{
-    fs::{self, remove_file},
+    fs::{self, create_dir, remove_dir_all, remove_file, rename},
     io::stdin,
     path::Path,
+    process::Command,
 };
 
 use crate::{
-    fs::{FileProperty, extract_archive},
+    fs::{FileProperty, create_archive_of_dir, extract_archive},
     sys::error,
 };
 
@@ -29,8 +30,6 @@ fn disclaimer() -> Result<(), std::io::Error> {
 }
 
 pub fn convert(source_package_path: &str, output_package_path: &str) -> Result<(), std::io::Error> {
-    disclaimer()?;
-
     /* Input file checks */
 
     if source_package_path.is_empty() {
@@ -71,6 +70,8 @@ pub fn convert(source_package_path: &str, output_package_path: &str) -> Result<(
         ))
     }
 
+    disclaimer()?;
+
     println!("Converting \"{source_package_path}\" -> \"{output_package_path}\"...");
 
     let source_is_debian = source_file_ext == "deb";
@@ -101,43 +102,76 @@ pub fn convert(source_package_path: &str, output_package_path: &str) -> Result<(
 
     println!("    Reading metadata...");
 
-    let spf_metadata_path = &FileProperty::name(source_package_path)?.replace(".spf", "/META");
+    let source_file_name = match FileProperty::name(source_package_path) {
+        Ok(name) => name,
+        Err(err) => error(&format!("Failed to get source name: {err}")),
+    };
+
+    let spf_metadata_path = source_file_name.replace(".spf", "/META");
 
     // `control.tar.xz` contains the debian package metadata, so extract if applicable.
     // Otherwise, extract assumed location of `.spf` package metadata, then collect the
     // metadata.
     let mut source_metadata: String = if source_is_debian {
         println!("        Extracting \"control.tar.xz\"...");
-        extract_archive("tar", "control.tar.xz")?;
+        //extract_archive("tar", "control.tar.xz")?;
+
+        create_dir("control")?;
+
+        // Manually extract to specific destination just cause
+        Command::new("tar")
+            .arg("-xf")
+            .arg("control.tar.xz")
+            .arg("-C")
+            .arg("./control")
+            .output()?;
 
         remove_file("control.tar.xz")?;
 
         println!("        Reading \"control\"...");
 
-        fs::read_to_string("control")?
+        fs::read_to_string("control/control")?
     } else {
         println!("        Reading \"{spf_metadata_path}\"...");
-        fs::read_to_string(spf_metadata_path)?
+        fs::read_to_string(&spf_metadata_path)?
     };
 
     println!("        Cleaning up metadata collection...");
 
     if source_is_debian {
-        remove_file("control")?;
+        remove_dir_all("control")?;
     } else {
-        remove_file(spf_metadata_path)?;
+        remove_file(&spf_metadata_path)?;
     }
 
     /* Conversion of metadata */
 
     println!("    Converting metadata...");
 
+    // println!("{source_metadata}");
+    // exit(0);
+
     let cloned_metadata = source_metadata.clone();
     let metadata_lines: Vec<&str> = cloned_metadata.lines().collect();
 
     for line in metadata_lines {
         if source_is_debian {
-            
+            if line.starts_with("Package:") {
+                source_metadata = source_metadata.replace("Package:", "PROJECT_NAME =");
+            } else if line.starts_with("Version:") {
+                source_metadata = source_metadata.replace("Version:", "VERSION =");
+            } else if line.starts_with("Description:") {
+                source_metadata = source_metadata.replace("Description:", "DESCRIPTION =");
+            } else if line.starts_with("Homepage:") {
+                source_metadata = source_metadata.replace("Homepage:", "REPOSITORY =");
+            } else if line.starts_with("Maintainer:") {
+                source_metadata = source_metadata.replace("Maintainer:", "AUTHORS =");
+            } else if line.starts_with("Architecture:") {
+                source_metadata = source_metadata.replace("Architecture:", "ARCH =");
+            } else {
+                source_metadata =
+                    source_metadata.replace(&format!("{line}\n"), &format!("#{line}\n"));
+            };
         } else {
             if line.starts_with("PROJECT_NAME =") {
                 source_metadata = source_metadata.replace("PROJECT_NAME =", "Package:");
@@ -148,7 +182,6 @@ pub fn convert(source_package_path: &str, output_package_path: &str) -> Result<(
             } else if line.starts_with("REPOSITORY =") {
                 source_metadata = source_metadata.replace("REPOSITORY =", "Homepage:");
             } else if line.starts_with("LICENSE =") {
-                println!("{line}");
                 source_metadata.retain(|_| line.starts_with("LICENSE ="));
             } else if line.starts_with("AUTHORS =") {
                 source_metadata = source_metadata.replace("AUTHORS =", "Maintainer:");
@@ -158,7 +191,62 @@ pub fn convert(source_package_path: &str, output_package_path: &str) -> Result<(
         }
     }
 
-    println!("source_metadata: {}", source_metadata);
+    if source_is_debian {
+        source_metadata = source_metadata
+            .lines()
+            .filter(|line| !line.trim().starts_with("#"))
+            .map(|line| line.trim_end_matches("#"))
+            .collect::<Vec<_>>()
+            .join("\n");
+    } else {
+        source_metadata = source_metadata
+            .lines()
+            .filter(|line| !line.starts_with("LICENSE =") || !line.starts_with("#"))
+            .collect::<Vec<_>>()
+            .join("\n")
+    }
+
+    /* File copying */;
+
+    println!("    Copying files...");
+
+    if source_is_debian {
+        create_dir("data")?;
+
+        // Manually extract to specific destination just cause
+        Command::new("tar")
+            .arg("-xf")
+            .arg("data.tar.xz")
+            .arg("-C")
+            .arg("./data")
+            .output()?;
+
+        remove_file("data.tar.xz")?;
+
+        let new_deb_dest = source_file_name.replace(".deb", "");
+        rename("data", &new_deb_dest)?;
+
+        fs::write(format!("{new_deb_dest}/META"), source_metadata)?;
+
+        println!("    Packaging...");
+
+        create_archive_of_dir("", output_package_path, &new_deb_dest)?;
+
+        remove_dir_all(new_deb_dest)?;
+    } else {
+        let extracted_spf_package = spf_metadata_path.replace("/META", "");
+        println!("{extracted_spf_package}");
+
+        rename(extracted_spf_package, "data")?;
+
+        println!("    Packaging...");
+
+        create_archive_of_dir("", "data.tar.xz", "data")?;
+
+        remove_dir_all("data")?;
+    }
+
+    println!("Done!");
 
     Ok(())
 }
