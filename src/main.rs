@@ -125,12 +125,13 @@ fn available_commands() {
     println!(
         "\
         Available Commands:\n\n  \
-          create     <metadata file> <output directory>   Create package\n  \
-          install    <.spf package location>              Install package\n  \
-          remove     <package to uninstall>               Uninstall package\n  \
-          list       <(optional) string to match>         List installed packages\n  \
-          template   <(optional) output location>         Generate package metadata template\n  \
-          inspect    <package to inspect>                 Inspect metadata of a package
+          create     <metadata file> <output directory>    Create package\n  \
+          install    <.spf package location>               Install package\n  \
+          remove     <package to uninstall>                Uninstall package\n  \
+          list       <(optional) string to match>          List installed packages\n  \
+          template   <(optional) output location>          Generate package metadata template\n  \
+          inspect    <package to inspect>                  Inspect metadata of a package\n  \
+          convert    <source package> <converted format>   Convert package formats
         \n\
         Available options:\n\n \
           --version       Display spf version\n \
