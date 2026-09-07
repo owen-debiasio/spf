@@ -13,7 +13,7 @@ use std::{
 use crate::{
     VERSION,
     fs::{FileProperty, create_archive_of_dir},
-    sys::{LIST_OF_ARCHS, error},
+    sys::error,
 };
 
 /// Starts the process of creating a `.spf` package.
@@ -178,20 +178,20 @@ fn write_project_meta_config(
             // Also determines partially completed strings.
             //
             // An architecture like `x86_` is disallowed.
-            if meta_category == "ARCH" {
-                let detected_arch = entry
-                    .split('=')
-                    .next_back()
-                    .unwrap_or_default()
-                    .trim_start();
+            // if meta_category == "ARCH" {
+            //     let detected_arch = entry
+            //         .split('=')
+            //         .next_back()
+            //         .unwrap_or_default()
+            //         .trim_start();
 
-                if !LIST_OF_ARCHS.contains(&detected_arch) {
-                    error(&format!(
-                        "\nInvalid architecture. Please pick from one of the options:\n{}",
-                        LIST_OF_ARCHS.join(", ")
-                    ))
-                }
-            }
+            //     if !LIST_OF_ARCHS.contains(&detected_arch) {
+            //         error(&format!(
+            //             "\nInvalid architecture. Please pick from one of the options:\n{}",
+            //             LIST_OF_ARCHS.join(", ")
+            //         ))
+            //     }
+            // }
 
             // Push the metadata to the buffer
             project_meta_buffer.push(entry);
