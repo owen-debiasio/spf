@@ -96,3 +96,8 @@
 - Made command example output in `available_commands` look nicer
 - Add support for metadata field `REPOSITORY`, which displays the source of the
   program
+
+## v0.6.0
+
+- Add support for converting `.deb` packages to `.spf` packages (and vice versa)
+  using command `convert`
