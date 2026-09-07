@@ -6,6 +6,7 @@
 
 use std::{
     fs::{self, remove_file},
+    io::stdin,
     path::Path,
 };
 
@@ -14,7 +15,22 @@ use crate::{
     sys::error,
 };
 
+/// Lets user know that this program has no warranty, and is not responsible
+fn disclaimer() -> Result<(), std::io::Error> {
+    println!(
+        "I, or this program, are not responsible for any damage to your system caused by this command.\n\
+        Install converted packages at your own risk.\n\n\
+        Press enter to continue..."
+    );
+
+    stdin().read_line(&mut String::new())?;
+
+    Ok(())
+}
+
 pub fn convert(source_package_path: &str, output_package_path: &str) -> Result<(), std::io::Error> {
+    disclaimer()?;
+
     /* Input file checks */
 
     if source_package_path.is_empty() {
@@ -114,7 +130,35 @@ pub fn convert(source_package_path: &str, output_package_path: &str) -> Result<(
 
     /* Conversion of metadata */
 
-    println!("        Converting metadata...");
+    println!("    Converting metadata...");
+
+    let cloned_metadata = source_metadata.clone();
+    let metadata_lines: Vec<&str> = cloned_metadata.lines().collect();
+
+    for line in metadata_lines {
+        if source_is_debian {
+            
+        } else {
+            if line.starts_with("PROJECT_NAME =") {
+                source_metadata = source_metadata.replace("PROJECT_NAME =", "Package:");
+            } else if line.starts_with("VERSION =") {
+                source_metadata = source_metadata.replace("VERSION =", "Version:");
+            } else if line.starts_with("DESCRIPTION =") {
+                source_metadata = source_metadata.replace("DESCRIPTION =", "Description:");
+            } else if line.starts_with("REPOSITORY =") {
+                source_metadata = source_metadata.replace("REPOSITORY =", "Homepage:");
+            } else if line.starts_with("LICENSE =") {
+                println!("{line}");
+                source_metadata.retain(|_| line.starts_with("LICENSE ="));
+            } else if line.starts_with("AUTHORS =") {
+                source_metadata = source_metadata.replace("AUTHORS =", "Maintainer:");
+            } else if line.starts_with("ARCH =") {
+                source_metadata = source_metadata.replace("ARCH =", "Architecture:");
+            };
+        }
+    }
+
+    println!("source_metadata: {}", source_metadata);
 
     Ok(())
 }
