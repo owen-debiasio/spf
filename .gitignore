@@ -2,9 +2,15 @@
 /target
 
 # Spare .deb, .rpm or .spf spf packages or binaries
-spf*
+spf-*
 
-# Spare extracted .deb archive contents
+# Spare extracted .deb related files
+*.deb
 control.tar.xz
 data.tar.xz
 debian-binary
+
+# Other packages
+
+*.spf
+*.rpm
