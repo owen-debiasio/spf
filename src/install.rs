@@ -5,12 +5,13 @@
 
 use std::{
     env::consts::ARCH,
-    fs::{self, OpenOptions, create_dir_all, remove_dir_all},
+    fs::{self, File, OpenOptions, create_dir_all, remove_dir_all},
     io::{self, Write},
     path::Path,
     process::exit,
 };
 
+use file_diff::diff_files;
 use glob::glob;
 
 use crate::{
@@ -143,16 +144,11 @@ pub fn spf_install(mut spf_package_path: String) -> Result<(), std::io::Error> {
     println!("Installing: {package_name}-{package_version} from ./{spf_package_path}");
 
     // Install all the necessary paths, including the metadata file.
-    match install_files(
+    install_files(
         &packaged_metadata_file,
         package_meta_path_install_location,
         &extracted_package_path,
-    ) {
-        Ok(()) => (),
-        Err(err) => error(&format!(
-            "Failed to install {package_name_formatted}: {err}"
-        )),
-    }
+    )?;
 
     println!("Cleaning up...");
 
@@ -326,48 +322,56 @@ fn install_files(
     // Write the header for defining installed paths
     project_meta_file.write_all(b"\n:::PATH DEFINE START:::\n")?;
 
-    let mut skip_install: bool = false;
-
     // Go through and install packaged paths
     for found_path in glob(path_to_search).expect("Failed to collect directories") {
         // File/folder to be copied
-        let current_path = found_path?.display().to_string();
+        let file_from_archive = found_path?.display().to_string();
 
         // Path where `file_from_archive` will be copied to
         // `extracted_package_path` is removed to prevent conflicts
-        let destination = current_path.replacen(extracted_package_path, "", 1);
+        let file_destination = file_from_archive.replacen(extracted_package_path, "", 1);
+
+        let mut write_path = || -> () {
+            // Write the path of the file to later be removed when uninstalled.
+            // Basically shows that the program is installed.
+            project_meta_file
+                .write_all(format!("{file_destination}\n").as_bytes())
+                .expect("Failed to write path");
+        };
 
         // `file_destination` as `Path`
-        let path_to_create = Path::new(&destination);
+        let path_to_create = Path::new(&file_destination);
 
-        if path_to_create.exists() {
-            println!("    Path \"{destination}\" exists, skipping");
-            skip_install = true
-        }
+        // If the path to be copied is a directory, simply create it instead of copying it.
+        if Path::new(&file_from_archive).is_dir() {
+            if !path_to_create.exists() {
+                write_path();
+            }
+            create_dir_all(path_to_create)?;
 
-        // Write the path entry, to later be removed
-        project_meta_file.write_all(format!("{destination}\n").as_bytes())?;
-
-        if skip_install {
             continue;
         }
 
-        // If the path to be copied is a directory, simply create it instead of copying it.
-        if Path::new(&current_path).is_dir() {
-            println!("    Creating \"{destination}\"");
-            create_dir_all(path_to_create)?;
-        } else {
-            println!("    Copying \"{current_path}\" -> \"{destination}\"");
+        println!("    Copying \"{file_from_archive}\" -> \"{file_destination}\"");
 
-            // Check if the file being copied `file_destination` is spf itself. If so,
-            // replace the old binary (current binary path) with the new binary
-            // (`file_from_archive`/`file_destination`)
-            if destination == get_binary_path()? {
-                self_replace::self_replace(&current_path)?;
-            }
-
-            fs::copy(&current_path, &destination)?;
+        if !diff_files(
+            &mut File::open(&file_from_archive)?,
+            &mut File::open(&file_destination)?,
+        ) && path_to_create.exists()
+        {
+            continue;
         }
+
+        // Check if the file being copied `file_destination` is spf itself. If so,
+        // replace the old binary (current binary path) with the new binary
+        // (`file_from_archive`/`file_destination`)
+        if file_destination == get_binary_path()? {
+            self_replace::self_replace(&file_from_archive)?;
+        }
+
+        fs::copy(&file_from_archive, &file_destination)?;
+
+        write_path();
     }
 
     Ok(())
