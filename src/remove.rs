@@ -5,7 +5,7 @@
 
 use crate::{
     metadata::{Meta, PACKAGE_INSTALL_PATH},
-    sys::{error, is_root},
+    sys::{error, get_binary_path, is_root},
 };
 use std::{
     collections::HashSet,
@@ -106,20 +106,30 @@ pub fn remove_spf_package(mut packages_to_remove: Vec<String>) -> Result<(), std
 fn remove_package(package_formatted: &str, package_meta_path: &str) -> Result<(), std::io::Error> {
     println!("\nRemoving: {package_formatted}");
 
+    let meta_file = fs::read_to_string(package_meta_path)?;
+
+    let mut paths_to_remove: Vec<&str> = meta_file.lines().collect();
+
+    // Remove anything that's not a path
+    for _ in paths_to_remove.clone() {
+        paths_to_remove.retain(|path| path.starts_with('/'));
+    }
+
     // Cycle through the lines of the metadata file
-    for entry in fs::read_to_string(package_meta_path)?.lines() {
-        // If the entry isn't an obvious path, skip to next line.
-        if !entry.starts_with('/') {
+    for entry in paths_to_remove {
+        println!("    Removing \"{entry}\"...");
+
+        let path_to_remove = Path::new(entry);
+
+        if !path_to_remove.exists() {
             continue;
         }
 
-        println!("    Removing \"{entry}\"...");
+        if path_to_remove.is_file() {
+            if entry == get_binary_path()? {
+                self_replace::self_replace(entry)?;
+            }
 
-        // Delete the paths.
-        //
-        // Whether the path is a file or directory is detected through
-        // `.is_file()`
-        if Path::new(entry).is_file() {
             remove_file(entry)?;
         } else {
             remove_dir_all(entry)?;

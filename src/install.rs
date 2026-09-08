@@ -143,11 +143,16 @@ pub fn spf_install(mut spf_package_path: String) -> Result<(), std::io::Error> {
     println!("Installing: {package_name}-{package_version} from ./{spf_package_path}");
 
     // Install all the necessary paths, including the metadata file.
-    install_files(
+    match install_files(
         &packaged_metadata_file,
         package_meta_path_install_location,
         &extracted_package_path,
-    )?;
+    ) {
+        Ok(()) => (),
+        Err(err) => error(&format!(
+            "Failed to install {package_name_formatted}: {err}"
+        )),
+    }
 
     println!("Cleaning up...");
 
@@ -321,43 +326,47 @@ fn install_files(
     // Write the header for defining installed paths
     project_meta_file.write_all(b"\n:::PATH DEFINE START:::\n")?;
 
+    let mut skip_install: bool = false;
+
     // Go through and install packaged paths
     for found_path in glob(path_to_search).expect("Failed to collect directories") {
         // File/folder to be copied
-        let file_from_archive = found_path?.display().to_string();
+        let current_path = found_path?.display().to_string();
 
         // Path where `file_from_archive` will be copied to
         // `extracted_package_path` is removed to prevent conflicts
-        let file_destination = file_from_archive.replacen(extracted_package_path, "", 1);
+        let destination = current_path.replacen(extracted_package_path, "", 1);
 
         // `file_destination` as `Path`
-        let path_to_create = Path::new(&file_destination);
+        let path_to_create = Path::new(&destination);
 
-        // If the path to be copied is a directory, simply create it instead of copying it.
-        if Path::new(&file_from_archive).is_dir() {
-            create_dir_all(path_to_create)?;
+        if path_to_create.exists() {
+            println!("    Path \"{destination}\" exists, skipping");
+            skip_install = true
+        }
+
+        // Write the path entry, to later be removed
+        project_meta_file.write_all(format!("{destination}\n").as_bytes())?;
+
+        if skip_install {
             continue;
         }
 
-        println!("    Copying \"{file_from_archive}\" -> \"{file_destination}\"");
+        // If the path to be copied is a directory, simply create it instead of copying it.
+        if Path::new(&current_path).is_dir() {
+            println!("    Creating \"{destination}\"");
+            create_dir_all(path_to_create)?;
+        } else {
+            println!("    Copying \"{current_path}\" -> \"{destination}\"");
 
-        // Check if the file being copied `file_destination` is spf itself. If so,
-        // replace the old binary (current binary path) with the new binary
-        // (`file_from_archive`/`file_destination`)
-        if file_destination == get_binary_path()? {
-            self_replace::self_replace(&file_from_archive)?;
-        }
+            // Check if the file being copied `file_destination` is spf itself. If so,
+            // replace the old binary (current binary path) with the new binary
+            // (`file_from_archive`/`file_destination`)
+            if destination == get_binary_path()? {
+                self_replace::self_replace(&current_path)?;
+            }
 
-        fs::copy(&file_from_archive, &file_destination)?;
-
-        // Write the path of the file to later be removed when uninstalled.
-        // Basically shows that the program is installed.
-        project_meta_file.write_all(format!("{file_destination}\n").as_bytes())?;
-
-        // Check that the path was copied/created correctly
-        if !path_to_create.exists() {
-            remove_dir_all(extracted_package_path)?;
-            error(&format!("Failed to copy file: \"{file_destination}\""))
+            fs::copy(&current_path, &destination)?;
         }
     }
 
