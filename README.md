@@ -92,7 +92,7 @@ You can find the standalone binary here:
 
 #### .spf Installer package
 
-You can find the `.rpm` package here:
+You can find the `.spf` package here:
 [Releases Page](https://github.com/owen-debiasio/spf/releases/latest)
 
 #### Build from source
@@ -134,3 +134,5 @@ sudo cp target/release/spf /usr/bin/spf # Install to location (like /usr/local/b
   [mitsuhiko](https://github.com/mitsuhiko)
 - [cmd-exists](https://github.com/ejsch03/cmd-exists) by
   [ejsch03](https://github.com/ejsch03)
+- [file-diff](https://github.com/ethanpailes/file_diff-rs) by
+  [ethanpailes](https://github.com/ethanpailes)
