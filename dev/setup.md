@@ -44,7 +44,7 @@ distrobox assemble create
 And to enter the container,
 
 ```bash
-distrobox enter spf
+distrobox enter spf-dev
 ```
 
 ### Notes
