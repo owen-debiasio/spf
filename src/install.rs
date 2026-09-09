@@ -314,10 +314,18 @@ fn install_files(
     // Init the new metadata file.
     //
     // Allows appending, it creates it, and opens it
-    let mut project_meta_file = OpenOptions::new()
-        .append(true)
-        .create(true)
-        .open(package_meta_path_install_location)?;
+    let mut project_meta_file: File;
+
+    if Path::new(&package_meta_path_install_location).exists() {
+        project_meta_file = OpenOptions::new()
+            .append(true)
+            .open(&package_meta_path_install_location)?;
+    } else {
+        project_meta_file = OpenOptions::new()
+            .append(true)
+            .create(true)
+            .open(&package_meta_path_install_location)?;
+    };
 
     // Write the header for defining installed paths
     project_meta_file.write_all(b"\n:::PATH DEFINE START:::\n")?;
@@ -331,47 +339,50 @@ fn install_files(
         // `extracted_package_path` is removed to prevent conflicts
         let file_destination = file_from_archive.replacen(extracted_package_path, "", 1);
 
-        let mut write_path = || -> () {
-            // Write the path of the file to later be removed when uninstalled.
-            // Basically shows that the program is installed.
-            project_meta_file
-                .write_all(format!("{file_destination}\n").as_bytes())
-                .expect("Failed to write path");
-        };
-
         // `file_destination` as `Path`
         let path_to_create = Path::new(&file_destination);
 
+        if path_to_create.exists() {
+            continue;
+        }
+
         // If the path to be copied is a directory, simply create it instead of copying it.
         if Path::new(&file_from_archive).is_dir() {
-            if !path_to_create.exists() {
-                write_path();
-            }
             create_dir_all(path_to_create)?;
+        } else {
+            println!("    Copying \"{file_from_archive}\" -> \"{file_destination}\"");
 
-            continue;
+            if path_to_create.exists()
+                && !diff_files(
+                    &mut File::open(&file_from_archive)?,
+                    &mut File::open(&file_destination)?,
+                )
+            {
+                continue;
+            }
+
+            // Check if the file being copied `file_destination` is spf itself. If so,
+            // replace the old binary (current binary path) with the new binary
+            // (`file_from_archive`/`file_destination`)
+            if file_destination == get_binary_path()? {
+                self_replace::self_replace(&file_from_archive)?;
+            }
+
+            fs::copy(&file_from_archive, &file_destination)?;
         }
 
-        println!("    Copying \"{file_from_archive}\" -> \"{file_destination}\"");
-
-        if !diff_files(
-            &mut File::open(&file_from_archive)?,
-            &mut File::open(&file_destination)?,
-        ) && path_to_create.exists()
+        if !fs::read_to_string(package_meta_path_install_location.clone())?
+            .lines()
+            .collect::<Vec<_>>()
+            .iter()
+            .filter(|line| line.starts_with('/'))
+            .collect::<Vec<_>>()
+            .contains(&&file_destination.as_str())
         {
-            continue;
+            // Write the path of the file to later be removed when uninstalled.
+            // Basically shows that the program is installed.
+            project_meta_file.write_all(format!("{file_destination}\n").as_bytes())?;
         }
-
-        // Check if the file being copied `file_destination` is spf itself. If so,
-        // replace the old binary (current binary path) with the new binary
-        // (`file_from_archive`/`file_destination`)
-        if file_destination == get_binary_path()? {
-            self_replace::self_replace(&file_from_archive)?;
-        }
-
-        fs::copy(&file_from_archive, &file_destination)?;
-
-        write_path();
     }
 
     Ok(())
