@@ -15,36 +15,19 @@ use crate::{
 /// Initializes what spf needs to function properly.
 ///
 /// What it does currently:
-///     - Check if needed paths exist
 ///     - Check if command `tar` is installed
 ///
 /// If the build of spf is a debug build (located in `./target/`), skip.
 /// Useful for github workflows.
 pub fn init() -> Result<(), std::io::Error> {
-    // Packages that spf needs to check so it can function
-    let paths_to_check = vec![PACKAGE_INSTALL_PATH];
-
-    // Check if the current build is a debug build or non-release build. Bypasses
-    // root requirement.
-    if !get_binary_path()?.contains("/target/") {
-        // Go through the paths and make sure they exist. Otherwise, create them.
-        for path in paths_to_check {
-            // If a needed path doesn't exist.
-            if !Path::new(path).exists() {
-                // Make sure user is running as root
-                if !is_root()? {
-                    error("In order to initialize the filesystem, you must run spf as root")
-                }
-
-                // Create the needed directory
-                create_dir_all(path)?;
-            }
-        }
-    }
-
-    // Check if command `tar is installed`
     match cmd_exists("tar") {
         Ok(()) => Ok(()),
-        Err(_) => error("Command \"tar\" not found! Please install it!"),
+        Err(err) => error(&format!("Command \"tar\" not found! Please install it! Details: {err}")),
+    }
+
+    match cmd_exists("ar") {
+        Ok(()) -> Ok(()),
+        Err(err) => error(&format!("Command \"ar\" not found! Please install it! Details: {err}"))
     }
 }
+

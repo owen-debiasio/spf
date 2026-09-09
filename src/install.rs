@@ -302,6 +302,10 @@ fn install_files(
     package_meta_path_install_location: String,
     extracted_package_path: &str,
 ) -> Result<(), std::io::Error> {
+    if !Path::new(PACKAGE_INSTALL_PATH).exists() {
+        create_dir_all(PACKAGE_INSTALL_PATH)?
+    }
+
     // Copy the packaged metadata file to its install location
     fs::copy(packaged_metadata_file, &package_meta_path_install_location)?;
 

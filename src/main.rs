@@ -31,7 +31,7 @@ mod template;
 static VERSION: &str = "v0.6.0";
 
 fn main() -> Result<(), std::io::Error> {
-    init::init()?;
+    //init::init()?;
 
     // Intro
     println!("spf-{VERSION}\n");
