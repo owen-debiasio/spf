@@ -136,3 +136,5 @@ sudo cp target/release/spf /usr/bin/spf # Install to location (like /usr/local/b
   [ejsch03](https://github.com/ejsch03)
 - [file-diff](https://github.com/ethanpailes/file_diff-rs) by
   [ethanpailes](https://github.com/ethanpailes)
+- [tar-rs](https://github.com/composefs/tar-rs) by
+  [composefs](https://github.com/composefs)
