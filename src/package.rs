@@ -89,12 +89,10 @@ pub fn create_spf_package(
             ".spf"
         }
     );
-    let x = &FileProperty::name(&archive_name.replace(".spf", ""))?;
-    println!("{x}");
 
     // Take the directories (`parent_directories`) inside `directory_to_compress`,
     // then package them to whatever `archive_name` is.
-    create_tar_archive(output_location, archive_name)?;
+    create_tar_archive(archive_name, output_location)?;
 
     // Cleanup directory that was compressed
     fs::remove_dir_all(output_location)?;
