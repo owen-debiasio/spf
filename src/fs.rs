@@ -4,7 +4,16 @@
 //! Copyright (C) 2026 Owen Debiasio <owen.debiasio@gmail.com>
 //! SPDX-License-Identifier: GPL-3.0-or-later
 
-use std::{ffi::OsStr, path::PathBuf, process::Command};
+use glob::glob;
+use std::{
+    ffi::OsStr,
+    fs::File,
+    path::{Path, PathBuf},
+    process::Command,
+};
+use tar::Builder;
+
+use crate::sys::error;
 
 /// Some utilities to retrieve one of the following properties from a path:
 ///     - File extension (using [`FileProperty::extension`])
@@ -80,48 +89,34 @@ impl FileProperty {
 }
 
 /// Creates an archive of a directory.
-/// Why am I using [`std::process::Command`] instead of a crate? F*ck you, that's why
-/// I'm using `tar` because it's basically on every distro and supported well on Linux.
 ///
 /// Inputs:
-///     - `parent_directories` ([`str`]) is the directories that contain the directory to archive **(OPTIONAL)**
 ///     - `output` ([`str`]) is the name of the output archive
-///     - `directory` ([`str`]) is the directory you want to archive
-///
-/// **Requires** `tar` executable (preferably the GNU version)
+///     - `path` ([`str`]) is the path you want to archive
 ///
 /// ```
-/// let parent_directories = "parent/dir/";
-/// let archive = "archive.spf";
-/// let folder_to_compress = "archive";
+/// let output = "archive.spf";
+/// let path = "archive";
 ///
-/// create_archive_of_dir(parent_directories, archive, folder_to_compress)
+/// create_tar_archive(output, path)
 /// ```
-pub fn create_archive_of_dir(
-    parent_directories: &str,
-    output: &str,
-    directory: &str,
-) -> Result<(), std::io::Error> {
-    // You gotta make this because if `parent_directories` it will prob shit itself smh
-    if parent_directories.is_empty() {
-        Command::new("tar")
-            .arg("-cf")
-            .arg(output)
-            .arg(directory)
-            .output()?;
+pub fn create_tar_archive(output: &str, path: &str) -> Result<(), std::io::Error> {
+    let mut archive = Builder::new(File::create(output)?);
 
-        Ok(())
+    if Path::new(path).is_dir() {
+        for entry in glob(&format!("{path}/**/*")).expect("Failed to read paths to add to archive")
+        {
+            println!("{entry:?}");
+            match entry {
+                Ok(path) => archive.append_path(path)?,
+                Err(err) => error(&format!("Failed to create archive: {err:?}")),
+            }
+        }
     } else {
-        Command::new("tar")
-            .arg("-C")
-            .arg(parent_directories)
-            .arg("-cf")
-            .arg(output)
-            .arg(directory)
-            .output()?;
-
-        Ok(())
+        archive.append_path(path)?
     }
+
+    Ok(())
 }
 
 /// Creates an archive of a directory.

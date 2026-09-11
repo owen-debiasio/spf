@@ -12,7 +12,7 @@ use std::{
 
 use crate::{
     VERSION,
-    fs::{FileProperty, create_archive_of_dir},
+    fs::{FileProperty, create_tar_archive},
     sys::error,
 };
 
@@ -89,8 +89,12 @@ pub fn create_spf_package(
             ".spf"
         }
     );
+    let x = &FileProperty::name(&archive_name.replace(".spf", ""))?;
+    println!("{x}");
 
-    package_to_spf(output_location, archive_name)?;
+    // Take the directories (`parent_directories`) inside `directory_to_compress`,
+    // then package them to whatever `archive_name` is.
+    create_tar_archive(output_location, archive_name)?;
 
     // Cleanup directory that was compressed
     fs::remove_dir_all(output_location)?;
@@ -323,41 +327,6 @@ fn copy_package_paths(
         // Copy `original_file_path` to `final_file_destination`
         fs::copy(&original_file_path, final_file_destination)?;
     }
-    Ok(())
-}
-
-/// Take the copied directories located in `output_location` ([`str`]) and compress
-/// them to what was provided as `archive_name` ([`str`]).
-///
-/// ```
-/// let output_location = "./package";
-/// let archive_name = "package.spf";
-///
-/// package_to_spf(output_location, archive_name)
-///
-/// // Archive `package.spf` should be located where `output_location` is
-/// ```
-fn package_to_spf(output_location: &str, archive_name: &str) -> Result<(), std::io::Error> {
-    let directory_to_compress = &FileProperty::name(archive_name)?.replace(".spf", "");
-
-    // Get parent directory
-    let parent_directories = &Path::new(output_location)
-        .parent()
-        .expect("Failed to retrieve parent directories")
-        .display()
-        .to_string();
-
-    // Take the directories (`parent_directories`) inside `directory_to_compress`,
-    // then package them to whatever `archive_name` is.
-    create_archive_of_dir(parent_directories, archive_name, directory_to_compress)?;
-
-    // Check if the package actually exists.
-    if !Path::new(archive_name).exists() {
-        error(&format!(
-            "Failed to package to \"{output_location}\": File not found"
-        ))
-    }
-
     Ok(())
 }
 

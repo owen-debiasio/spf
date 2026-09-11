@@ -12,7 +12,7 @@ use std::{
 };
 
 use crate::{
-    fs::{FileProperty, create_archive_of_dir, extract_archive},
+    fs::{FileProperty, create_tar_archive, extract_archive},
     sys::error,
 };
 
@@ -230,7 +230,7 @@ pub fn convert(source_package_path: &str, output_package_path: &str) -> Result<(
 
         println!("    Packaging...");
 
-        create_archive_of_dir("", output_package_path, &new_deb_dest)?;
+        create_tar_archive(output_package_path, &new_deb_dest)?;
 
         remove_dir_all(new_deb_dest)?;
     } else {
@@ -241,7 +241,7 @@ pub fn convert(source_package_path: &str, output_package_path: &str) -> Result<(
 
         println!("    Packaging...");
 
-        create_archive_of_dir("", "data.tar.xz", "data")?;
+        create_tar_archive("data.tar.xz", "data")?;
 
         remove_dir_all("data")?;
     }
