@@ -86,10 +86,10 @@ impl FileProperty {
 }
 
 /// Creates an archive of a directory.
-/// 
+///
 /// Creates a blank archive (`output`), then copies paths that are located in
 /// `path`.
-/// 
+///
 /// Finish and close the archive once done.
 ///
 /// Inputs:
