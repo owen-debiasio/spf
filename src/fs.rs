@@ -4,7 +4,6 @@
 //! Copyright (C) 2026 Owen Debiasio <owen.debiasio@gmail.com>
 //! SPDX-License-Identifier: GPL-3.0-or-later
 
-use glob::glob;
 use std::{
     ffi::OsStr,
     fs::File,
@@ -12,8 +11,6 @@ use std::{
     process::Command,
 };
 use tar::Builder;
-
-use crate::sys::error;
 
 /// Some utilities to retrieve one of the following properties from a path:
 ///     - File extension (using [`FileProperty::extension`])
@@ -104,17 +101,12 @@ pub fn create_tar_archive(output: &str, path: &str) -> Result<(), std::io::Error
     let mut archive = Builder::new(File::create(output)?);
 
     if Path::new(path).is_dir() {
-        for entry in glob(&format!("{path}/**/*")).expect("Failed to read paths to add to archive")
-        {
-            println!("{entry:?}");
-            match entry {
-                Ok(path) => archive.append_path(path)?,
-                Err(err) => error(&format!("Failed to create archive: {err:?}")),
-            }
-        }
+        archive.append_dir_all(FileProperty::name(path)?, path)?;
     } else {
         archive.append_path(path)?
     }
+
+    archive.finish()?;
 
     Ok(())
 }
