@@ -1,16 +1,16 @@
 # Rust junk
 /target
 
-# Spare .deb, .rpm or .spf spf packages or binaries
+# Spare spf related items
 spf-*
+*.spf
+spfbuildcfg
 
-# Spare extracted .deb related files
+# Spare debian package items
 *.deb
 control.tar.xz
 data.tar.xz
 debian-binary
 
 # Other packages
-
-*.spf
 *.rpm
