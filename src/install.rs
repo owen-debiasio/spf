@@ -306,6 +306,18 @@ fn install_files(
         create_dir_all(PACKAGE_INSTALL_PATH)?
     }
 
+    let package_meta_path_install_location_as_path = Path::new(&package_meta_path_install_location);
+
+    // Helps determine if a path as previously installed
+    let previous_meta_contents;
+
+    if package_meta_path_install_location_as_path.exists() {
+        previous_meta_contents = fs::read_to_string(package_meta_path_install_location_as_path)?;
+        fs::remove_file(&package_meta_path_install_location)?;
+    } else {
+        previous_meta_contents = String::new()
+    }
+
     // Copy the packaged metadata file to its install location
     fs::copy(packaged_metadata_file, &package_meta_path_install_location)?;
 
@@ -318,18 +330,9 @@ fn install_files(
     // Init the new metadata file.
     //
     // Allows appending, it creates it, and opens it
-    let mut project_meta_file: File;
-
-    if Path::new(&package_meta_path_install_location).exists() {
-        project_meta_file = OpenOptions::new()
-            .append(true)
-            .open(&package_meta_path_install_location)?;
-    } else {
-        project_meta_file = OpenOptions::new()
-            .append(true)
-            .create(true)
-            .open(&package_meta_path_install_location)?;
-    };
+    let mut project_meta_file = OpenOptions::new()
+        .append(true)
+        .open(&package_meta_path_install_location)?;
 
     // Write the header for defining installed paths
     project_meta_file.write_all(b"\n:::PATH DEFINE START:::\n")?;
@@ -346,7 +349,11 @@ fn install_files(
         // `file_destination` as `Path`
         let path_to_create = Path::new(&file_destination);
 
-        if path_to_create.exists() {
+        // If a file is already installed, AND NOT found in the previous metadata,
+        // just skip.
+        if path_to_create.exists()
+            && !previous_meta_contents.contains(&format!("{}\n", file_destination.as_str()))
+        {
             continue;
         }
 
@@ -375,18 +382,9 @@ fn install_files(
             fs::copy(&file_from_archive, &file_destination)?;
         }
 
-        if !fs::read_to_string(package_meta_path_install_location.clone())?
-            .lines()
-            .collect::<Vec<_>>()
-            .iter()
-            .filter(|line| line.starts_with('/'))
-            .collect::<Vec<_>>()
-            .contains(&&file_destination.as_str())
-        {
-            // Write the path of the file to later be removed when uninstalled.
-            // Basically shows that the program is installed.
-            project_meta_file.write_all(format!("{file_destination}\n").as_bytes())?;
-        }
+        // Write the path of the file to later be removed when uninstalled.
+        // Basically shows that the program is installed.
+        project_meta_file.write_all(format!("{file_destination}\n").as_bytes())?;
     }
 
     Ok(())
