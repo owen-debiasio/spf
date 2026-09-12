@@ -101,3 +101,7 @@
 
 - Add support for converting `.deb` packages to `.spf` packages (and vice versa)
   using command `convert`
+- Fix package reinstallation (At the cost of wiping my own drive while fixing
+  it)
+- Code optimizations & random fixes
+- Tar is now used natively
