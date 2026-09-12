@@ -5,14 +5,13 @@
 //! SPDX-License-Identifier: GPL-3.0-or-later
 
 use std::{
-    fs::{self, create_dir, remove_dir_all, remove_file, rename},
+    fs::{self, remove_dir_all, remove_file, rename},
     io::stdin,
     path::Path,
-    process::Command,
 };
 
 use crate::{
-    fs::{FileProperty, create_tar_archive, extract_archive},
+    fs::{FileProperty, create_tar_archive, extract_ar_archive, extract_tar_archive},
     sys::error,
 };
 
@@ -29,7 +28,6 @@ fn disclaimer() -> Result<(), std::io::Error> {
     Ok(())
 }
 
-/// TODO: Make native tar functions
 pub fn convert(source_package_path: &str, output_package_path: &str) -> Result<(), std::io::Error> {
     /* Input file checks */
 
@@ -74,25 +72,19 @@ pub fn convert(source_package_path: &str, output_package_path: &str) -> Result<(
     disclaimer()?;
 
     println!("Converting \"{source_package_path}\" -> \"{output_package_path}\"...");
+    println!("    Extracting \"{source_package_path}\"...");
 
     let source_is_debian = source_file_ext == "deb";
 
-    // Dynamically choose the extractor for the package.
+    // Dynamically extract the package.
     //
     // If the package is a `.deb` file, use `ar`.
     // Otherwise, use `tar.`
-    let extracter = if source_file_ext == "spf" {
-        "tar"
-    } else if source_file_ext == "deb" {
-        "ar"
+    if source_file_ext == "deb" {
+        extract_ar_archive(source_package_path, ".")?;
     } else {
-        // Use `tar` for fallback (however it's likely to fail on unsupported binaries)
-        "tar"
+        extract_tar_archive(source_package_path, ".", "gz")?;
     };
-
-    println!("    Extracting \"{source_package_path}\"...");
-
-    extract_archive(extracter, source_package_path)?;
 
     // `debian-binary` isn't used, so delete it
     if source_is_debian {
@@ -115,17 +107,8 @@ pub fn convert(source_package_path: &str, output_package_path: &str) -> Result<(
     // metadata.
     let mut source_metadata: String = if source_is_debian {
         println!("        Extracting \"control.tar.xz\"...");
-        //extract_archive("tar", "control.tar.xz")?;
 
-        create_dir("control")?;
-
-        // Manually extract to specific destination just cause
-        Command::new("tar")
-            .arg("-xf")
-            .arg("control.tar.xz")
-            .arg("-C")
-            .arg("./control")
-            .output()?;
+        extract_tar_archive("./control.tar.xz", "./control", "xz")?;
 
         remove_file("control.tar.xz")?;
 
@@ -212,15 +195,7 @@ pub fn convert(source_package_path: &str, output_package_path: &str) -> Result<(
     println!("    Copying files...");
 
     if source_is_debian {
-        create_dir("data")?;
-
-        // Manually extract to specific destination just cause
-        Command::new("tar")
-            .arg("-xf")
-            .arg("data.tar.xz")
-            .arg("-C")
-            .arg("./data")
-            .output()?;
+        extract_tar_archive("data.tar.xz", "./data", "xz")?;
 
         remove_file("data.tar.xz")?;
 

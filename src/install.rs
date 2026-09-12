@@ -15,7 +15,7 @@ use file_diff::diff_files;
 use glob::glob;
 
 use crate::{
-    fs::{FileProperty, extract_archive},
+    fs::{FileProperty, extract_tar_archive},
     metadata::{Meta, PACKAGE_INSTALL_PATH},
     sys::{args_contains, error, get_binary_path, is_root},
 };
@@ -58,8 +58,7 @@ pub fn spf_install(mut spf_package_path: String) -> Result<(), std::io::Error> {
 
     println!("Loading package: {spf_package_path}\n");
 
-    // Extract the provided package
-    extract_archive("tar", &spf_package_path)?;
+    extract_tar_archive(&spf_package_path, ".", "")?;
 
     spf_package_path = FileProperty::name(&spf_package_path)?;
 

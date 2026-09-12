@@ -4,13 +4,15 @@
 //! Copyright (C) 2026 Owen Debiasio <owen.debiasio@gmail.com>
 //! SPDX-License-Identifier: GPL-3.0-or-later
 
+use flate2::read::GzDecoder;
 use std::{
     ffi::OsStr,
-    fs::File,
+    fs::{self, File},
+    io,
     path::{Path, PathBuf},
-    process::Command,
 };
-use tar::Builder;
+use tar::{Archive, Builder};
+use xz::read::XzDecoder;
 
 /// Some utilities to retrieve one of the following properties from a path:
 ///     - File extension (using [`FileProperty::extension`])
@@ -121,17 +123,89 @@ pub fn create_tar_archive(output: &str, path: &str) -> Result<(), std::io::Error
 /// You just need to input the path of where it outputs to (`path` ([`str`])).
 /// Extracts it using `archive_exec` ([`str`]) to the current working directory.
 ///
+/// `archive_type` ([`str`]) determines which archive format to use.
+///
+/// Chooses one of the following:
+///     - `gz`
+///     - `xz`
+///     - Leave empty for regular tar format
+///
+/// Using tar.gz:
+/// ```
+/// let archive = "archive.tar.gz";
+/// let dest = ".";
+/// let archive_type = "gz";
+///
+/// extract_archive(archive, dest, archive_type);
+/// ```
+///
+/// Using tar.xz:
+/// ```
+/// let archive = "archive.tar.xz";
+/// let dest = ".";
+/// let archive_type = "xz";
+///
+/// extract_archive(archive, dest, archive_type);
+/// ```
+///
+/// Other
+/// ```
+/// let archive = "archive.tar";
+/// let dest = ".";
+/// let archive_type = "";
+///
+/// extract_archive(archive, dest, archive_type);
+/// ```
+pub fn extract_tar_archive(
+    path: &str,
+    dest: &str,
+    archive_type: &str,
+) -> Result<(), std::io::Error> {
+    let archive_path = File::open(path)?;
+
+    if !matches!(archive_type, "gz" | "xz" | "") {
+        panic!("Invalid coded archive type: {archive_type}")
+    }
+
+    if archive_type == "gz" {
+        Archive::new(GzDecoder::new(archive_path)).unpack(dest)?;
+    } else if archive_type == "xz" {
+        Archive::new(XzDecoder::new(archive_path)).unpack(dest)?;
+    } else {
+        Archive::new(archive_path).unpack(dest)?;
+    };
+
+    Ok(())
+}
+
+/// Creates an archive using `tar`.
+///
+/// You just need to input the path of where it outputs to (`path` ([`str`])).
+/// Extracts it using `archive_exec` ([`str`]) to the current working directory.
+///
 /// ```
 /// let archive_exec = "tar";
-/// let path_of_archive = "archive.spf";
+/// let path_of_archive = "archive.ar";
 /// extract_archive(archive_exec, path_of_archive);
 ///
 /// // Extracted directory `archive` should be located in the current working
 /// // directory
 /// ```
-/// TODO: make this native tar
-pub fn extract_archive(exec: &str, path: &str) -> Result<(), std::io::Error> {
-    Command::new(exec).arg("-xf").arg(path).output()?;
+pub fn extract_ar_archive(path: &str, dest: &str) -> Result<(), std::io::Error> {
+    fs::create_dir_all(dest)?;
+
+    let mut archive = ar::Archive::new(File::open(path)?);
+
+    while let Some(entry_result) = archive.next_entry() {
+        let mut entry = entry_result?;
+
+        let mut file = File::create(
+            str::from_utf8(entry.header().identifier()).expect("Failed to get header"),
+        )
+        .unwrap();
+
+        io::copy(&mut entry, &mut file)?;
+    }
 
     Ok(())
 }

@@ -11,7 +11,7 @@ use std::{
 };
 
 use crate::{
-    fs::{FileProperty, extract_archive},
+    fs::{FileProperty, extract_tar_archive},
     metadata::PACKAGE_INSTALL_PATH,
     sys::error,
 };
@@ -53,7 +53,7 @@ fn inspect_spf_package(package_path: &str) -> Result<(), std::io::Error> {
         error(&format!(".spf package not found: {package_path}"))
     }
 
-    extract_archive("tar", package_path)?;
+    extract_tar_archive(package_path, ".", "")?;
 
     let metadata_path = FileProperty::name(package_path)?.replace(".spf", "/META");
 
