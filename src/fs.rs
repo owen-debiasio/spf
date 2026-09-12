@@ -129,6 +129,7 @@ pub fn create_tar_archive(output: &str, path: &str) -> Result<(), std::io::Error
 /// // Extracted directory `archive` should be located in the current working
 /// // directory
 /// ```
+/// TODO: make this native tar
 pub fn extract_archive(exec: &str, path: &str) -> Result<(), std::io::Error> {
     Command::new(exec).arg("-xf").arg(path).output()?;
 

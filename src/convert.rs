@@ -29,6 +29,7 @@ fn disclaimer() -> Result<(), std::io::Error> {
     Ok(())
 }
 
+/// TODO: Make native tar functions
 pub fn convert(source_package_path: &str, output_package_path: &str) -> Result<(), std::io::Error> {
     /* Input file checks */
 
