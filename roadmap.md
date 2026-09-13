@@ -6,7 +6,10 @@
 Here's a todo list that I've thrown together of things I want to add/change over
 time.
 
-Related: [TODO](todo.md)
+Related:
+
+- [TODO list](todo.md)
+- [SPF Changelog](changes.md)
 
 ## Work in progress
 

@@ -1,5 +1,12 @@
 # spf changelog
 
+Scroll all the way down to see the latest releases.
+
+Waiting for new features? Check out the status of them in these related pages:
+
+- [SPF Roadmap](roadmap.md)
+- [TODO list](todo.md)
+
 ## v0.1.0
 
 - Initial release
@@ -105,3 +112,6 @@
   it)
 - Code optimizations & random fixes
 - Tar is now used natively
+- Overhauled package architecture system
+  - There is now a list of supported architectures: `x86_64`, `x86`, `aarch64`,
+    `arm`
