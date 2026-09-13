@@ -98,11 +98,16 @@ Waiting for new features? Check out the status of them in these related pages:
 
 ## v0.5.2
 
+<details>
+<summary>Show details</summary>
+
 - Optimized error handling
 - Code optimizations
 - Made command example output in `available_commands` look nicer
 - Add support for metadata field `REPOSITORY`, which displays the source of the
   program
+
+</details>
 
 ## v0.6.0
 
