@@ -137,6 +137,8 @@ fn convert_to_spf(output_package_path: &str) -> Result<(), std::io::Error> {
     let cloned_metadata = source_metadata.clone();
     let metadata_lines: Vec<&str> = cloned_metadata.lines().collect();
 
+    // Go through and replace the category headers with the .spf META file
+    // counterparts.
     for line in metadata_lines {
         if line.starts_with("Package:") {
             source_metadata = source_metadata.replace("Package:", "PROJECT_NAME =");
@@ -156,16 +158,20 @@ fn convert_to_spf(output_package_path: &str) -> Result<(), std::io::Error> {
 
             source_metadata = source_metadata.replace(line, &format!("ARCH = {spf_arch}"));
         } else {
+            // If nothing matches, comment the lines. Will be removed after.
             source_metadata = source_metadata.replace(&format!("{line}\n"), &format!("#{line}\n"));
         };
     }
 
+    // Removes the lines that have been commented.
     source_metadata = source_metadata
         .lines()
         .filter(|line| !line.starts_with("#"))
         .map(|line| line.trim_end_matches("#"))
         .collect::<Vec<_>>()
         .join("\n");
+
+    println!("    Extracting data (this might take a while)...");
 
     extract_tar_archive("data.tar.xz", "./data", "xz")?;
 
@@ -186,6 +192,9 @@ fn convert_to_spf(output_package_path: &str) -> Result<(), std::io::Error> {
 }
 
 /// Follows a series of steps in order to convert a `.spf` file to `.deb`.
+///
+/// Collects the metadata, copies paths, then add them to the output .deb
+/// file.
 fn convert_to_deb(
     spf_metadata_path: String,
     source_file_name: String,
@@ -198,15 +207,19 @@ fn convert_to_deb(
 
     let package_metadata = Meta::from(&spf_metadata_path)?;
 
+    // Name
     let name = package_metadata.clone().load_value("PROJECT_NAME")?;
     println!("            Collected package name: \"{name}\"");
 
+    // Version
     let version = package_metadata.clone().load_value("VERSION")?;
     println!("            Collected package version: \"{version}\"");
 
+    // Description
     let desc = package_metadata.clone().load_value("DESCRIPTION")?;
     println!("            Collected package description: \"{desc}\"");
 
+    // Architecture
     let arch = package_metadata.load_value("ARCH")?;
     println!("            Collected package architecture: \"{arch}\"");
 
@@ -214,6 +227,7 @@ fn convert_to_deb(
 
     let mut package = DebPackage::new(&name);
 
+    // Convert the architectures to the `.deb` counterparts
     let arch_to_use = match arch.as_str() {
         "universal" => DebArchitecture::All,
         "x86_64" => DebArchitecture::Amd64,
@@ -225,6 +239,7 @@ fn convert_to_deb(
         )),
     };
 
+    // Set the metadata
     package = package
         .set_version(&version)
         .set_description(&desc)
@@ -232,12 +247,14 @@ fn convert_to_deb(
 
     println!("        Writing paths...");
 
+    // Goes through and adds all of the paths to add
     for path in glob(&format!("{extracted_source}/**/*")).expect("Failed to get paths") {
         let current_path = path?.display().to_string();
 
         print!("\r\x1B[K            Writing path: \"{current_path}\"");
         stdout().flush()?;
 
+        // Adds the paths. Varies depending on if the path is a file or directory.
         package = if Path::new(&current_path).is_file() {
             package.with_file(DebFile::from_path(
                 &current_path,
