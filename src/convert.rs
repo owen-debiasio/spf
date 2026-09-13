@@ -5,13 +5,18 @@
 //! SPDX-License-Identifier: GPL-3.0-or-later
 
 use std::{
-    fs::{self, remove_dir_all, remove_file, rename},
-    io::stdin,
+    fs::{self, File, remove_dir_all, remove_file, rename},
+    io::{Write, stdin, stdout},
     path::Path,
 };
 
+use glob::glob;
+
+use deb_rust::{DebArchitecture, DebFile, binary::DebPackage};
+
 use crate::{
     fs::{FileProperty, create_tar_archive, extract_ar_archive, extract_tar_archive},
+    metadata::Meta,
     sys::error,
 };
 
@@ -83,7 +88,7 @@ pub fn convert(source_package_path: &str, output_package_path: &str) -> Result<(
     if source_file_ext == "deb" {
         extract_ar_archive(source_package_path, ".")?;
     } else {
-        extract_tar_archive(source_package_path, ".", "gz")?;
+        extract_tar_archive(source_package_path, ".", "")?;
     };
 
     // `debian-binary` isn't used, so delete it
@@ -125,15 +130,12 @@ pub fn convert(source_package_path: &str, output_package_path: &str) -> Result<(
     if source_is_debian {
         remove_dir_all("control")?;
     } else {
-        remove_file(&spf_metadata_path)?;
+        //remove_file(&spf_metadata_path)?;
     }
 
     /* Conversion of metadata */
 
     println!("    Converting metadata...");
-
-    // println!("{source_metadata}");
-    // exit(0);
 
     let cloned_metadata = source_metadata.clone();
     let metadata_lines: Vec<&str> = cloned_metadata.lines().collect();
@@ -165,30 +167,25 @@ pub fn convert(source_package_path: &str, output_package_path: &str) -> Result<(
                 source_metadata = source_metadata.replace("DESCRIPTION =", "Description:");
             } else if line.starts_with("REPOSITORY =") {
                 source_metadata = source_metadata.replace("REPOSITORY =", "Homepage:");
-            } else if line.starts_with("LICENSE =") {
-                source_metadata.retain(|_| line.starts_with("LICENSE ="));
             } else if line.starts_with("AUTHORS =") {
                 source_metadata = source_metadata.replace("AUTHORS =", "Maintainer:");
+            } else if line.starts_with("LICENSE =") {
+                source_metadata = source_metadata.replace("LICENSE = ", "#");
             } else if line.starts_with("ARCH =") {
                 source_metadata = source_metadata.replace("ARCH =", "Architecture:");
+            } else {
+                source_metadata =
+                    source_metadata.replace(&format!("{line}\n"), &format!("#{line}\n"));
             };
         }
     }
 
-    if source_is_debian {
-        source_metadata = source_metadata
-            .lines()
-            .filter(|line| !line.trim().starts_with("#"))
-            .map(|line| line.trim_end_matches("#"))
-            .collect::<Vec<_>>()
-            .join("\n");
-    } else {
-        source_metadata = source_metadata
-            .lines()
-            .filter(|line| !line.starts_with("LICENSE =") || !line.starts_with("#"))
-            .collect::<Vec<_>>()
-            .join("\n")
-    }
+    source_metadata = source_metadata
+        .lines()
+        .filter(|line| !line.starts_with("#"))
+        .map(|line| line.trim_end_matches("#"))
+        .collect::<Vec<_>>()
+        .join("\n")
 
     /* File copying */;
 
@@ -206,23 +203,55 @@ pub fn convert(source_package_path: &str, output_package_path: &str) -> Result<(
 
         println!("    Packaging...");
 
-        create_tar_archive(output_package_path, &new_deb_dest)?;
+        create_tar_archive(output_package_path, &new_deb_dest, "xz")?;
 
         remove_dir_all(new_deb_dest)?;
     } else {
-        let extracted_spf_package = spf_metadata_path.replace("/META", "");
-        println!("{extracted_spf_package}");
-
-        rename(extracted_spf_package, "data")?;
-
         println!("    Packaging...");
+        println!("        Setting metadata...");
 
-        create_tar_archive("data.tar.xz", "data")?;
+        let package_metadata = Meta::from(&spf_metadata_path)?;
+        let name = package_metadata.clone().load_value("PROJECT_NAME")?;
+        let version = package_metadata.clone().load_value("VERSION")?;
+        let desc = package_metadata.load_value("DESCRIPTION")?;
 
-        remove_dir_all("data")?;
+        remove_file(spf_metadata_path)?;
+
+        let mut package = DebPackage::new(&name);
+
+        package = package
+            .set_version(&version)
+            .set_description(&desc)
+            .set_architecture(DebArchitecture::All);
+
+        println!("        Writing paths...");
+
+        let extracted_source = source_file_name.replace(".spf", "");
+
+        for path in glob(&format!("{extracted_source}/**/*")).expect("Failed to get paths") {
+            let current_path = path?.display().to_string();
+
+            print!("\r\x1B[K            Writing path: \"{current_path}\"");
+            stdout().flush()?;
+
+            package = if Path::new(&current_path).is_file() {
+                package.with_file(DebFile::from_path(
+                    &current_path,
+                    current_path.replace(&extracted_source, ""),
+                )?)
+            } else {
+                package.with_dir(&current_path, &current_path.replace(&extracted_source, ""))?
+            }
+        }
+
+        remove_dir_all(extracted_source)?;
+
+        println!("\n    Building...");
+
+        package.build()?.write(File::create(output_package_path)?)?;
     }
 
-    println!("Done!");
+    println!("\nDone! Converted \"{source_package_path}\" -> \"{output_package_path}!\"");
 
     Ok(())
 }
