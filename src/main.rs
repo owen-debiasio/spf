@@ -16,9 +16,6 @@ mod fs;
 mod metadata;
 mod sys;
 
-// Core
-mod init;
-
 // Commands
 mod convert;
 mod inspect;
@@ -31,8 +28,6 @@ mod template;
 static VERSION: &str = "v0.6.0";
 
 fn main() -> Result<(), std::io::Error> {
-    init::init()?;
-
     // Intro
     println!("spf-{VERSION}\n");
 
