@@ -135,6 +135,6 @@ fn available_commands() {
         \n\
         Available options:\n\n \
           --version       Display spf version\n \
-          --ignore-args   Force the installation of a package with a different architecture"
+          --ignore-arch   Force the installation of a package with a different architecture"
     );
 }
