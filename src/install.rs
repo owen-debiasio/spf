@@ -80,7 +80,7 @@ pub fn spf_install(mut spf_package_path: String) -> Result<(), std::io::Error> {
     let extracted_package_path = spf_package_path.replace(".spf", "");
 
     // Check to make sure the system architecture matches or is compatible the package architecture
-    if package_arch != ARCH && !args_contains("--ignore-arch")? {
+    if package_arch != ARCH && !args_contains("--ignore-arch")? && package_arch != "universal" {
         remove_dir_all(extracted_package_path)?;
 
         error(&format!(
