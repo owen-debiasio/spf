@@ -219,6 +219,14 @@ fn convert_to_deb(
     let desc = package_metadata.clone().load_value("DESCRIPTION")?;
     println!("            Collected package description: \"{desc}\"");
 
+    // Maintainer
+    let maintainer = package_metadata.clone().load_value("AUTHORS")?;
+    println!("            Collected package maintainer(s): \"{maintainer}\"");
+
+    // Homepage
+    let homepage = package_metadata.clone().load_value("REPOSITORY")?;
+    println!("            Collected package homepage: \"{homepage}\"");
+
     // Architecture
     let arch = package_metadata.load_value("ARCH")?;
     println!("            Collected package architecture: \"{arch}\"");
@@ -241,8 +249,11 @@ fn convert_to_deb(
 
     // Set the metadata
     package = package
+        .set_name(&name)
         .set_version(&version)
         .set_description(&desc)
+        .set_maintainer(&maintainer)
+        .set_homepage(&homepage)
         .set_architecture(arch_to_use);
 
     println!("        Writing paths...");
