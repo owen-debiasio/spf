@@ -12,7 +12,7 @@ use std::{
     path::{Path, PathBuf},
 };
 use tar::{Archive, Builder};
-use xz::read::XzDecoder;
+use xz::{read::XzDecoder, write::XzEncoder};
 
 /// Some utilities to retrieve one of the following properties from a path:
 ///     - File extension (using [`FileProperty::extension`])
@@ -87,7 +87,7 @@ impl FileProperty {
     }
 }
 
-/// Creates an archive of a directory.
+/// Creates an archive using `tar`.
 ///
 /// Creates a blank archive (`output`), then copies paths that are located in
 /// `path`.
@@ -97,28 +97,64 @@ impl FileProperty {
 /// Inputs:
 ///     - `output` ([`str`]) is the name of the output archive
 ///     - `path` ([`str`]) is the path you want to archive
+///     - `archive_type` ([`str`]) is the type of tar type
 ///
+/// Making `tar.xz`
 /// ```
-/// let output = "archive.spf";
+/// let output = "archive.tar.xz";
 /// let path = "archive";
+/// let tar_type = "xz";
 ///
-/// create_tar_archive(output, path)
+/// create_tar_archive(output, path, tar_type)
 /// ```
-pub fn create_tar_archive(output: &str, path: &str) -> Result<(), std::io::Error> {
-    let mut archive = Builder::new(File::create(output)?);
-
-    if Path::new(path).is_dir() {
-        archive.append_dir_all(FileProperty::name(path)?, path)?;
-    } else {
-        archive.append_path(path)?
+///
+/// Making something else
+/// ```
+/// let output = "archive.tar.xz";
+/// let path = "archive";
+/// let tar_type = "";
+///
+/// create_tar_archive(output, path, tar_type)
+/// ```
+pub fn create_tar_archive(
+    output: &str,
+    path: &str,
+    archive_type: &str,
+) -> Result<(), std::io::Error> {
+    if !matches!(archive_type, "xz" | "") {
+        panic!("Invalid coded archive type: {archive_type}")
     }
 
-    archive.finish()?;
+    let archive_file = File::create(output)?;
+
+    // Because of some incompatible types error in this if/else statement,
+    // just use the whole process in each block.
+    if archive_type == "xz" {
+        let mut archive = Builder::new(XzEncoder::new(&archive_file, 6));
+
+        if Path::new(path).is_dir() {
+            archive.append_dir_all(FileProperty::name(path)?, path)?;
+        } else {
+            archive.append_path(path)?
+        }
+
+        archive.finish()?;
+    } else {
+        let mut archive = Builder::new(archive_file);
+
+        if Path::new(path).is_dir() {
+            archive.append_dir_all(FileProperty::name(path)?, path)?;
+        } else {
+            archive.append_path(path)?
+        }
+
+        archive.finish()?;
+    };
 
     Ok(())
 }
 
-/// Creates an archive of a directory.
+/// Extracts an archive using `tar`.
 ///
 /// You just need to input the path of where it outputs to (`path` ([`str`])).
 /// Extracts it using `archive_exec` ([`str`]) to the current working directory.
@@ -136,7 +172,7 @@ pub fn create_tar_archive(output: &str, path: &str) -> Result<(), std::io::Error
 /// let dest = ".";
 /// let archive_type = "gz";
 ///
-/// extract_archive(archive, dest, archive_type);
+/// extract_tar_archive(archive, dest, archive_type);
 /// ```
 ///
 /// Using tar.xz:
@@ -145,7 +181,7 @@ pub fn create_tar_archive(output: &str, path: &str) -> Result<(), std::io::Error
 /// let dest = ".";
 /// let archive_type = "xz";
 ///
-/// extract_archive(archive, dest, archive_type);
+/// extract_tar_archive(archive, dest, archive_type);
 /// ```
 ///
 /// Other
@@ -154,7 +190,7 @@ pub fn create_tar_archive(output: &str, path: &str) -> Result<(), std::io::Error
 /// let dest = ".";
 /// let archive_type = "";
 ///
-/// extract_archive(archive, dest, archive_type);
+/// extract_tar_archive(archive, dest, archive_type);
 /// ```
 pub fn extract_tar_archive(
     path: &str,
@@ -178,18 +214,14 @@ pub fn extract_tar_archive(
     Ok(())
 }
 
-/// Creates an archive using `tar`.
+/// Extracts an archive using `ar`.
 ///
-/// You just need to input the path of where it outputs to (`path` ([`str`])).
-/// Extracts it using `archive_exec` ([`str`]) to the current working directory.
+/// Takes the selected archive (`path` ([`str`])), then extracts it to `dest` ([`str`]).
 ///
 /// ```
-/// let archive_exec = "tar";
 /// let path_of_archive = "archive.ar";
-/// extract_archive(archive_exec, path_of_archive);
-///
-/// // Extracted directory `archive` should be located in the current working
-/// // directory
+/// let destination = "dir/archive"
+/// extract_ar_archive(path_of_archive, destination);
 /// ```
 pub fn extract_ar_archive(path: &str, dest: &str) -> Result<(), std::io::Error> {
     fs::create_dir_all(dest)?;

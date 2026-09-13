@@ -92,7 +92,7 @@ pub fn create_spf_package(
 
     // Take the directories (`parent_directories`) inside `directory_to_compress`,
     // then package them to whatever `archive_name` is.
-    create_tar_archive(archive_name, output_location)?;
+    create_tar_archive(archive_name, output_location, "")?;
 
     // Cleanup directory that was compressed
     fs::remove_dir_all(output_location)?;
