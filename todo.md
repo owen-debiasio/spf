@@ -1,7 +1,7 @@
 # spf TODO
 
 > [!IMPORTANT]  
-> Last updated: `September 13, 2026 @ 11:38 AM EST`
+> Last updated: `September 13, 2026 @ 12:49 AM EST`
 
 ---
 
@@ -11,4 +11,3 @@
 - Continue working on conversion `.spf` -> `.deb`
 - Update function and comment documentation
 - Make docs on command conversion
-- Restore proper package architecture functionality
