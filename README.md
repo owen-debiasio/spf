@@ -143,3 +143,5 @@ sudo cp target/release/spf /usr/bin/spf # Install to location (like /usr/local/b
   [Jihyeon Kim (김지현)](https://github.com/simnalamburt)
 - [rust-ar](https://github.com/mdsteele/rust-ar) by
   [mdsteele](https://github.com/mdsteele)
+- [deb-rust](https://codeberg.org/notsludgebomb/deb-rust) by
+  [NotSludgeBomb](https://codeberg.org/NotSludgeBomb)
