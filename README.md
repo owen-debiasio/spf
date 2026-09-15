@@ -21,8 +21,7 @@ convert    <source package> <converted format>   Convert package formats
 
 > [!IMPORTANT]  
 > Right now, binaries and packages for spf are built for `x86_64` and `aarch64`
-> systems. Look at
-> [Building from source](#build-from-source)
+> systems. Look at [Building from source](#build-from-source)
 
 ### Debian/Ubuntu
 
