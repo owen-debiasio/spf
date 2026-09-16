@@ -5,6 +5,10 @@ spf is my small side project where I aim to create a packaging format similar to
 
 ![spf logo](assets/logo.png "spf logo")
 
+![Badge Commits](https://img.shields.io/github/commit-activity/m/owen-debiasio/spf?label=Commits)
+![Badge License](https://img.shields.io/badge/License-GPLv3-blue.svg)
+![Badge Issues](https://img.shields.io/github/issues/owen-debiasio/spf)
+
 ## How to use
 
 ```none
