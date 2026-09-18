@@ -5,7 +5,7 @@
 
 use std::{
     env::consts::ARCH,
-    fs::{self, File, OpenOptions, create_dir_all, remove_dir_all},
+    fs::{self, File, OpenOptions, create_dir_all, read_to_string, remove_dir_all, remove_file},
     io::{self, Write},
     path::Path,
     process::exit,
@@ -80,7 +80,7 @@ pub fn spf_install(mut spf_package_path: String) -> Result<(), std::io::Error> {
     let extracted_package_path = spf_package_path.replace(".spf", "");
 
     // Check to make sure the system architecture matches or is compatible the package architecture
-    if package_arch != ARCH && !args_contains("--ignore-arch")? && package_arch != "universal" {
+    if !matches!(package_arch.as_str(), ARCH | "universal") && !args_contains("--ignore-arch")? {
         remove_dir_all(extracted_package_path)?;
 
         error(&format!(
@@ -308,23 +308,20 @@ fn install_files(
     let package_meta_path_install_location_as_path = Path::new(&package_meta_path_install_location);
 
     // Helps determine if a path as previously installed
-    let previous_meta_contents;
+    let previous_meta_contents = if package_meta_path_install_location_as_path.exists() {
+        let contents = read_to_string(package_meta_path_install_location_as_path)?;
+        remove_file(&package_meta_path_install_location)?;
 
-    if package_meta_path_install_location_as_path.exists() {
-        previous_meta_contents = fs::read_to_string(package_meta_path_install_location_as_path)?;
-        fs::remove_file(&package_meta_path_install_location)?;
+        contents
     } else {
-        previous_meta_contents = String::new()
-    }
+        String::new()
+    };
 
     // Copy the packaged metadata file to its install location
     fs::copy(packaged_metadata_file, &package_meta_path_install_location)?;
 
     // Remove the metadata file that was packaged
     fs::remove_file(packaged_metadata_file)?;
-
-    // Get the location to look for the paths to copy
-    let path_to_search = &format!("./{extracted_package_path}/**/*");
 
     // Init the new metadata file.
     //
@@ -337,7 +334,9 @@ fn install_files(
     project_meta_file.write_all(b"\n:::PATH DEFINE START:::\n")?;
 
     // Go through and install packaged paths
-    for found_path in glob(path_to_search).expect("Failed to collect directories") {
+    for found_path in
+        glob(&format!("./{extracted_package_path}/**/*")).expect("Failed to collect directories")
+    {
         // File/folder to be copied
         let file_from_archive = found_path?.display().to_string();
 
@@ -351,7 +350,7 @@ fn install_files(
         // If a file is already installed, AND NOT found in the previous metadata,
         // just skip.
         if path_to_create.exists()
-            && !previous_meta_contents.contains(&format!("{}\n", file_destination.as_str()))
+            && !previous_meta_contents.contains(&format!("{file_destination}\n"))
         {
             continue;
         }

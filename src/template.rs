@@ -5,7 +5,7 @@
 //! SPDX-License-Identifier: GPL-3.0-or-later
 
 use std::{
-    env,
+    env::current_dir,
     fs::{self},
     path::Path,
     process::exit,
@@ -55,7 +55,7 @@ target/debug/spf:/usr/bin/spf
 /// ```
 pub fn gen_meta_template(mut output_location: String) -> Result<(), std::io::Error> {
     if output_location.is_empty() {
-        output_location = env::current_dir()?.to_str().unwrap_or_default().to_string();
+        output_location = current_dir()?.to_str().unwrap_or_default().to_string();
 
     // Output location has to be a directory because rust doesn't want to
     // listen to me

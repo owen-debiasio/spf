@@ -10,9 +10,12 @@ use std::{
     fs::{self, File},
     io,
     path::{Path, PathBuf},
+    str::from_utf8,
 };
 use tar::{Archive, Builder};
 use xz::{read::XzDecoder, write::XzEncoder};
+
+use crate::sys::error;
 
 /// Some utilities to retrieve one of the following properties from a path:
 ///     - File extension (using [`FileProperty::extension`])
@@ -232,9 +235,9 @@ pub fn extract_ar_archive(path: &str, dest: &str) -> Result<(), std::io::Error> 
         let mut entry = entry_result?;
 
         let mut file = File::create(
-            str::from_utf8(entry.header().identifier()).expect("Failed to get header"),
-        )
-        .unwrap();
+            from_utf8(entry.header().identifier())
+                .unwrap_or_else(|err| error(&format!("Failed to get utf8 header: {err}"))),
+        )?;
 
         io::copy(&mut entry, &mut file)?;
     }

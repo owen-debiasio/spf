@@ -77,11 +77,9 @@ impl Env {
 /// }
 /// ```
 pub fn is_root() -> Result<bool, std::io::Error> {
-    if Env::name()? == "root" || Env::home()?.contains("/root") {
-        return Ok(true);
-    }
+    let identifies_as_root = Env::name()? == "root" || Env::home()?.contains("/root");
 
-    Ok(false)
+    Ok(identifies_as_root)
 }
 
 /// Basic non-fatal error.
@@ -115,7 +113,7 @@ pub fn error(message: &str) -> ! {
 /// // `/usr/bin/spf`
 /// ```
 pub fn get_binary_path() -> Result<String, std::io::Error> {
-    let path = current_exe()?.to_str().unwrap_or_default().to_string();
+    let path = current_exe()?.display().to_string();
 
     Ok(path)
 }
@@ -196,5 +194,5 @@ pub fn return_args() -> Result<Vec<String>, std::io::Error> {
 ///
 /// Entry `universal` means to work on any system.
 ///
-/// Stored as [[`str`]; 4]
+/// Stored as [[`str`]; 5]
 pub static SUPPORTED_ARCHS: [&str; 5] = ["universal", "x86", "x86_64", "arm", "aarch64"];
