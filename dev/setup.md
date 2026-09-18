@@ -51,3 +51,22 @@ distrobox enter spf-dev
 
 - The default shell is `/bin/bash`
 - The container is based on the latest Arch Linux release (`archlinux:latest`)
+
+## Docker
+
+Docker is also available if needed
+
+### Build
+
+```bash
+sudo docker build -t spf .
+```
+
+### Enter
+
+> [!NOTE]  
+> `-it` is added so you can use the container as an interactive shell
+
+```bash
+sudo docker run -it spf
+```
