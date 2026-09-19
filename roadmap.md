@@ -20,6 +20,11 @@ Related:
 - Pre/Post install/uninstall jobs
   - Such as running scripts, or handling things spf doesn't
 - Intel x86_64 and M-series Apple Silicon (aarch64) Mac support
+- Command `verify`
+  - Verifies one of the following:
+    - `.spf` package metadata
+    - Package config
+    - Installed package metadata
 
 ## Previously Completed
 
