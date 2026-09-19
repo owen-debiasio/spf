@@ -25,7 +25,7 @@ mod package;
 mod remove;
 mod template;
 
-static VERSION: &str = "v0.6.0";
+static VERSION: &str = "v0.6.1";
 
 fn main() -> Result<(), std::io::Error> {
     // Intro
