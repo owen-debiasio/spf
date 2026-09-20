@@ -1,4 +1,4 @@
-use std::process::exit;
+use std::{io::Error, process::exit};
 
 use crate::{
     convert::convert,
@@ -27,7 +27,7 @@ mod template;
 
 static VERSION: &str = "v0.6.1";
 
-fn main() -> Result<(), std::io::Error> {
+fn main() -> Result<(), Error> {
     // Intro
     println!("spf-{VERSION}\n");
 
@@ -40,7 +40,7 @@ fn main() -> Result<(), std::io::Error> {
     $ spf <root arg> <other actions>
 
     Note: I'm not sure why `.map_or` works, but it
-    does so I'm keeping it.
+    does, so I'm keeping it.
     */
     let root_arg = collected_args.first().map_or("", |a| a).to_string();
     let secondary_arg = collected_args.get(1).map_or("", |a| a).to_string();

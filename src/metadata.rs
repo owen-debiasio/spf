@@ -4,7 +4,7 @@
 //! Copyright (C) 2026 Owen Debiasio <owen.debiasio@gmail.com>
 //! SPDX-License-Identifier: GPL-3.0-or-later
 
-use std::fs;
+use std::{fs::read_to_string, io::Error};
 
 /// Where spf package metadata is installed to.
 pub static PACKAGE_INSTALL_PATH: &str = "/usr/share/spf/packages/";
@@ -52,8 +52,8 @@ impl Meta {
     /// // (`metadata_file` in this case).
     /// let metadata_contents = Meta::from(metadata_file)?;
     /// ```
-    pub fn from(loaded_meta_file: &str) -> Result<Meta, std::io::Error> {
-        let meta_file_contents = fs::read_to_string(loaded_meta_file)?;
+    pub fn from(loaded_meta_file: &str) -> Result<Meta, Error> {
+        let meta_file_contents = read_to_string(loaded_meta_file)?;
 
         Ok(Meta { meta_file_contents })
     }
@@ -78,7 +78,7 @@ impl Meta {
     /// ```
     ///
     /// NOTE: You may need to use `clone`
-    pub fn load_value(self, category_to_find: &'static str) -> Result<String, std::io::Error> {
+    pub fn load_value(self, category_to_find: &'static str) -> Result<String, Error> {
         let string_prior_to_value = &format!("{category_to_find} =");
 
         let meta_contents = self

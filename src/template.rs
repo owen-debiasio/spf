@@ -4,14 +4,8 @@
 //! Copyright (C) 2026 Owen Debiasio <owen.debiasio@gmail.com>
 //! SPDX-License-Identifier: GPL-3.0-or-later
 
-use std::{
-    env::current_dir,
-    fs::{self},
-    path::Path,
-    process::exit,
-};
-
 use crate::sys::error;
+use std::{env::current_dir, fs::write, io::Error, path::Path, process::exit};
 
 /// Sample metadata contents to be printed. Every possible feature
 /// of the metadata is included.
@@ -53,9 +47,9 @@ target/debug/spf:/usr/bin/spf
 ///
 /// // Output location is `~/Documents/spf_template`
 /// ```
-pub fn gen_meta_template(mut output_location: String) -> Result<(), std::io::Error> {
+pub fn gen_meta_template(mut output_location: String) -> Result<(), Error> {
     if output_location.is_empty() {
-        output_location = current_dir()?.to_str().unwrap_or_default().to_string();
+        output_location = current_dir()?.display().to_string();
 
     // Output location has to be a directory because rust doesn't want to
     // listen to me
@@ -66,7 +60,7 @@ pub fn gen_meta_template(mut output_location: String) -> Result<(), std::io::Err
     output_location = format!("{output_location}/spf_template");
 
     // Write the contents
-    fs::write(&output_location, TEMPLATE_CONTENTS)?;
+    write(&output_location, TEMPLATE_CONTENTS)?;
 
     println!(
         "Generated template at: {}",

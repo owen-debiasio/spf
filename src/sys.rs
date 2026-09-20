@@ -5,6 +5,7 @@
 
 use std::{
     env::{args, current_exe, var},
+    io::Error,
     process::exit,
 };
 
@@ -40,7 +41,7 @@ impl Env {
     /// // Displays whatever your home dir is (something like `/home/username/`)
     /// println!("{home}");
     /// ```
-    pub fn home() -> Result<String, std::io::Error> {
+    pub fn home() -> Result<String, Error> {
         Ok(var("HOME").unwrap_or_default())
     }
 
@@ -52,7 +53,7 @@ impl Env {
     /// // Displays whatever your username is.
     /// println!("{username}");
     /// ```
-    pub fn name() -> Result<String, std::io::Error> {
+    pub fn name() -> Result<String, Error> {
         Ok(var("USER").unwrap_or_default())
     }
 }
@@ -76,7 +77,7 @@ impl Env {
 ///     println!("I am not root")
 /// }
 /// ```
-pub fn is_root() -> Result<bool, std::io::Error> {
+pub fn is_root() -> Result<bool, Error> {
     let identifies_as_root = Env::name()? == "root" || Env::home()?.contains("/root");
 
     Ok(identifies_as_root)
@@ -112,7 +113,7 @@ pub fn error(message: &str) -> ! {
 /// // From a proper installation of spf, the output should be:
 /// // `/usr/bin/spf`
 /// ```
-pub fn get_binary_path() -> Result<String, std::io::Error> {
+pub fn get_binary_path() -> Result<String, Error> {
     let path = current_exe()?.display().to_string();
 
     Ok(path)
@@ -146,7 +147,7 @@ pub fn get_binary_path() -> Result<String, std::io::Error> {
 /// // Output should be `false`
 /// println!("{does_arg_contain}");
 /// ```
-pub fn args_contains(arg: &str) -> Result<bool, std::io::Error> {
+pub fn args_contains(arg: &str) -> Result<bool, Error> {
     Ok(return_args()?.contains(&arg.to_string()))
 }
 
@@ -168,7 +169,7 @@ pub fn args_contains(arg: &str) -> Result<bool, std::io::Error> {
 /// ```
 /// let collected_args = return_args();
 /// ```
-pub fn return_args() -> Result<Vec<String>, std::io::Error> {
+pub fn return_args() -> Result<Vec<String>, Error> {
     let mut collected_args = Vec::new();
 
     for given_arg in args().skip(1) {

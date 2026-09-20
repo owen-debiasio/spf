@@ -8,7 +8,7 @@ use flate2::read::GzDecoder;
 use std::{
     ffi::OsStr,
     fs::{self, File},
-    io,
+    io::{Error, copy},
     path::{Path, PathBuf},
     str::from_utf8,
 };
@@ -58,7 +58,7 @@ impl FileProperty {
     /// // Output should be `extension`
     /// println!("{file_ext}");
     /// ```
-    pub fn extension(path: &str) -> Result<String, std::io::Error> {
+    pub fn extension(path: &str) -> Result<String, Error> {
         let file_extension = PathBuf::from(path)
             .extension()
             .unwrap_or(OsStr::new(&String::new()))
@@ -79,7 +79,7 @@ impl FileProperty {
     /// // Output should be `file`
     /// println!("{file_name}");
     /// ```
-    pub fn name(path: &str) -> Result<String, std::io::Error> {
+    pub fn name(path: &str) -> Result<String, Error> {
         let file_name = PathBuf::from(path)
             .file_name()
             .expect("Failed to retrieve file name")
@@ -119,11 +119,7 @@ impl FileProperty {
 ///
 /// create_tar_archive(output, path, tar_type)
 /// ```
-pub fn create_tar_archive(
-    output: &str,
-    path: &str,
-    archive_type: &str,
-) -> Result<(), std::io::Error> {
+pub fn create_tar_archive(output: &str, path: &str, archive_type: &str) -> Result<(), Error> {
     if !matches!(archive_type, "xz" | "") {
         panic!("Invalid coded archive type: {archive_type}")
     }
@@ -195,11 +191,7 @@ pub fn create_tar_archive(
 ///
 /// extract_tar_archive(archive, dest, archive_type);
 /// ```
-pub fn extract_tar_archive(
-    path: &str,
-    dest: &str,
-    archive_type: &str,
-) -> Result<(), std::io::Error> {
+pub fn extract_tar_archive(path: &str, dest: &str, archive_type: &str) -> Result<(), Error> {
     let archive_path = File::open(path)?;
 
     if !matches!(archive_type, "gz" | "xz" | "") {
@@ -226,7 +218,7 @@ pub fn extract_tar_archive(
 /// let destination = "dir/archive"
 /// extract_ar_archive(path_of_archive, destination);
 /// ```
-pub fn extract_ar_archive(path: &str, dest: &str) -> Result<(), std::io::Error> {
+pub fn extract_ar_archive(path: &str, dest: &str) -> Result<(), Error> {
     fs::create_dir_all(dest)?;
 
     let mut archive = ar::Archive::new(File::open(path)?);
@@ -239,7 +231,7 @@ pub fn extract_ar_archive(path: &str, dest: &str) -> Result<(), std::io::Error> 
                 .unwrap_or_else(|err| error(&format!("Failed to get utf8 header: {err}"))),
         )?;
 
-        io::copy(&mut entry, &mut file)?;
+        copy(&mut entry, &mut file)?;
     }
 
     Ok(())

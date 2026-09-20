@@ -258,7 +258,7 @@ fn convert_to_deb(
 
     println!("        Writing paths...");
 
-    // Goes through and adds all of the paths to add
+    // Goes through and adds all the paths to add
     for path in glob(&format!("{extracted_source}/**/*")).expect("Failed to get paths") {
         let current_path = path?.display().to_string();
 

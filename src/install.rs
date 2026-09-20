@@ -3,16 +3,15 @@
 //! Copyright (C) 2026 Owen Debiasio <owen.debiasio@gmail.com>
 //! SPDX-License-Identifier: GPL-3.0-or-later
 
+use file_diff::diff_files;
+use glob::glob;
 use std::{
     env::consts::ARCH,
-    fs::{self, File, OpenOptions, create_dir_all, read_to_string, remove_dir_all, remove_file},
-    io::{self, Write},
+    fs::{File, OpenOptions, copy, create_dir_all, read_to_string, remove_dir_all, remove_file},
+    io::{Error, Write, stdin},
     path::Path,
     process::exit,
 };
-
-use file_diff::diff_files;
-use glob::glob;
 
 use crate::{
     fs::{FileProperty, extract_tar_archive},
@@ -35,9 +34,10 @@ use crate::{
 ///
 /// When it actually gets to installing the files using [`install_files`],
 /// the tree inside the extracted package contains the directories and files
-/// that are written to their new metadata file located in [`PACKAGE_INSTALL_PATH`],
-/// and are copied to their respective locations.
-pub fn spf_install(mut spf_package_path: String) -> Result<(), std::io::Error> {
+/// that are written to their new metadata file. That metadata is located in
+/// [`PACKAGE_INSTALL_PATH`]. Then, those paths are copied to their respective
+/// locations.
+pub fn spf_install(mut spf_package_path: String) -> Result<(), Error> {
     // Root is required for this command
     if !is_root()? {
         error("To execute this action, please run spf as root.")
@@ -108,7 +108,7 @@ pub fn spf_install(mut spf_package_path: String) -> Result<(), std::io::Error> {
     );
 
     let mut proceed_to_install = String::new();
-    io::stdin().read_line(&mut proceed_to_install)?;
+    stdin().read_line(&mut proceed_to_install)?;
 
     println!();
 
@@ -186,7 +186,7 @@ fn check_version(
     packaged_project_name: &str,
     packaged_project_version: &str,
     spf_package_path: &str,
-) -> Result<(), std::io::Error> {
+) -> Result<(), Error> {
     // Loads package version
     let installed_version = Meta::from(package_meta_path)?.load_value("VERSION")?;
 
@@ -233,7 +233,7 @@ fn check_version(
 
     // Take in the user input
     let mut proceed_to_install = String::new();
-    io::stdin().read_line(&mut proceed_to_install)?;
+    stdin().read_line(&mut proceed_to_install)?;
 
     println!();
 
@@ -241,7 +241,7 @@ fn check_version(
 
     // If user declines, clean up and exit. Otherwise, proceed and end function
     if proceed_to_install.trim().to_lowercase() != "y" {
-        fs::remove_dir_all(&extracted_package_path)?;
+        remove_dir_all(&extracted_package_path)?;
 
         println!("Aborted");
         exit(0)
@@ -262,7 +262,7 @@ fn check_version(
 fn parse_installed_and_packaged_versions(
     packaged_project_version: &str,
     installed_version: &str,
-) -> Result<(usize, usize), std::io::Error> {
+) -> Result<(usize, usize), Error> {
     // Removes `v`, any special characters, and converts to usize.
     // Returns `0` is something fails.
     let remove_chars_and_to_usize = |version: &str| -> usize {
@@ -300,7 +300,7 @@ fn install_files(
     packaged_metadata_file: &str,
     package_meta_path_install_location: String,
     extracted_package_path: &str,
-) -> Result<(), std::io::Error> {
+) -> Result<(), Error> {
     if !Path::new(PACKAGE_INSTALL_PATH).exists() {
         create_dir_all(PACKAGE_INSTALL_PATH)?
     }
@@ -318,10 +318,10 @@ fn install_files(
     };
 
     // Copy the packaged metadata file to its install location
-    fs::copy(packaged_metadata_file, &package_meta_path_install_location)?;
+    copy(packaged_metadata_file, &package_meta_path_install_location)?;
 
     // Remove the metadata file that was packaged
-    fs::remove_file(packaged_metadata_file)?;
+    remove_file(packaged_metadata_file)?;
 
     // Init the new metadata file.
     //
@@ -377,7 +377,7 @@ fn install_files(
                 self_replace::self_replace(&file_from_archive)?;
             }
 
-            fs::copy(&file_from_archive, &file_destination)?;
+            copy(&file_from_archive, &file_destination)?;
         }
 
         // Write the path of the file to later be removed when uninstalled.

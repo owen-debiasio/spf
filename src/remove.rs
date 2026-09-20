@@ -9,8 +9,8 @@ use crate::{
 };
 use std::{
     collections::HashSet,
-    fs::{self, remove_dir_all, remove_file},
-    io,
+    fs::{read_to_string, remove_dir_all, remove_file},
+    io::{Error, stdin},
     path::Path,
     process::exit,
 };
@@ -31,7 +31,7 @@ use std::{
 ///
 /// remove_spf_package(packages_to_remove)
 /// ```
-pub fn remove_spf_package(mut packages_to_remove: Vec<String>) -> Result<(), std::io::Error> {
+pub fn remove_spf_package(mut packages_to_remove: Vec<String>) -> Result<(), Error> {
     if !is_root()? {
         error("To execute this action, please run spf as root.")
     }
@@ -60,7 +60,7 @@ pub fn remove_spf_package(mut packages_to_remove: Vec<String>) -> Result<(), std
     println!("\nProceed?\n(Y/N)");
 
     let mut proceed_to_remove = String::new();
-    io::stdin().read_line(&mut proceed_to_remove)?;
+    stdin().read_line(&mut proceed_to_remove)?;
 
     if proceed_to_remove.trim().to_lowercase() != "y" {
         println!("Aborted");
@@ -103,10 +103,10 @@ pub fn remove_spf_package(mut packages_to_remove: Vec<String>) -> Result<(), std
 ///
 /// remove_package(package_formatted, package_meta_path)
 /// ```
-fn remove_package(package_formatted: &str, package_meta_path: &str) -> Result<(), std::io::Error> {
+fn remove_package(package_formatted: &str, package_meta_path: &str) -> Result<(), Error> {
     println!("\nRemoving: {package_formatted}");
 
-    let meta_file = fs::read_to_string(package_meta_path)?;
+    let meta_file = read_to_string(package_meta_path)?;
 
     let mut paths_to_remove: Vec<&str> = meta_file.lines().collect();
 
@@ -206,7 +206,7 @@ fn remove_package(package_formatted: &str, package_meta_path: &str) -> Result<()
 /// // package3-v0.0.3
 /// // ...
 /// ```
-fn list_packages(packages_to_list: &[String]) -> Result<(), std::io::Error> {
+fn list_packages(packages_to_list: &[String]) -> Result<(), Error> {
     println!("You are about to remove the following package(s):\n");
 
     let mut package_list: Vec<String> = Vec::new();

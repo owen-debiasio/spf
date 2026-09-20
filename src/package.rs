@@ -3,17 +3,16 @@
 //! Copyright (C) 2026 Owen Debiasio <owen.debiasio@gmail.com>
 //! SPDX-License-Identifier: GPL-3.0-or-later
 
-use std::{
-    fs::{self, File, create_dir_all},
-    io::Write,
-    path::Path,
-    process::exit,
-};
-
 use crate::{
     VERSION,
     fs::{FileProperty, create_tar_archive},
     sys::{SUPPORTED_ARCHS, error},
+};
+use std::{
+    fs::{File, copy, create_dir_all, read_to_string, remove_dir_all},
+    io::{Error, Write},
+    path::Path,
+    process::exit,
 };
 
 /// Starts the process of creating a `.spf` package.
@@ -33,10 +32,7 @@ use crate::{
 /// A `.spf` package is packaged as a `.spf` archive, and inside, there is a metadata file
 /// (`META`) stored in the root directory. Every other file/directory is placed there by the
 /// user.
-pub fn create_spf_package(
-    package_config: &str,
-    mut output_location: &str,
-) -> Result<(), std::io::Error> {
+pub fn create_spf_package(package_config: &str, mut output_location: &str) -> Result<(), Error> {
     // Check if the package config file name is valid, whether it
     // has extension or if it's empty.
     // If the file has an extension or is not provided / is empty,
@@ -64,7 +60,7 @@ pub fn create_spf_package(
 
     println!("Compiling files and directories...\n");
 
-    let package_config_contents = &*fs::read_to_string(package_config)?;
+    let package_config_contents = &*read_to_string(package_config)?;
 
     let project_meta_file_path = File::create(format!("{output_location}/META"))?;
 
@@ -95,7 +91,7 @@ pub fn create_spf_package(
     create_tar_archive(archive_name, output_location, "")?;
 
     // Cleanup directory that was compressed
-    fs::remove_dir_all(output_location)?;
+    remove_dir_all(output_location)?;
 
     println!("\nDone! Packaged to: \"./{archive_name}\"");
 
@@ -127,7 +123,7 @@ pub fn create_spf_package(
 fn write_project_meta_config(
     package_config_contents: &str,
     mut project_meta_file: &File,
-) -> Result<(), std::io::Error> {
+) -> Result<(), Error> {
     // Lets users know if a package was packaged using an older spf version. Only stored
     // internally.
     let spf_packager_header = &format!("### PACKAGED WITH SPF {VERSION} ###\n");
@@ -236,10 +232,7 @@ fn write_project_meta_config(
 ///
 /// copy_package_paths(package_config_contents, output_location);
 /// ```
-fn copy_package_paths(
-    package_config_contents: &str,
-    output_location: &str,
-) -> Result<(), std::io::Error> {
+fn copy_package_paths(package_config_contents: &str, output_location: &str) -> Result<(), Error> {
     // This easily allows the parser to skip the project metadata, which
     // has already been parsed thanks to `write_project_meta_config()`.
     let mut enable_skipping_project_meta = true;
@@ -318,7 +311,7 @@ fn copy_package_paths(
         create_dir_all(destination_directories)?;
 
         // Copy `original_file_path` to `final_file_destination`
-        fs::copy(&original_file_path, final_file_destination)?;
+        copy(&original_file_path, final_file_destination)?;
     }
     Ok(())
 }
@@ -340,7 +333,7 @@ fn copy_package_paths(
 ///
 /// check_path_entry(entry, original, destination)
 /// ```
-fn check_path_entry(entry: &str, original: &str, destination: &str) -> Result<(), std::io::Error> {
+fn check_path_entry(entry: &str, original: &str, destination: &str) -> Result<(), Error> {
     let paths_are_included = !original.is_empty() && !destination.is_empty();
 
     let entry_formatting_is_preserved = format!("{original}:{destination}") == entry;
