@@ -120,3 +120,7 @@ Waiting for new features? Check out the status of them in these related pages:
 - Overhauled package architecture system
   - There is now a list of supported architectures: `x86_64`, `x86`, `aarch64`,
     `arm`
+
+## v0.6.1
+
+- Code optimizations
