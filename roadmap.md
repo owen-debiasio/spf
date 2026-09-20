@@ -1,7 +1,7 @@
 # spf Roadmap
 
 > [!IMPORTANT]  
-> Last updated: `September 6, 2026 @ 10:52 AM EST`
+> Last updated: `September 19, 2026 @ 07:57 PM EST`
 
 Here's a todo list that I've thrown together of things I want to add/change over
 time.
