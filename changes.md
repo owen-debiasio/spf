@@ -124,3 +124,4 @@ Waiting for new features? Check out the status of them in these related pages:
 ## v0.6.1
 
 - Code optimizations
+- Use dependency `xz2` by @alexcrichton, replacing `xz`.
