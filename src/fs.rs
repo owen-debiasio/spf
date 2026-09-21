@@ -13,7 +13,7 @@ use std::{
     str::from_utf8,
 };
 use tar::{Archive, Builder};
-use xz::{read::XzDecoder, write::XzEncoder};
+use xz2::{read::XzDecoder, write::XzEncoder};
 
 use crate::sys::error;
 

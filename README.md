@@ -93,8 +93,8 @@ sudo cp target/release/spf /usr/bin/spf # Install to location (like /usr/local/b
   [ethanpailes](https://github.com/ethanpailes)
 - [tar-rs](https://github.com/composefs/tar-rs) by
   [composefs](https://github.com/composefs)
-- [xz-rs](https://github.com/simnalamburt/xz-rs) by
-  [Jihyeon Kim (김지현)](https://github.com/simnalamburt)
+- [xz2-rs](https://github.com/alexcrichton/xz2-rs) by
+  [Alex Crichton](https://github.com/alexcrichton)
 - [rust-ar](https://github.com/mdsteele/rust-ar) by
   [mdsteele](https://github.com/mdsteele)
 - [deb-rust](https://codeberg.org/notsludgebomb/deb-rust) by
