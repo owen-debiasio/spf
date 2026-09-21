@@ -48,12 +48,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "4e7648175b45a9a48536d676f68d918270699102aa8dab5496df06904c914600"
 
 [[package]]
-name = "cmd-exists"
-version = "0.1.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "023c523050bdbe68ab3814ae3d78f343e71710bb4d1e08df25bc2eda7d58dd3d"
-
-[[package]]
 name = "crc32fast"
 version = "1.5.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -288,7 +282,6 @@ name = "spf"
 version = "0.6.1"
 dependencies = [
  "ar",
- "cmd-exists",
  "deb-rust",
  "file_diff",
  "flate2",
