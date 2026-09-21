@@ -6,7 +6,7 @@
 
 use std::{
     fs::{self, File, remove_dir_all, remove_file, rename},
-    io::{Write, stdin, stdout},
+    io::{Error, Write, stdin, stdout},
     path::Path,
 };
 
@@ -21,7 +21,7 @@ use crate::{
 };
 
 /// Lets user know that this program has no warranty, and is not responsible
-fn disclaimer() -> Result<(), std::io::Error> {
+fn disclaimer() -> Result<(), Error> {
     println!(
         "I, or this program, are not responsible for any damage to your system caused by this command.\n\
         Install converted packages at your own risk.\n\n\
@@ -33,7 +33,7 @@ fn disclaimer() -> Result<(), std::io::Error> {
     Ok(())
 }
 
-pub fn convert(source_package_path: &str, output_package_path: &str) -> Result<(), std::io::Error> {
+pub fn convert(source_package_path: &str, output_package_path: &str) -> Result<(), Error> {
     /* Input file checks */
 
     if source_package_path.is_empty() {
@@ -112,7 +112,7 @@ pub fn convert(source_package_path: &str, output_package_path: &str) -> Result<(
 }
 
 /// Follows a series of steps in order to convert a `.deb` file to `.spf`.
-fn convert_to_spf(output_package_path: &str) -> Result<(), std::io::Error> {
+fn convert_to_spf(output_package_path: &str) -> Result<(), Error> {
     println!("        Extracting \"control.tar.xz\"...");
 
     extract_tar_archive("./control.tar.xz", "./control", "xz")?;
@@ -199,7 +199,7 @@ fn convert_to_deb(
     spf_metadata_path: String,
     source_file_name: String,
     output_package_path: &str,
-) -> Result<(), std::io::Error> {
+) -> Result<(), Error> {
     let extracted_source = source_file_name.replace(".spf", "");
 
     println!("    Packaging...");
@@ -307,7 +307,7 @@ fn convert_to_deb(
 ///
 /// assert_eq!("arm64", arch)
 /// ```
-pub fn convert_arch(arch: &str, is_debian: bool) -> Result<&'static str, std::io::Error> {
+pub fn convert_arch(arch: &str, is_debian: bool) -> Result<&'static str, Error> {
     let arch = if is_debian {
         // Convert to .spf
         match arch {
