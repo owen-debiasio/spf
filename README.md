@@ -99,3 +99,4 @@ sudo cp target/release/spf /usr/bin/spf # Install to location (like /usr/local/b
   [mdsteele](https://github.com/mdsteele)
 - [deb-rust](https://codeberg.org/notsludgebomb/deb-rust) by
   [NotSludgeBomb](https://codeberg.org/NotSludgeBomb)
+- [rpm](https://github.com/rpm-rs/rpm-rs) by [rpm-rs](https://github.com/rpm-rs)
