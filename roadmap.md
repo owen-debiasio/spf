@@ -1,7 +1,7 @@
 # spf Roadmap
 
 > [!IMPORTANT]  
-> Last updated: `September 21, 2026 @ 01:31 PM EST`
+> Last updated: `September 22, 2026 @ 05:46 PM EST`
 
 Here's a todo list that I've thrown together of things I want to add/change over
 time.
@@ -13,7 +13,7 @@ Related:
 
 ## Work in progress
 
-- Nothing right now
+- Add converting `.spf` packages -> `.rpm` packages (and vice versa)
 
 ## List of proposed features
 
@@ -25,8 +25,6 @@ Related:
     - `.spf` package metadata
     - Package config
     - Installed package metadata
-- Add converting `.spf` packages -> `.rpm` packages (and vice versa)
-  - Use crate `rpm`
 
 ## Previously Completed
 

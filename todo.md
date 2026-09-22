@@ -1,7 +1,7 @@
 # spf TODO
 
 > [!IMPORTANT]  
-> Last updated: `September 13, 2026 @ 12:49 AM EST`
+> Last updated: `September 22, 2026 @ 05:46 PM EST`
 
 Related:
 
@@ -10,4 +10,9 @@ Related:
 
 ---
 
-- Nothing specific
+- [src/convert.rs](src/convert.rs)
+  - Finish adding conversions:
+    - `.deb` -> `.spf`
+    - `.spf` -> `.rpm`
+    - `rpm` -> `.spf`
+  - Documents structs and enums and stuff
