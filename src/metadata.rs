@@ -9,6 +9,20 @@ use std::{fs::read_to_string, io::Error};
 /// Where spf package metadata is installed to.
 pub static PACKAGE_INSTALL_PATH: &str = "/usr/share/spf/packages/";
 
+/// These are the available categories for `spf` packages.
+///
+/// Every entry is stored as [`String`], and is public.
+#[derive(Clone, Debug)]
+pub struct Categories {
+    pub name: String,
+    pub version: String,
+    pub description: String,
+    pub source: String,
+    pub license: String,
+    pub authors: String,
+    pub arch: String,
+}
+
 /// [`Meta`] refers to the metadata found within either a .spf package or an already installed
 /// package that has its metadata stored at `/usr/share/spf/packages/` ([`PACKAGE_INSTALL_PATH`]).
 ///

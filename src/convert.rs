@@ -5,18 +5,20 @@
 //! SPDX-License-Identifier: GPL-3.0-or-later
 
 use std::{
-    fs::{self, File, remove_dir_all, remove_file, rename},
+    fs::{File, remove_dir_all, remove_file},
     io::{Error, Write, stdin, stdout},
     path::Path,
+    process::exit,
 };
 
 use glob::glob;
 
 use deb_rust::{DebArchitecture, DebFile, binary::DebPackage};
+use rpm::PackageMetadata;
 
 use crate::{
-    fs::{FileProperty, create_tar_archive, extract_ar_archive, extract_tar_archive},
-    metadata::Meta,
+    fs::{FileProperty, extract_tar_archive},
+    metadata::{Categories, Meta},
     sys::error,
 };
 
@@ -93,260 +95,295 @@ pub fn convert(source_package_path: &str, output_package_path: &str) -> Result<(
         error(&format!("File \"{source_package_path}\" does not exist!"))
     }
 
-    let source_file_name = match FileProperty::name(source_package_path) {
-        Ok(name) => name,
-        Err(err) => error(&format!("Failed to get source name: {err}")),
-    };
-
-    let source_package_type = verify_input_paths(source_package_path, output_package_path);
+    let _ = verify_input_paths(source_package_path, output_package_path);
 
     println!("Converting \"{source_package_path}\" -> \"{output_package_path}\"...");
-    println!("    Extracting \"{source_package_path}\"...");
 
-    if source_package_type == "deb" {
-        extract_ar_archive(source_package_path, ".")?;
+    let output_extension = FileProperty::extension(output_package_path)?;
 
-        // `debian-binary` isn't used, so delete it
-        remove_file("debian-binary")?;
+    let output_package_type = match output_extension.as_ref() {
+        "spf" => PackageType::Spf,
+        "deb" => PackageType::Deb,
+        "rpm" => PackageType::Rpm,
+        &_ => {
+            error("Failed to determine output package type? idk bro this probably shouldn't happen")
+        }
+    };
 
-        convert_to_spf(output_package_path)?;
-    } else {
-        extract_tar_archive(source_package_path, ".", "")?;
-
-        // Since the metadata file is located in the root of the package, it
-        // makes it easier to modify the path to retrieve it
-        let spf_metadata_path = source_file_name.replace(".spf", "/META");
-
-        convert_to_deb(spf_metadata_path, source_file_name, output_package_path)?;
-    }
+    Package::from(source_package_path.to_string())?
+        .convert(output_package_type, output_package_path)?;
 
     println!("\nDone! Converted \"{source_package_path}\" -> \"{output_package_path}\"!");
 
-    Ok(())
+    exit(0)
 }
 
-/// Follows a series of steps in order to convert a `.deb` file to `.spf`.
-fn convert_to_spf(output_package_path: &str) -> Result<(), Error> {
-    println!("        Extracting \"control.tar.xz\"...");
+// /// Follows a series of steps in order to convert a `.deb` file to `.spf`.
+// fn convert_to_spf(output_package_path: &str) -> Result<(), Error> {
+//     println!("        Extracting \"control.tar.xz\"...");
 
-    extract_tar_archive("./control.tar.xz", "./control", "xz")?;
+//     extract_tar_archive("./control.tar.xz", "./control", "xz")?;
 
-    remove_file("control.tar.xz")?;
+//     remove_file("control.tar.xz")?;
 
-    println!("        Reading \"control\"...");
+//     println!("        Reading \"control\"...");
 
-    // `control.tar.xz` contains the debian package metadata, so extract if applicable.
-    // Otherwise, extract assumed location of `.spf` package metadata, then collect the
-    // metadata.
-    let mut source_metadata: String = fs::read_to_string("control/control")?;
+//     // `control.tar.xz` contains the debian package metadata, so extract if applicable.
+//     // Otherwise, extract assumed location of `.spf` package metadata, then collect the
+//     // metadata.
+//     let mut source_metadata: String = fs::read_to_string("control/control")?;
 
-    println!("        Cleaning up metadata collection...");
+//     println!("        Cleaning up metadata collection...");
 
-    remove_dir_all("control")?;
+//     remove_dir_all("control")?;
 
-    /* Conversion of metadata */
+//     /* Conversion of metadata */
+//     println!("    Converting metadata...");
 
-    println!("    Converting metadata...");
+//     let cloned_metadata = source_metadata.clone();
+//     let metadata_lines: Vec<&str> = cloned_metadata.lines().collect();
 
-    let cloned_metadata = source_metadata.clone();
-    let metadata_lines: Vec<&str> = cloned_metadata.lines().collect();
+//     // Go through and replace the category headers with the .spf META file
+//     // counterparts.
+//     for line in metadata_lines {
+//         if line.starts_with("Package:") {
+//             source_metadata = source_metadata.replace("Package:", "PROJECT_NAME =");
+//         } else if line.starts_with("Version:") {
+//             source_metadata = source_metadata.replace("Version:", "VERSION =");
+//         } else if line.starts_with("Description:") {
+//             source_metadata = source_metadata.replace("Description:", "DESCRIPTION =");
+//         } else if line.starts_with("Homepage:") {
+//             source_metadata = source_metadata.replace("Homepage:", "REPOSITORY =");
+//         } else if line.starts_with("Maintainer:") {
+//             source_metadata = source_metadata.replace("Maintainer:", "AUTHORS =");
+//         } else if line.starts_with("Architecture:") {
+//             let deb_arch = line.replace("Architecture: ", "");
+//             let spf_arch = convert_arch(&deb_arch, true)?;
 
-    // Go through and replace the category headers with the .spf META file
-    // counterparts.
-    for line in metadata_lines {
-        if line.starts_with("Package:") {
-            source_metadata = source_metadata.replace("Package:", "PROJECT_NAME =");
-        } else if line.starts_with("Version:") {
-            source_metadata = source_metadata.replace("Version:", "VERSION =");
-        } else if line.starts_with("Description:") {
-            source_metadata = source_metadata.replace("Description:", "DESCRIPTION =");
-        } else if line.starts_with("Homepage:") {
-            source_metadata = source_metadata.replace("Homepage:", "REPOSITORY =");
-        } else if line.starts_with("Maintainer:") {
-            source_metadata = source_metadata.replace("Maintainer:", "AUTHORS =");
-        } else if line.starts_with("Architecture:") {
-            let deb_arch = line.replace("Architecture: ", "");
-            let spf_arch = convert_arch(&deb_arch, true)?;
+//             println!("        Converted architecture \"{deb_arch}\" -> \"{spf_arch}\"");
 
-            println!("        Converted architecture \"{deb_arch}\" -> \"{spf_arch}\"");
+//             source_metadata = source_metadata.replace(line, &format!("ARCH = {spf_arch}"));
+//         } else {
+//             // If nothing matches, comment the lines. Will be removed after.
+//             source_metadata = source_metadata.replace(&format!("{line}\n"), &format!("#{line}\n"));
+//         };
+//     }
 
-            source_metadata = source_metadata.replace(line, &format!("ARCH = {spf_arch}"));
-        } else {
-            // If nothing matches, comment the lines. Will be removed after.
-            source_metadata = source_metadata.replace(&format!("{line}\n"), &format!("#{line}\n"));
+//     // Removes the lines that have been commented.
+//     source_metadata = source_metadata
+//         .lines()
+//         .filter(|line| !line.starts_with("#"))
+//         .map(|line| line.trim_end_matches("#"))
+//         .collect::<Vec<_>>()
+//         .join("\n");
+
+//     println!("    Extracting data (this might take a while)...");
+
+//     extract_tar_archive("data.tar.xz", "./data", "xz")?;
+
+//     remove_file("data.tar.xz")?;
+
+//     let new_spf_dest = output_package_path.replace(".spf", "");
+//     rename("data", &new_spf_dest)?;
+
+//     fs::write(format!("{new_spf_dest}/META"), source_metadata)?;
+
+//     println!("    Packaging...");
+
+//     create_tar_archive(output_package_path, &new_spf_dest, "")?;
+
+//     remove_dir_all(new_spf_dest)?;
+
+//     Ok(())
+// }
+
+#[derive(Clone, Debug)]
+enum PackageType {
+    Spf,
+    Deb,
+    Rpm,
+}
+
+struct Package {
+    source_package_path: String,
+}
+
+impl Package {
+    pub fn from(package_path: String) -> Result<Package, Error> {
+        Ok(Package {
+            source_package_path: package_path,
+        })
+    }
+
+    fn load_package_metadata(
+        package_type: PackageType,
+        package_path: &str,
+    ) -> Result<Categories, Error> {
+        let returned_meta = match package_type {
+            // Get spf package metadata
+            PackageType::Spf => {
+                if !package_path.ends_with(".spf") {
+                    panic!("must be .spf file")
+                }
+
+                extract_tar_archive(package_path, ".", "")?;
+
+                let metadata_path = &format!(
+                    "{}/META",
+                    FileProperty::name(package_path)?.trim_end_matches(".spf")
+                );
+
+                let package = Meta::from(metadata_path)?;
+
+                Categories {
+                    name: package.clone().load_value("PROJECT_NAME")?,
+                    version: package.clone().load_value("VERSION")?,
+                    description: package.clone().load_value("DESCRIPTION")?,
+                    source: package.clone().load_value("REPOSITORY")?,
+                    license: package.clone().load_value("LICENSE")?,
+                    authors: package.clone().load_value("AUTHORS")?,
+                    arch: package.load_value("ARCH")?,
+                }
+            }
+
+            // Get Debian package metadata
+            PackageType::Deb => {
+                let package = DebPackage::from(File::open(package_path)?)?;
+
+                Categories {
+                    name: package.name().to_string(),
+                    version: package.version().to_string(),
+                    description: package.description().to_string(),
+                    source: package.homepage().to_string(),
+                    license: String::new(), // There is no license field for Debian packages, so return an empty string.
+                    authors: package.maintainer().to_string(),
+                    arch: package.architecture().as_str().to_string(),
+                }
+            }
+
+            PackageType::Rpm => {
+                let package = PackageMetadata::open(package_path)
+                    .unwrap_or_else(|err| error(&format!("Failed to open rpm package: {err}")));
+
+                Categories {
+                    name: package.get_name().unwrap_or_default().to_string(),
+                    version: package.get_version().unwrap_or_default().to_string(),
+                    description: package.get_description().unwrap_or_default().to_string(),
+                    source: package.get_vendor().unwrap_or_default().to_string(),
+                    license: package.get_license().unwrap_or_default().to_string(),
+                    authors: package.get_packager().unwrap_or_default().to_string(),
+                    arch: package.get_arch().unwrap_or_default().to_string(),
+                }
+            }
         };
+
+        Ok(returned_meta)
     }
 
-    // Removes the lines that have been commented.
-    source_metadata = source_metadata
-        .lines()
-        .filter(|line| !line.starts_with("#"))
-        .map(|line| line.trim_end_matches("#"))
-        .collect::<Vec<_>>()
-        .join("\n");
+    pub fn convert(self, package_type: PackageType, output_location: &str) -> Result<(), Error> {
+        let source_package = &self.source_package_path;
 
-    println!("    Extracting data (this might take a while)...");
+        let source_package_type = match FileProperty::extension(source_package)?.as_ref() {
+            "spf" => PackageType::Spf,
+            "deb" => PackageType::Deb,
+            "rpm" => PackageType::Rpm,
+            _ => error("no"),
+        };
 
-    extract_tar_archive("data.tar.xz", "./data", "xz")?;
+        println!("    Collecting metadata...");
+        let metadata = Self::load_package_metadata(source_package_type.clone(), source_package)?;
 
-    remove_file("data.tar.xz")?;
+        match source_package_type {
+            PackageType::Spf => match package_type {
+                PackageType::Spf => error("You cannot convert a .spf package to a .spf package!"),
+                // spf -> deb
+                PackageType::Deb => {
+                    let package_name = &metadata.name;
+                    let package_metadata = metadata.arch;
 
-    let new_spf_dest = output_package_path.replace(".spf", "");
-    rename("data", &new_spf_dest)?;
+                    let mut package = DebPackage::new(package_name);
 
-    fs::write(format!("{new_spf_dest}/META"), source_metadata)?;
+                    // Convert the architectures to the `.deb` counterparts
+                    let arch_to_use = match package_metadata.as_ref() {
+                        "universal" => DebArchitecture::All,
+                        "x86_64" => DebArchitecture::Amd64,
+                        "x86" => DebArchitecture::I386,
+                        "aarch64" => DebArchitecture::Arm64,
+                        "arm" => DebArchitecture::Armhf,
+                        _ => error("Failed converting arch to .deb equivalent"),
+                    };
 
-    println!("    Packaging...");
+                    println!("        Applying...");
 
-    create_tar_archive(output_package_path, &new_spf_dest, "")?;
+                    // Set the metadata
+                    package = package
+                        .set_name(package_name)
+                        .set_version(&metadata.version)
+                        .set_description(&metadata.description)
+                        .set_maintainer(&metadata.authors)
+                        .set_homepage(&metadata.source)
+                        .set_architecture(arch_to_use);
 
-    remove_dir_all(new_spf_dest)?;
+                    extract_tar_archive(source_package, ".", "")?;
 
-    Ok(())
-}
+                    let source_name = FileProperty::name(source_package)?;
 
-/// Follows a series of steps in order to convert a `.spf` file to `.deb`.
-///
-/// Collects the metadata, copies paths, then add them to the output .deb
-/// file.
-fn convert_to_deb(
-    spf_metadata_path: String,
-    source_file_name: String,
-    output_package_path: &str,
-) -> Result<(), Error> {
-    let extracted_source = source_file_name.replace(".spf", "");
+                    let extracted_source = source_name.trim_end_matches(".spf");
 
-    println!("    Packaging...");
-    println!("        Loading package metadata...");
+                    remove_file(format!("{extracted_source}/META"))?;
 
-    let package_metadata = Meta::from(&spf_metadata_path)?;
+                    println!("    Collecting paths...");
 
-    // Name
-    let name = package_metadata.clone().load_value("PROJECT_NAME")?;
-    println!("            Collected package name: \"{name}\"");
+                    // Collect paths and add them to the package
+                    for path in
+                        glob(&format!("{extracted_source}/**/*")).expect("Failed to get paths")
+                    {
+                        let current_path = path?.display().to_string();
 
-    // Version
-    let version = package_metadata.clone().load_value("VERSION")?;
-    println!("            Collected package version: \"{version}\"");
+                        print!("\r\x1B[K        Writing path: \"{current_path}\"");
+                        stdout().flush()?;
 
-    // Description
-    let desc = package_metadata.clone().load_value("DESCRIPTION")?;
-    println!("            Collected package description: \"{desc}\"");
+                        // Adds the paths. Varies depending on if the path is a file or directory.
+                        package = if Path::new(&current_path).is_file() {
+                            package.with_file(DebFile::from_path(
+                                &current_path,
+                                current_path.replace(source_package, ""),
+                            )?)
+                        } else {
+                            package.with_dir(
+                                &current_path,
+                                &current_path.replace(source_package, ""),
+                            )?
+                        }
+                    }
 
-    // Maintainer
-    let maintainer = package_metadata.clone().load_value("AUTHORS")?;
-    println!("            Collected package maintainer(s): \"{maintainer}\"");
+                    println!("\n    Building...");
 
-    // Homepage
-    let homepage = package_metadata.clone().load_value("REPOSITORY")?;
-    println!("            Collected package homepage: \"{homepage}\"");
+                    package.build()?.write(File::create(output_location)?)?;
 
-    // Architecture
-    let arch = package_metadata.load_value("ARCH")?;
-    println!("            Collected package architecture: \"{arch}\"");
-
-    remove_file(spf_metadata_path)?;
-
-    let mut package = DebPackage::new(&name);
-
-    // Convert the architectures to the `.deb` counterparts
-    let arch_to_use = match arch.as_str() {
-        "universal" => DebArchitecture::All,
-        "x86_64" => DebArchitecture::Amd64,
-        "x86" => DebArchitecture::I386,
-        "aarch64" => DebArchitecture::Arm64,
-        "arm" => DebArchitecture::Armhf,
-        _ => error(&format!(
-            "Failed converting arch \"{arch}\" to .deb equivalent"
-        )),
-    };
-
-    // Set the metadata
-    package = package
-        .set_name(&name)
-        .set_version(&version)
-        .set_description(&desc)
-        .set_maintainer(&maintainer)
-        .set_homepage(&homepage)
-        .set_architecture(arch_to_use);
-
-    println!("        Writing paths...");
-
-    // Goes through and adds all the paths to add
-    for path in glob(&format!("{extracted_source}/**/*")).expect("Failed to get paths") {
-        let current_path = path?.display().to_string();
-
-        print!("\r\x1B[K            Writing path: \"{current_path}\"");
-        stdout().flush()?;
-
-        // Adds the paths. Varies depending on if the path is a file or directory.
-        package = if Path::new(&current_path).is_file() {
-            package.with_file(DebFile::from_path(
-                &current_path,
-                current_path.replace(&extracted_source, ""),
-            )?)
-        } else {
-            package.with_dir(&current_path, &current_path.replace(&extracted_source, ""))?
+                    remove_dir_all(extracted_source)?;
+                }
+                // spf -> rpm
+                PackageType::Rpm => todo!(),
+            },
+            PackageType::Deb => match source_package_type {
+                // deb -> spf
+                PackageType::Spf => todo!(),
+                // deb -> deb
+                PackageType::Deb => error("You cannot convert a .deb package to a .deb package!"),
+                // deb -> rpm
+                PackageType::Rpm => error("You cannot convert a .deb package to a .rpm package!"),
+            },
+            PackageType::Rpm => match source_package_type {
+                // rpm -> spf
+                PackageType::Spf => todo!(),
+                // rpm -> deb
+                PackageType::Deb => error("You cannot convert a .rpm package to a .deb package!"),
+                // rpm -> rpm
+                PackageType::Rpm => error("You cannot convert a .rpm package to a .rpm package!"),
+            },
         }
+
+        Ok(())
     }
-
-    remove_dir_all(extracted_source)?;
-
-    println!("\n    Building...");
-
-    package.build()?.write(File::create(output_package_path)?)?;
-
-    Ok(())
-}
-
-/// Converts a `.spf` arch to `.deb` arch, and vice versa.
-///
-/// Determined with `is_debian` ([bool]), and converts `arch` ([`str`])
-///
-/// Convert to `.spf`:
-/// ```
-/// let is_debian = true;
-/// let deb_arch = "amd64";
-///
-/// let arch = convert_arch(deb_arch, is_debian)
-///
-/// assert_eq!("x86_64", arch)
-/// ```
-/// Convert to `.deb`:
-/// ```
-/// let is_debian = false;
-/// let deb_arch = "x86_64";
-///
-/// let arch = convert_arch(deb_arch, is_debian)
-///
-/// assert_eq!("arm64", arch)
-/// ```
-pub fn convert_arch(arch: &str, is_debian: bool) -> Result<&'static str, Error> {
-    let arch = if is_debian {
-        // Convert to .spf
-        match arch {
-            "all" => "universal",
-            "amd64" => "x86_64",
-            "i386" => "x86",
-            "arm64" => "aarch64",
-            "armhf" => "arm",
-            _ => error(&format!(
-                "Failed to convert arch \"{arch}\" to .spf equivalent"
-            )),
-        }
-    } else {
-        // Convert to .deb
-        match arch {
-            "universal" => "all",
-            "x86_64" => "amd64",
-            "x86" => "i386",
-            "aarch64" => "arm64",
-            "arm" => "armhf",
-            _ => error(&format!(
-                "Failed to convert arch \"{arch}\" to .deb equivalent"
-            )),
-        }
-    };
-
-    Ok(arch)
 }
