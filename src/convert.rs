@@ -33,8 +33,55 @@ fn disclaimer() -> Result<(), Error> {
     Ok(())
 }
 
+/// Checks if the input/output packages are supported.
+///
+/// It specifically checks if:
+/// - Package formats are supported
+/// - User tries to convert a package to the same format
+/// - User tries to convert `.deb` packages to `rpm` packages (and vice versa)
+fn verify_input_paths(source_package_path: &str, output_package_path: &str) -> String {
+    let source_file_ext = match FileProperty::extension(source_package_path) {
+        Ok(ext) => ext,
+        Err(err) => error(&format!("Failed to get source file extension: {err}")),
+    };
+
+    let output_file_ext = match FileProperty::extension(output_package_path) {
+        Ok(ext) => ext,
+        Err(err) => error(&format!("Failed to get output file extension: {err}")),
+    };
+
+    // Verify supported package formats
+    if !matches!(source_file_ext.as_str(), "spf" | "deb" | "rpm") {
+        error(&format!(
+            "Unsupported input package format: .{source_file_ext}"
+        ))
+    } else if !matches!(output_file_ext.as_str(), "spf" | "deb" | "rpm") {
+        error(&format!(
+            "Unsupported output package format: {output_file_ext}"
+        ))
+    }
+
+    if output_package_path.is_empty() {
+        error("Please provide an output package path!")
+    }
+
+    // Makes sure the use doesn't try to convert 2 of the same package types
+    if source_file_ext == output_file_ext {
+        error("Source and output packages must not be the same!")
+    }
+
+    // Make sure user doesn't attempt to convert `.deb` -> `.rpm` (and vice versa)
+    if (source_file_ext == "rpm" && output_file_ext == "deb")
+        || (source_file_ext == "deb" && output_file_ext == "rpm")
+    {
+        error("\".deb\" and \".rpm\" files can not be converted back and forth!")
+    }
+
+    source_file_ext
+}
+
 pub fn convert(source_package_path: &str, output_package_path: &str) -> Result<(), Error> {
-    /* Input file checks */
+    disclaimer()?;
 
     if source_package_path.is_empty() {
         error("Please provide an input package path!")
@@ -51,58 +98,25 @@ pub fn convert(source_package_path: &str, output_package_path: &str) -> Result<(
         Err(err) => error(&format!("Failed to get source name: {err}")),
     };
 
-    let source_file_ext = match FileProperty::extension(source_package_path) {
-        Ok(ext) => ext,
-        Err(err) => error(&format!("Failed to get source file extension: {err}")),
-    };
-
-    if !matches!(source_file_ext.as_str(), "spf" | "deb") {
-        error(&format!(
-            "Unsupported input package format: .{source_file_ext}"
-        ))
-    }
-
-    /* Output file checks */
-
-    if output_package_path.is_empty() {
-        error("Please provide an output package path!")
-    }
-
-    let output_file_ext = match FileProperty::extension(output_package_path) {
-        Ok(ext) => ext,
-        Err(err) => error(&format!("Failed to get output file extension: {err}")),
-    };
-
-    if !matches!(output_file_ext.as_str(), "spf" | "deb") {
-        error(&format!(
-            "Unsupported output package format: {output_file_ext}"
-        ))
-    }
-
-    if source_file_ext == output_file_ext {
-        error("Source and output packages may not be the same!")
-    }
-
-    disclaimer()?;
+    let source_package_type = verify_input_paths(source_package_path, output_package_path);
 
     println!("Converting \"{source_package_path}\" -> \"{output_package_path}\"...");
     println!("    Extracting \"{source_package_path}\"...");
 
-    let source_is_debian = source_file_ext == "deb";
-
-    // `debian-binary` isn't used, so delete it
-    if source_is_debian {
+    if source_package_type == "deb" {
         extract_ar_archive(source_package_path, ".")?;
+
+        // `debian-binary` isn't used, so delete it
         remove_file("debian-binary")?;
-    } else {
-        extract_tar_archive(source_package_path, ".", "")?;
-    }
 
-    let spf_metadata_path = source_file_name.replace(".spf", "/META");
-
-    if source_is_debian {
         convert_to_spf(output_package_path)?;
     } else {
+        extract_tar_archive(source_package_path, ".", "")?;
+
+        // Since the metadata file is located in the root of the package, it
+        // makes it easier to modify the path to retrieve it
+        let spf_metadata_path = source_file_name.replace(".spf", "/META");
+
         convert_to_deb(spf_metadata_path, source_file_name, output_package_path)?;
     }
 
