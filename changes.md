@@ -125,3 +125,4 @@ Waiting for new features? Check out the status of them in these related pages:
 
 - Code optimizations
 - Use dependency `xz2` by @alexcrichton, replacing `xz`.
+- Add support for converting `.spf` packages to `.rpm` packages (and vice versa)
