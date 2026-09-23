@@ -1,7 +1,7 @@
 # spf Roadmap
 
 > [!IMPORTANT]  
-> Last updated: `September 22, 2026 @ 05:46 PM EST`
+> Last updated: `September 23, 2026 @ 05:09 PM EST`
 
 Here's a todo list that I've thrown together of things I want to add/change over
 time.
@@ -25,6 +25,9 @@ Related:
     - `.spf` package metadata
     - Package config
     - Installed package metadata
+- Restructure and clean up codebase
+  - It's spaghetti code right now
+  - Hopefully by `v1.0.0`
 
 ## Previously Completed
 
