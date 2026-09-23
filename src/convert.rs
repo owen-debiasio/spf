@@ -14,7 +14,7 @@ use std::{
 use glob::glob;
 
 use deb_rust::{DebArchitecture, DebFile, binary::DebPackage};
-use rpm::PackageMetadata;
+use rpm::{FileOptions, PackageBuilder, PackageMetadata};
 
 use crate::{
     fs::{FileProperty, extract_tar_archive},
@@ -290,82 +290,86 @@ impl Package {
             _ => error("no"),
         };
 
-        println!("    Collecting metadata...");
+        println!("    Collecting source package metadata...");
         let metadata = Self::load_package_metadata(source_package_type.clone(), source_package)?;
 
         match source_package_type {
-            PackageType::Spf => match package_type {
-                PackageType::Spf => error("You cannot convert a .spf package to a .spf package!"),
-                // spf -> deb
-                PackageType::Deb => {
-                    let package_name = &metadata.name;
-                    let package_metadata = metadata.arch;
+            PackageType::Spf => {
+                println!("    Extracting...");
+                extract_tar_archive(source_package, ".", "")?;
 
-                    let mut package = DebPackage::new(package_name);
+                let source_name = FileProperty::name(source_package)?;
 
-                    // Convert the architectures to the `.deb` counterparts
-                    let arch_to_use = match package_metadata.as_ref() {
-                        "universal" => DebArchitecture::All,
-                        "x86_64" => DebArchitecture::Amd64,
-                        "x86" => DebArchitecture::I386,
-                        "aarch64" => DebArchitecture::Arm64,
-                        "arm" => DebArchitecture::Armhf,
-                        _ => error("Failed converting arch to .deb equivalent"),
-                    };
+                let extracted_source = source_name.trim_end_matches(".spf");
 
-                    println!("        Applying...");
+                remove_file(format!("{extracted_source}/META"))?;
 
-                    // Set the metadata
-                    package = package
-                        .set_name(package_name)
-                        .set_version(&metadata.version)
-                        .set_description(&metadata.description)
-                        .set_maintainer(&metadata.authors)
-                        .set_homepage(&metadata.source)
-                        .set_architecture(arch_to_use);
-
-                    extract_tar_archive(source_package, ".", "")?;
-
-                    let source_name = FileProperty::name(source_package)?;
-
-                    let extracted_source = source_name.trim_end_matches(".spf");
-
-                    remove_file(format!("{extracted_source}/META"))?;
-
-                    println!("    Collecting paths...");
-
-                    // Collect paths and add them to the package
-                    for path in
-                        glob(&format!("{extracted_source}/**/*")).expect("Failed to get paths")
-                    {
-                        let current_path = path?.display().to_string();
-
-                        print!("\r\x1B[K        Writing path: \"{current_path}\"");
-                        stdout().flush()?;
-
-                        // Adds the paths. Varies depending on if the path is a file or directory.
-                        package = if Path::new(&current_path).is_file() {
-                            package.with_file(DebFile::from_path(
-                                &current_path,
-                                current_path.replace(source_package, ""),
-                            )?)
-                        } else {
-                            package.with_dir(
-                                &current_path,
-                                &current_path.replace(source_package, ""),
-                            )?
-                        }
+                match package_type {
+                    PackageType::Spf => {
+                        error("You cannot convert a .spf package to a .spf package!")
                     }
+                    // spf -> deb
+                    PackageType::Deb => {
+                        let mut package = DebPackage::new(&metadata.name);
 
-                    println!("\n    Building...");
+                        let package_arch = metadata.arch;
 
-                    package.build()?.write(File::create(output_location)?)?;
+                        // Convert the architectures to the `.deb` counterparts
+                        let arch_to_use = match package_arch.as_ref() {
+                            "universal" => DebArchitecture::All,
+                            "x86_64" => DebArchitecture::Amd64,
+                            "x86" => DebArchitecture::I386,
+                            "aarch64" => DebArchitecture::Arm64,
+                            "arm" => DebArchitecture::Armhf,
+                            _ => error("Failed converting arch to .deb equivalent"),
+                        };
 
-                    remove_dir_all(extracted_source)?;
+                        println!("        Applying...");
+
+                        // Set the metadata
+                        package = package
+                            .set_name(&metadata.name)
+                            .set_version(&metadata.version)
+                            .set_description(&metadata.description)
+                            .set_maintainer(&metadata.authors)
+                            .set_homepage(&metadata.source)
+                            .set_architecture(arch_to_use);
+
+                        println!("    Collecting paths...");
+
+                        // Collect paths and add them to the package
+                        for path in
+                            glob(&format!("{extracted_source}/**/*")).expect("Failed to get paths")
+                        {
+                            let current_path = path?.display().to_string();
+
+                            print!("\r\x1B[K        Writing path: \"{current_path}\"");
+                            stdout().flush()?;
+
+                            // Adds the paths. Varies depending on if the path is a file or directory.
+                            package = if Path::new(&current_path).is_file() {
+                                package.with_file(DebFile::from_path(
+                                    &current_path,
+                                    current_path.replace(source_package, ""),
+                                )?)
+                            } else {
+                                package.with_dir(
+                                    &current_path,
+                                    &current_path.replace(source_package, ""),
+                                )?
+                            }
+                        }
+
+                        println!("\n    Building...");
+
+                        package.build()?.write(File::create(output_location)?)?;
+
+                        remove_dir_all(extracted_source)?;
+                    }
+                    // spf -> rpm
+                    PackageType::Rpm => todo!(),
                 }
-                // spf -> rpm
-                PackageType::Rpm => todo!(),
-            },
+            }
             PackageType::Deb => match source_package_type {
                 // deb -> spf
                 PackageType::Spf => todo!(),
