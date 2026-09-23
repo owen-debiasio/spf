@@ -346,17 +346,14 @@ impl Package {
                             print!("\r\x1B[K        Writing path: \"{current_path}\"");
                             stdout().flush()?;
 
+                            let destination =
+                                &current_path.trim_start_matches(source_package).to_string();
+
                             // Adds the paths. Varies depending on if the path is a file or directory.
                             package = if Path::new(&current_path).is_file() {
-                                package.with_file(DebFile::from_path(
-                                    &current_path,
-                                    current_path.replace(source_package, ""),
-                                )?)
+                                package.with_file(DebFile::from_path(&current_path, destination)?)
                             } else {
-                                package.with_dir(
-                                    &current_path,
-                                    &current_path.replace(source_package, ""),
-                                )?
+                                package.with_dir(&current_path, destination)?
                             }
                         }
 
