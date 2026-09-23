@@ -79,7 +79,7 @@ fn verify_input_paths(source_package_path: &str, output_package_path: &str) -> S
         error("\".deb\" and \".rpm\" files can not be converted back and forth!")
     }
 
-    source_file_ext
+    output_file_ext
 }
 
 pub fn convert(source_package_path: &str, output_package_path: &str) -> Result<(), Error> {
@@ -95,17 +95,15 @@ pub fn convert(source_package_path: &str, output_package_path: &str) -> Result<(
         error(&format!("File \"{source_package_path}\" does not exist!"))
     }
 
-    let _ = verify_input_paths(source_package_path, output_package_path);
+    let output_extension = verify_input_paths(source_package_path, output_package_path);
 
     println!("Converting \"{source_package_path}\" -> \"{output_package_path}\"...");
 
-    let output_extension = FileProperty::extension(output_package_path)?;
-
-    let output_package_type = match output_extension.as_ref() {
+    let output_package_type = match output_extension.as_str() {
         "spf" => PackageType::Spf,
         "deb" => PackageType::Deb,
         "rpm" => PackageType::Rpm,
-        &_ => {
+        _ => {
             error("Failed to determine output package type? idk bro this probably shouldn't happen")
         }
     };
