@@ -5,8 +5,6 @@ set -e
 prettier --config .prettierrc -w .
 markdownlint-cli2 "**/*.md" --fix
 
-cargo update
-
 cargo clippy
 cargo fmt
 

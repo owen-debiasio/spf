@@ -2,9 +2,6 @@
 
 set -e
 
-# Update rust
-cargo update
-
 # lint and format
 ./dev/format.bash
 
