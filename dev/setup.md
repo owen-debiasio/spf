@@ -34,8 +34,8 @@ If you are using an immutable distro, you can use
 
 ### Setup
 
-spf already includes [distrobox.ini](distrobox.ini), so to set up the container,
-run:
+spf already includes [distrobox.ini](../distrobox.ini), so to set up the
+container, run:
 
 ```bash
 distrobox assemble create
