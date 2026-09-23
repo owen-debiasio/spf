@@ -121,8 +121,10 @@ Waiting for new features? Check out the status of them in these related pages:
   - There is now a list of supported architectures: `x86_64`, `x86`, `aarch64`,
     `arm`
 
-## v0.6.1
+## v0.7.0
 
 - Code optimizations
 - Use dependency `xz2` by @alexcrichton, replacing `xz`.
 - Add support for converting `.spf` packages to `.rpm` packages (and vice versa)
+- The mirror to Codeberg is now available.
+  [Find it here](https://codeberg.org/owen-debiasio/spf)
