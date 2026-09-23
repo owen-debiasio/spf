@@ -25,7 +25,7 @@ mod package;
 mod remove;
 mod template;
 
-pub static VERSION: &str = "v0.6.1";
+pub static VERSION: &str = "v0.7.0";
 
 fn main() -> Result<(), Error> {
     // Intro
