@@ -1,7 +1,7 @@
 # spf TODO
 
 > [!IMPORTANT]  
-> Last updated: `September 23, 2026 @ 05:08 PM EST`
+> Last updated: `September 24, 2026 @ 07:50 AM EST`
 
 Related:
 
@@ -17,3 +17,5 @@ Related:
     - `rpm` -> `.spf`
   - Documents structs and enums and stuff
 - Fix Debian package metadata being collected as empty
+- [src/main.rs](src/main.rs)
+  - Fix command/argument/flag parsing
