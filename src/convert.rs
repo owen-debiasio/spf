@@ -211,7 +211,7 @@ impl Package {
         Ok(returned_meta)
     }
 
-    pub fn convert(self, package_type: PackageType, output_location: &str) -> Result<(), Error> {
+    pub fn convert(self, output_package_type: PackageType, output_location: &str) -> Result<(), Error> {
         let source_package_path = &self.source_package_path;
         let source_package = Self::from(source_package_path.to_string())?;
         println!("    Loading package...");
@@ -229,7 +229,7 @@ impl Package {
 
                 remove_file(format!("{extracted_source}/META"))?;
 
-                match package_type {
+                match output_package_type {
                     PackageType::Spf => {
                         error("You cannot convert a .spf package to a .spf package!")
                     }
@@ -293,7 +293,7 @@ impl Package {
                     PackageType::Rpm => todo!(),
                 }
             }
-            PackageType::Deb => match package_type {
+            PackageType::Deb => match output_package_type {
                 // deb -> spf
                 PackageType::Spf => {
                     println!("        Extracting...");
@@ -355,7 +355,7 @@ impl Package {
                 // deb -> rpm
                 PackageType::Rpm => error("You cannot convert a .deb package to a .rpm package!"),
             },
-            PackageType::Rpm => match package_type {
+            PackageType::Rpm => match output_package_type {
                 // rpm -> spf
                 PackageType::Spf => todo!(),
                 // rpm -> deb
