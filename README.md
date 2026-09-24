@@ -9,6 +9,8 @@ spf is my small side project where I aim to create a packaging format similar to
 ![Badge License](https://img.shields.io/badge/License-GPLv3-blue.svg)
 ![Badge Issues](https://img.shields.io/github/issues/owen-debiasio/spf)
 
+[Codeberg Mirror](https://codeberg.org/owen-debiasio/spf)
+
 ## How to use
 
 ```none
@@ -56,11 +58,33 @@ You can find the `.spf` package here:
 You can build from source if you wish, like if you want to use the latest git
 build
 
-##### Build prerequisites
+##### Install Dependencies
 
-- Rust (Cargo, Rustup, Rustc)
-  - I recommend using the most recent stable release
+- Rust (Cargo, Rustc)
 - Git
+
+###### Arch
+
+```bash
+sudo pacman -S --needed cargo git
+```
+
+###### Debian/Debian-based
+
+```bash
+sudo apt install git
+```
+
+> [!NOTE]  
+> Install Rust from [rustup.rs](rustup.rs)
+
+###### Fedora/SUSE-based
+
+```bash
+sudo dnf install git cargo rust
+```
+
+---
 
 ##### Building
 
