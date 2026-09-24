@@ -16,6 +16,6 @@ Related:
     - `.spf` -> `.rpm`
     - `rpm` -> `.spf`
   - Documents structs and enums and stuff
-- Fix Debian package metadata being collected as empty
+  - Fix Debian package metadata being collected as empty
 - [src/main.rs](src/main.rs)
   - Fix command/argument/flag parsing
