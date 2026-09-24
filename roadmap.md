@@ -3,8 +3,8 @@
 > [!IMPORTANT]  
 > Last updated: `September 23, 2026 @ 05:09 PM EST`
 
-Here's a todo list that I've thrown together of things I want to add/change over
-time.
+Here's an idea list that I've thrown together of things I want to add/change
+over time. These are only IDEAS and are not guarenteed to be implemented.
 
 Related:
 
@@ -28,6 +28,12 @@ Related:
 - Restructure and clean up codebase
   - It's spaghetti code right now
   - Hopefully by `v1.0.0`
+- Unit tests (for `cargo test`)
+- Remote package repository support
+  - Ubuntu PPA
+  - Arch Linux AUR
+  - Cargo
+- Ability to install packages through a remote repostory
 
 ## Previously Completed
 
