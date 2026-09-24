@@ -11,6 +11,7 @@ use std::{
     process::exit,
 };
 
+use deb_rs2::file::Deb;
 use glob::glob;
 
 use deb_rust::{DebArchitecture, DebFile, binary::DebPackage};
@@ -177,18 +178,26 @@ impl Package {
             }
 
             // Get Debian package metadata
-            // TODO: Fix metadata being collected as empty
             PackageType::Deb => {
-                let package = DebPackage::from(File::open(self.source_package_path)?)?;
+                let loaded_metadata = Deb::new(self.source_package_path)
+                    .extract()?
+                    .retrieve_control()?;
+
+                let unknown = String::from("Unknown (converted)");
 
                 Categories {
-                    name: package.name().to_string(),
-                    version: package.version().to_string(),
-                    description: package.description().to_string(),
-                    source: package.homepage().to_string(),
-                    license: String::new(), // There is no license field for Debian packages, so return an empty string.
-                    authors: package.maintainer().to_string(),
-                    arch: package.architecture().as_str().to_string(),
+                    name: loaded_metadata.package,
+                    version: loaded_metadata.version,
+                    description: loaded_metadata
+                        .description
+                        .split(" #")
+                        .next()
+                        .unwrap_or(&unknown)
+                        .to_string(),
+                    source: loaded_metadata.homepage.unwrap_or(unknown.clone()),
+                    license: unknown, // There is no license field for Debian packages, so return an empty string.
+                    authors: loaded_metadata.maintainer,
+                    arch: loaded_metadata.architecture,
                 }
             }
 
