@@ -34,6 +34,7 @@ Related:
   - Arch Linux AUR
   - Cargo
 - Ability to install packages through a remote repostory
+- Converting in between `.spf` packages and Arch Linux packages
 
 ## Previously Completed
 
