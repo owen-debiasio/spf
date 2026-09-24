@@ -211,7 +211,11 @@ impl Package {
         Ok(returned_meta)
     }
 
-    pub fn convert(self, output_package_type: PackageType, output_location: &str) -> Result<(), Error> {
+    pub fn convert(
+        self,
+        output_package_type: PackageType,
+        output_location: &str,
+    ) -> Result<(), Error> {
         let source_package_path = &self.source_package_path;
         let source_package = Self::from(source_package_path.to_string())?;
         println!("    Loading package...");
