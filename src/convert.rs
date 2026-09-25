@@ -125,6 +125,7 @@ pub enum PackageType {
     Rpm,
 }
 
+#[derive(Clone, Debug)]
 struct Package {
     source_package_path: String,
     package_type: PackageType,
@@ -149,19 +150,21 @@ impl Package {
         })
     }
 
-    fn load_metadata(self) -> Result<Categories, Error> {
+    fn load_metadata(&self) -> Result<Categories, Error> {
+        let package_path = self.source_package_path.clone();
+
         let returned_meta = match self.package_type {
             // Get spf package metadata
             PackageType::Spf => {
-                if !self.source_package_path.ends_with(".spf") {
+                if !package_path.ends_with(".spf") {
                     panic!("must be .spf file")
                 }
 
-                extract_tar_archive(&self.source_package_path, ".", "")?;
+                extract_tar_archive(&package_path, ".", "")?;
 
                 let metadata_path = &format!(
                     "{}/META",
-                    FileProperty::name(&self.source_package_path)?.trim_end_matches(".spf")
+                    FileProperty::name(&package_path)?.trim_end_matches(".spf")
                 );
 
                 let package = Meta::from(metadata_path)?;
@@ -179,9 +182,7 @@ impl Package {
 
             // Get Debian package metadata
             PackageType::Deb => {
-                let loaded_metadata = Deb::new(self.source_package_path)
-                    .extract()?
-                    .retrieve_control()?;
+                let loaded_metadata = Deb::new(package_path).extract()?.retrieve_control()?;
 
                 let unknown = String::from("Unknown (converted)");
 
@@ -202,7 +203,7 @@ impl Package {
             }
 
             PackageType::Rpm => {
-                let package = PackageMetadata::open(self.source_package_path)
+                let package = PackageMetadata::open(package_path)
                     .unwrap_or_else(|err| error(&format!("Failed to open rpm package: {err}")));
 
                 Categories {
@@ -225,11 +226,10 @@ impl Package {
         output_package_type: PackageType,
         output_location: &str,
     ) -> Result<(), Error> {
-        let source_package_path = &self.source_package_path;
-        let source_package = Self::from(source_package_path.to_string())?;
         println!("    Loading package...");
 
-        let metadata = source_package.load_metadata()?;
+        let metadata = self.clone().load_metadata()?;
+        let source_package_path = &self.source_package_path;
 
         match self.package_type {
             PackageType::Spf => {
