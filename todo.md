@@ -1,7 +1,7 @@
 # spf TODO
 
 > [!IMPORTANT]  
-> Last updated: `September 24, 2026 @ 07:50 AM EST`
+> Last updated: `September 26, 2026 @ 07:20 PM EST`
 
 Related:
 
@@ -10,12 +10,15 @@ Related:
 
 ---
 
+## Current goals for v0.7.0
+
 - [src/convert.rs](src/convert.rs)
   - Finish adding conversions:
     - `.deb` -> `.spf` :check:
     - `.spf` -> `.rpm`
-    - `rpm` -> `.spf`
-  - Documents structs and enums and stuff
-  - Fix Debian package metadata being collected as empty
+    - `rpm` -> `.spf` (work in progress)
+  - Document structs and enums and stuff
+  - Fix `spf` packages being archived with wrong name when being converted from
+    `.rpm` to `.spf`
 - [src/main.rs](src/main.rs)
   - Fix command/argument/flag parsing
