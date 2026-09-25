@@ -313,6 +313,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "cmd-exists"
+version = "0.1.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "023c523050bdbe68ab3814ae3d78f343e71710bb4d1e08df25bc2eda7d58dd3d"
+
+[[package]]
 name = "const-oid"
 version = "0.9.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1938,6 +1944,7 @@ name = "spf"
 version = "0.7.0"
 dependencies = [
  "ar",
+ "cmd-exists",
  "deb-rs2",
  "deb-rust",
  "file_diff",
