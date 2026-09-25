@@ -8,7 +8,7 @@ use flate2::read::GzDecoder;
 use std::{
     ffi::OsStr,
     fs::{self, File},
-    io::{Error, copy},
+    io::{BufReader, Error, copy},
     path::{Path, PathBuf},
     str::from_utf8,
 };
@@ -199,7 +199,7 @@ pub fn extract_tar_archive(path: &str, dest: &str, archive_type: &str) -> Result
     }
 
     if archive_type == "gz" {
-        Archive::new(GzDecoder::new(archive_path)).unpack(dest)?;
+        Archive::new(GzDecoder::new(BufReader::new(archive_path))).unpack(dest)?;
     } else if archive_type == "xz" {
         Archive::new(XzDecoder::new(archive_path)).unpack(dest)?;
     } else {
