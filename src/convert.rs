@@ -8,9 +8,10 @@ use std::{
     fs::{File, remove_dir_all, remove_file, rename},
     io::{Error, Write, stdin, stdout},
     path::Path,
-    process::exit,
+    process::{Command, exit},
 };
 
+use cmd_exists::cmd_exists;
 use deb_rs2::file::Deb;
 use glob::glob;
 
@@ -207,13 +208,31 @@ impl Package {
                     .unwrap_or_else(|err| error(&format!("Failed to open rpm package: {err}")));
 
                 Categories {
-                    name: package.get_name().unwrap_or_default().to_string(),
-                    version: package.get_version().unwrap_or_default().to_string(),
-                    description: package.get_description().unwrap_or_default().to_string(),
-                    source: package.get_vendor().unwrap_or_default().to_string(),
-                    license: package.get_license().unwrap_or_default().to_string(),
-                    authors: package.get_packager().unwrap_or_default().to_string(),
-                    arch: package.get_arch().unwrap_or_default().to_string(),
+                    name: package
+                        .get_name()
+                        .unwrap_or("Unknown (likely lost in conversion)")
+                        .to_string(),
+                    version: package
+                        .get_version()
+                        .unwrap_or("Unknown (likely lost in conversion)")
+                        .to_string(),
+                    description: package
+                        .get_description()
+                        .unwrap_or("Unknown (likely lost in conversion)")
+                        .to_string(),
+                    source: package
+                        .get_vendor()
+                        .unwrap_or("Unknown (likely lost in conversion)")
+                        .to_string(),
+                    license: package
+                        .get_license()
+                        .unwrap_or("Unknown (likely lost in conversion)")
+                        .to_string(),
+                    authors: package
+                        .get_packager()
+                        .unwrap_or("Unknown (likely lost in conversion)")
+                        .to_string(),
+                    arch: package.get_arch().unwrap_or("noarch").to_string(),
                 }
             }
         };
@@ -375,7 +394,56 @@ impl Package {
             },
             PackageType::Rpm => match output_package_type {
                 // rpm -> spf
-                PackageType::Spf => todo!(),
+                // TODO: Fix spf packages being archived with wrong name when being
+                // converted from .rpm to .spf
+                PackageType::Spf => {
+                    cmd_exists("rpm2archive")
+                        .unwrap_or_else(|err| error(&format!("Cannot run \"rpm2cpio\": {err}")));
+
+                    println!("        Extracting...");
+
+                    Command::new("rpm2archive")
+                        .arg(source_package_path)
+                        .status()?;
+
+                    let tgz_file = &format!("{source_package_path}.tgz");
+
+                    let extract_dest = &format!("./{}", FileProperty::name(tgz_file)?);
+                    let extract_dest_clean = &extract_dest.trim_end_matches(".rpm.tgz").to_string();
+
+                    extract_tar_archive(tgz_file, extract_dest_clean, "gz")?;
+
+                    remove_file(tgz_file)?;
+
+                    println!("    Converting metadata...");
+
+                    println!("        Collecting...");
+
+                    let metadata_file_contents: Vec<String> = vec![
+                        format!("### CONVERTED & PACKAGED WITH SPF {VERSION} ###\n"),
+                        format!("PROJECT_NAME = {}", metadata.name),
+                        format!("VERSION = {}", metadata.version),
+                        format!("DESCRIPTION = {}", metadata.description),
+                        format!("REPOSITORY = {}", metadata.source),
+                        format!("LICENSE = {}", metadata.license),
+                        format!("AUTHORS = {}", metadata.authors),
+                        format!(
+                            "ARCH = {}",
+                            convert_arch(&metadata.arch, output_package_type)?
+                        ),
+                    ];
+
+                    println!("        Writing...");
+
+                    let mut new_meta_file = File::create(format!("{extract_dest_clean}/META"))?;
+                    new_meta_file.write_all(metadata_file_contents.join("\n").as_bytes())?;
+
+                    println!("    Packaging...");
+
+                    create_tar_archive(output_location, extract_dest_clean, "")?;
+
+                    remove_dir_all(extract_dest_clean)?;
+                }
                 // rpm -> deb
                 PackageType::Deb => error("You cannot convert a .rpm package to a .deb package!"),
                 // rpm -> rpm
