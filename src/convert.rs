@@ -119,7 +119,7 @@ pub fn convert(source_package_path: &str, output_package_path: &str) -> Result<(
 }
 
 #[derive(Clone, Debug)]
-enum PackageType {
+pub enum PackageType {
     Spf,
     Deb,
     Rpm,
@@ -341,6 +341,8 @@ impl Package {
 
                     println!("        Generating...");
 
+                    // Convert arch to spf equivelent
+
                     let metadata_file_contents: Vec<String> = vec![
                         format!("### CONVERTED & PACKAGED WITH SPF {VERSION} ###\n"),
                         format!("PROJECT_NAME = {}", metadata.name),
@@ -349,7 +351,10 @@ impl Package {
                         format!("REPOSITORY = {}", metadata.source),
                         format!("LICENSE = {}", metadata.license),
                         format!("AUTHORS = {}", metadata.authors),
-                        format!("ARCH = {}", metadata.arch),
+                        format!(
+                            "ARCH = {}",
+                            convert_arch(&metadata.arch, output_package_type)?
+                        ),
                     ];
 
                     println!("        Writing...");
@@ -380,4 +385,44 @@ impl Package {
 
         Ok(())
     }
+}
+
+pub fn convert_arch(
+    input_arch: &str,
+    output_package_type: PackageType,
+) -> Result<&'static str, Error> {
+    let arch_error = || {
+        error(&format!(
+            "Failed to convert arch \"{input_arch}\" to \"{output_package_type:?}\" equivalent"
+        ))
+    };
+
+    let arch = match output_package_type {
+        PackageType::Spf => match input_arch {
+            "all" | "noarch" | "src" | "nosrc" => "universal",
+            "amd64" | "x86_64" => "x86_64",
+            "i386" | "i686" => "x86",
+            "arm64" | "aarch64" => "aarch64",
+            "armhf" | "armv7hl" | "armvhl" => "arm",
+            _ => arch_error(),
+        },
+        PackageType::Deb => match input_arch {
+            "universal" | "noarch" | "src" | "nosrc" => "all",
+            "x86_64" => "amd64",
+            "x86" | "i386" | "i686" => "i386",
+            "aarch64" => "arm64",
+            "arm" | "armv7hl" | "armvhl" => "armhf",
+            _ => arch_error(),
+        },
+        PackageType::Rpm => match input_arch {
+            "universal" | "all" => "noarch",
+            "x86_64" => "amd64",
+            "x86" | "i386" => "i686",
+            "aarch64" | "arm64" => "aarch64",
+            "arm" | "armhf" => "armv7hl",
+            _ => arch_error(),
+        },
+    };
+
+    Ok(arch)
 }
