@@ -1,7 +1,7 @@
 # spf TODO
 
 > [!IMPORTANT]  
-> Last updated: `September 26, 2026 @ 09:47 AM EST`
+> Last updated: `September 26, 2026 @ 05:10 PM EST`
 
 Related:
 
@@ -12,11 +12,11 @@ Related:
 
 ## Current goals for v0.7.0
 
-- [src/convert.rs](src/convert.rs)
-  - Finish adding conversions:
-    - `.deb` -> `.spf` ✅
-    - `.spf` -> `.rpm`
-    - `rpm` -> `.spf` ✅
+> [!NOTE]  
+> Completed tasks will be removed
+
+- [src/convert.rs](src/convert.rs), [src/metadata.rs](src/metadata.rs)
   - Document structs and enums and stuff
+  - Clean up code
 - [src/main.rs](src/main.rs)
   - Fix command/argument/flag parsing
