@@ -5,8 +5,10 @@
 //! SPDX-License-Identifier: GPL-3.0-or-later
 
 use std::{
+    ffi::OsStr,
     fs::{File, remove_dir_all, remove_file, rename},
     io::{Error, Write, stdin, stdout},
+    os::unix::ffi::OsStrExt,
     path::Path,
     process::{Command, exit},
 };
@@ -16,7 +18,7 @@ use deb_rs2::file::Deb;
 use glob::glob;
 
 use deb_rust::{DebArchitecture, DebFile, binary::DebPackage};
-use rpm::PackageMetadata;
+use rpm::{PackageBuilder, PackageMetadata};
 
 use crate::{
     VERSION,
@@ -322,7 +324,71 @@ impl Package {
                         remove_dir_all(extracted_source)?;
                     }
                     // spf -> rpm
-                    PackageType::Rpm => todo!(),
+                    PackageType::Rpm => {
+                        println!("    Setting metadata...");
+                        let hostname = hostname::get()
+                            .unwrap_or(OsStr::from_bytes("Unknown".as_bytes()).to_owned())
+                            .display()
+                            .to_string();
+
+                        let build_host = &format!("SPF package converter @ {hostname}");
+
+                        let mut package_details = PackageBuilder::new(
+                            &metadata.name,
+                            &metadata.version,
+                            &metadata.license,
+                            convert_arch(&metadata.arch, output_package_type)?,
+                            &metadata.description,
+                        );
+
+                        let package = package_details.build_host(build_host);
+
+                        let direct_source_path = FileProperty::name(source_package_path)?;
+                        let extracted_spf = direct_source_path.trim_end_matches(".spf");
+
+                        for path in
+                            glob(&format!("{extracted_spf}/**/*")).expect("Failed to find paths")
+                        {
+                            let path = path?.display().to_string();
+                            let destination = path.trim_start_matches(extracted_spf);
+
+                            print!("\r\x1B[K    Writing path: \"{path}\"");
+                            stdout().flush()?;
+
+                            if Path::new(&path).is_file() {
+                                package
+                                    .with_file(
+                                        &path,
+                                        rpm::FileOptions::new(
+                                            path.trim_start_matches(extracted_spf),
+                                        )
+                                        .config()
+                                        .noreplace(),
+                                    )
+                                    .unwrap_or_else(|_| error("no"));
+                            } else {
+                                package
+                                    .with_dir(path.clone(), destination, |path| path.config())
+                                    .unwrap_or_else(|err| {
+                                        error(&format!("Failed to copy directory: {err}"))
+                                    });
+                            }
+                        }
+
+                        println!("\n    Building...");
+
+                        package
+                            .build()
+                            .unwrap_or_else(|err| {
+                                error(&format!("Failed to convert from rpm: {err}"))
+                            })
+                            .write_to(output_location)
+                            .unwrap_or_else(|err| {
+                                error(&format!("Failed to write output spf file from rpm: {err}"))
+                            });
+
+                        remove_dir_all(extracted_spf)?;
+                    }
                 }
             }
             PackageType::Deb => match output_package_type {
