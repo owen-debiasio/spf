@@ -1,7 +1,7 @@
 # spf TODO
 
 > [!IMPORTANT]  
-> Last updated: `September 26, 2026 @ 07:20 PM EST`
+> Last updated: `September 26, 2026 @ 09:47 AM EST`
 
 Related:
 
@@ -14,9 +14,9 @@ Related:
 
 - [src/convert.rs](src/convert.rs)
   - Finish adding conversions:
-    - `.deb` -> `.spf` :check:
+    - `.deb` -> `.spf` ✅
     - `.spf` -> `.rpm`
-    - `rpm` -> `.spf` (work in progress)
+    - `rpm` -> `.spf` ✅
   - Document structs and enums and stuff
 - [src/main.rs](src/main.rs)
   - Fix command/argument/flag parsing
