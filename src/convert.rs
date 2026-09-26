@@ -394,8 +394,6 @@ impl Package {
             },
             PackageType::Rpm => match output_package_type {
                 // rpm -> spf
-                // TODO: Fix spf packages being archived with wrong name when being
-                // converted from .rpm to .spf
                 PackageType::Spf => {
                     cmd_exists("rpm2archive")
                         .unwrap_or_else(|err| error(&format!("Cannot run \"rpm2cpio\": {err}")));
@@ -440,9 +438,13 @@ impl Package {
 
                     println!("    Packaging...");
 
-                    create_tar_archive(output_location, extract_dest_clean, "")?;
+                    let new_extracted_folder_name = output_location.trim_end_matches(".spf");
 
-                    remove_dir_all(extract_dest_clean)?;
+                    rename(extract_dest_clean, new_extracted_folder_name)?;
+
+                    create_tar_archive(output_location, new_extracted_folder_name, "")?;
+
+                    remove_dir_all(new_extracted_folder_name)?;
                 }
                 // rpm -> deb
                 PackageType::Deb => error("You cannot convert a .rpm package to a .deb package!"),
