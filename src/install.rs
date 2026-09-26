@@ -14,7 +14,7 @@ use std::{
 };
 
 use crate::{
-    fs::{FileProperty, extract_tar_archive},
+    fs::{ArchiveType, FileProperty, extract_archive},
     metadata::{Meta, PACKAGE_INSTALL_PATH},
     sys::{args_contains, error, get_binary_path, is_root},
 };
@@ -58,7 +58,7 @@ pub fn spf_install(mut spf_package_path: String) -> Result<(), Error> {
 
     println!("Loading package: {spf_package_path}\n");
 
-    extract_tar_archive(&spf_package_path, ".", "")?;
+    extract_archive(&spf_package_path, ".", ArchiveType::Tar)?;
 
     spf_package_path = FileProperty::name(&spf_package_path)?;
 

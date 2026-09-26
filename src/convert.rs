@@ -22,7 +22,7 @@ use rpm::{PackageBuilder, PackageMetadata};
 
 use crate::{
     VERSION,
-    fs::{FileProperty, create_tar_archive, extract_ar_archive, extract_tar_archive},
+    fs::{ArchiveType, FileProperty, create_archive, extract_archive},
     metadata::{Categories, Meta},
     sys::error,
 };
@@ -163,7 +163,7 @@ impl Package {
                     panic!("must be .spf file")
                 }
 
-                extract_tar_archive(&package_path, ".", "")?;
+                extract_archive(&package_path, ".", ArchiveType::Tar)?;
 
                 let metadata_path = &format!(
                     "{}/META",
@@ -187,7 +187,7 @@ impl Package {
             PackageType::Deb => {
                 let loaded_metadata = Deb::new(package_path).extract()?.retrieve_control()?;
 
-                let unknown = String::from("Unknown (converted)");
+                let unknown = String::from("Unknown (converted from Debian package)");
 
                 Categories {
                     name: loaded_metadata.package,
@@ -255,7 +255,7 @@ impl Package {
         match self.package_type {
             PackageType::Spf => {
                 println!("        Extracting...");
-                extract_tar_archive(source_package_path, ".", "")?;
+                extract_archive(source_package_path, ".", ArchiveType::Tar)?;
 
                 let source_name = FileProperty::name(source_package_path)?;
 
@@ -396,7 +396,7 @@ impl Package {
                 PackageType::Spf => {
                     println!("        Extracting...");
 
-                    extract_ar_archive(source_package_path, ".")?;
+                    extract_archive(source_package_path, ".", ArchiveType::Ar)?;
 
                     println!(
                         "    Converting package files...\n        Removing unused data files..."
@@ -409,7 +409,7 @@ impl Package {
                     remove_file("control.tar.xz")?;
 
                     println!("        Extracting \"./data.tar.xz\"...");
-                    extract_tar_archive("data.tar.xz", "./data", "xz")?;
+                    extract_archive("data.tar.xz", "./data", ArchiveType::Xz)?;
 
                     println!("            Removing \"./data.tar.xz\"...");
                     remove_file("data.tar.xz")?;
@@ -449,7 +449,7 @@ impl Package {
 
                     println!("    Packaging...");
 
-                    create_tar_archive(output_location, new_package_dir, "")?;
+                    create_archive(output_location, new_package_dir, ArchiveType::Tar)?;
 
                     remove_dir_all(new_package_dir)?;
                 }
@@ -475,7 +475,7 @@ impl Package {
                     let extract_dest = &format!("./{}", FileProperty::name(tgz_file)?);
                     let extract_dest_clean = &extract_dest.trim_end_matches(".rpm.tgz").to_string();
 
-                    extract_tar_archive(tgz_file, extract_dest_clean, "gz")?;
+                    extract_archive(tgz_file, extract_dest_clean, ArchiveType::Gz)?;
 
                     remove_file(tgz_file)?;
 
@@ -508,7 +508,7 @@ impl Package {
 
                     rename(extract_dest_clean, new_extracted_folder_name)?;
 
-                    create_tar_archive(output_location, new_extracted_folder_name, "")?;
+                    create_archive(output_location, new_extracted_folder_name, ArchiveType::Tar)?;
 
                     remove_dir_all(new_extracted_folder_name)?;
                 }

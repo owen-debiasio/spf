@@ -5,7 +5,7 @@
 
 use crate::{
     VERSION,
-    fs::{FileProperty, create_tar_archive},
+    fs::{ArchiveType, FileProperty, create_archive},
     sys::{SUPPORTED_ARCHS, error},
 };
 use std::{
@@ -88,7 +88,7 @@ pub fn create_spf_package(package_config: &str, mut output_location: &str) -> Re
 
     // Take the directories (`parent_directories`) inside `directory_to_compress`,
     // then package them to whatever `archive_name` is.
-    create_tar_archive(archive_name, output_location, "")?;
+    create_archive(archive_name, output_location, ArchiveType::Tar)?;
 
     // Cleanup directory that was compressed
     remove_dir_all(output_location)?;

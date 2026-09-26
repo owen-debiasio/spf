@@ -90,6 +90,14 @@ impl FileProperty {
     }
 }
 
+/// Determines what type of archive to create/extract
+pub enum ArchiveType {
+    Tar,
+    Xz,
+    Gz,
+    Ar,
+}
+
 /// Creates an archive using `tar`.
 ///
 /// Creates a blank archive (`output`), then copies paths that are located in
@@ -100,138 +108,93 @@ impl FileProperty {
 /// Inputs:
 ///     - `output` ([`str`]) is the name of the output archive
 ///     - `path` ([`str`]) is the path you want to archive
-///     - `archive_type` ([`str`]) is the type of tar type
+///     - `archive_type` ([`ArchiveType`]) is the type of tar type
 ///
-/// Making `tar.xz`
+/// Example: Making tar.xz
 /// ```
 /// let output = "archive.tar.xz";
 /// let path = "archive";
-/// let tar_type = "xz";
+/// let tar_type = ArchiveType::Xz;
 ///
 /// create_tar_archive(output, path, tar_type)
 /// ```
-///
-/// Making something else
-/// ```
-/// let output = "archive.tar.xz";
-/// let path = "archive";
-/// let tar_type = "";
-///
-/// create_tar_archive(output, path, tar_type)
-/// ```
-pub fn create_tar_archive(output: &str, path: &str, archive_type: &str) -> Result<(), Error> {
-    if !matches!(archive_type, "xz" | "") {
-        panic!("Invalid coded archive type: {archive_type}")
+pub fn create_archive(
+    output_file: &str,
+    path_to_archive: &str,
+    archive_type: ArchiveType,
+) -> Result<(), Error> {
+    let archive_file = File::create(output_file)?;
+
+    match archive_type {
+        ArchiveType::Tar => {
+            let mut archive = Builder::new(archive_file);
+
+            if Path::new(path_to_archive).is_dir() {
+                archive.append_dir_all(FileProperty::name(path_to_archive)?, path_to_archive)?;
+            } else {
+                archive.append_path(path_to_archive)?
+            }
+
+            archive.finish()?;
+        }
+        ArchiveType::Xz => {
+            let mut archive = Builder::new(XzEncoder::new(&archive_file, 6));
+
+            if Path::new(path_to_archive).is_dir() {
+                archive.append_dir_all(FileProperty::name(path_to_archive)?, path_to_archive)?;
+            } else {
+                archive.append_path(path_to_archive)?
+            }
+
+            archive.finish()?;
+        }
+        ArchiveType::Gz => todo!(),
+        ArchiveType::Ar => todo!(),
     }
-
-    let archive_file = File::create(output)?;
-
-    // Because of some incompatible types error in this if/else statement,
-    // just use the whole process in each block.
-    if archive_type == "xz" {
-        let mut archive = Builder::new(XzEncoder::new(&archive_file, 6));
-
-        if Path::new(path).is_dir() {
-            archive.append_dir_all(FileProperty::name(path)?, path)?;
-        } else {
-            archive.append_path(path)?
-        }
-
-        archive.finish()?;
-    } else {
-        let mut archive = Builder::new(archive_file);
-
-        if Path::new(path).is_dir() {
-            archive.append_dir_all(FileProperty::name(path)?, path)?;
-        } else {
-            archive.append_path(path)?
-        }
-
-        archive.finish()?;
-    };
 
     Ok(())
 }
 
-/// Extracts an archive using `tar`.
+/// Extracts a `tar` archive.
 ///
-/// You just need to input the path of where it outputs to (`path` ([`str`])).
-/// Extracts it using `archive_exec` ([`str`]) to the current working directory.
+/// Inputs:
+///     - `path` ([`str`]) is the path you want to archive
+///     - `dest` ([`str`]) is the output of the archive
+///     - `archive_type` ([`ArchiveType`]) is the type of `tar` archive
 ///
-/// `archive_type` ([`str`]) determines which archive format to use.
-///
-/// Chooses one of the following:
-///     - `gz`
-///     - `xz`
-///     - Leave empty for regular tar format
-///
-/// Using tar.gz:
+/// Example: Extracting tar.gz:
 /// ```
-/// let archive = "archive.tar.gz";
-/// let dest = ".";
-/// let archive_type = "gz";
+/// let archive_path = "example.tar.gz";
+/// let output = "dir/file.tar.gz";
+/// let type = ArchiveType::Gz;
 ///
-/// extract_tar_archive(archive, dest, archive_type);
+/// extract_archive(archive_path, output, type)?;
 /// ```
-///
-/// Using tar.xz:
-/// ```
-/// let archive = "archive.tar.xz";
-/// let dest = ".";
-/// let archive_type = "xz";
-///
-/// extract_tar_archive(archive, dest, archive_type);
-/// ```
-///
-/// Other
-/// ```
-/// let archive = "archive.tar";
-/// let dest = ".";
-/// let archive_type = "";
-///
-/// extract_tar_archive(archive, dest, archive_type);
-/// ```
-pub fn extract_tar_archive(path: &str, dest: &str, archive_type: &str) -> Result<(), Error> {
+pub fn extract_archive(path: &str, dest: &str, archive_type: ArchiveType) -> Result<(), Error> {
     let archive_path = File::open(path)?;
 
-    if !matches!(archive_type, "gz" | "xz" | "") {
-        panic!("Invalid coded archive type: {archive_type}")
-    }
+    match archive_type {
+        ArchiveType::Tar => Archive::new(archive_path).unpack(dest)?,
+        ArchiveType::Xz => Archive::new(XzDecoder::new(archive_path)).unpack(dest)?,
+        ArchiveType::Gz => {
+            Archive::new(GzDecoder::new(BufReader::new(archive_path))).unpack(dest)?
+        }
+        ArchiveType::Ar => {
+            fs::create_dir_all(dest)?;
 
-    if archive_type == "gz" {
-        Archive::new(GzDecoder::new(BufReader::new(archive_path))).unpack(dest)?;
-    } else if archive_type == "xz" {
-        Archive::new(XzDecoder::new(archive_path)).unpack(dest)?;
-    } else {
-        Archive::new(archive_path).unpack(dest)?;
-    };
+            let mut archive = ar::Archive::new(archive_path);
 
-    Ok(())
-}
+            while let Some(entry_result) = archive.next_entry() {
+                let mut entry = entry_result?;
 
-/// Extracts an archive using `ar`.
-///
-/// Takes the selected archive (`path` ([`str`])), then extracts it to `dest` ([`str`]).
-///
-/// ```
-/// let path_of_archive = "archive.ar";
-/// let destination = "dir/archive"
-/// extract_ar_archive(path_of_archive, destination);
-/// ```
-pub fn extract_ar_archive(path: &str, dest: &str) -> Result<(), Error> {
-    fs::create_dir_all(dest)?;
+                let mut file = File::create(
+                    from_utf8(entry.header().identifier())
+                        .unwrap_or_else(|err| error(&format!("Failed to get utf8 header: {err}"))),
+                )?;
 
-    let mut archive = ar::Archive::new(File::open(path)?);
-
-    while let Some(entry_result) = archive.next_entry() {
-        let mut entry = entry_result?;
-
-        let mut file = File::create(
-            from_utf8(entry.header().identifier())
-                .unwrap_or_else(|err| error(&format!("Failed to get utf8 header: {err}"))),
-        )?;
-
-        copy(&mut entry, &mut file)?;
+                copy(&mut entry, &mut file)?;
+            }
+        }
     }
 
     Ok(())
