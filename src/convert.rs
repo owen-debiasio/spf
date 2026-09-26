@@ -1,5 +1,8 @@
-//! Functions related to and providing the ability to convert a `.spf`
-//! package to a `.deb` package (and vice versa).
+//! Functions related to and providing the ability to convert supported packages.
+//! - `.spf` -> `.deb`
+//! - `.deb` -> `.spf`
+//! - `.rpm` -> `.spf`
+//! - `.spf` -> `.rpm`
 //!
 //! Copyright (C) 2026 Owen Debiasio <owen.debiasio@gmail.com>
 //! SPDX-License-Identifier: GPL-3.0-or-later
