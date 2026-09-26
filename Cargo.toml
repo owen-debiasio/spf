@@ -15,6 +15,7 @@ deb-rust = "0.1.2"
 file_diff = "1.0.0"
 flate2 = "1.1.10"
 glob = "0.3.4"
+hostname = "0.4.2"
 rpm = { version = "0.28.0", default-features = false, features = [
     "chrono",
     "flate2",

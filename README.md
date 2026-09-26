@@ -121,3 +121,4 @@ sudo cp target/release/spf /usr/bin/spf # Install to location (like /usr/local/b
   (original: [deb-rs](https://github.com/trickypr/deb-rs) by @trickypr
 - [rpm](https://github.com/rpm-rs/rpm-rs) by @rpm-rs
 - [cmd-exists](https://github.com/ejsch03/cmd-exists) by @ejsch03
+- [hostname](https://github.com/djc/hostname) by @djc
