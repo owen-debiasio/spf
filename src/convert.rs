@@ -116,7 +116,7 @@ pub fn convert(source_package_path: &str, output_package_path: &str) -> Result<(
         }
     };
 
-    Package::from(source_package_path.to_string())?
+    Converter::from(source_package_path.to_string())?
         .convert(output_package_type, output_package_path)?;
 
     println!("\nDone! Converted \"{source_package_path}\" -> \"{output_package_path}\"!");
@@ -132,13 +132,13 @@ pub enum PackageType {
 }
 
 #[derive(Clone, Debug)]
-struct Package {
+struct Converter {
     source_package_path: String,
     package_type: PackageType,
 }
 
-impl Package {
-    pub fn from(package_path: String) -> Result<Package, Error> {
+impl Converter {
+    pub fn from(package_path: String) -> Result<Converter, Error> {
         let source_package_ext = FileProperty::extension(&package_path)?;
 
         let source_package_type = match source_package_ext.as_ref() {
@@ -150,13 +150,13 @@ impl Package {
             )),
         };
 
-        Ok(Package {
+        Ok(Converter {
             source_package_path: package_path,
             package_type: source_package_type,
         })
     }
 
-    fn load_metadata(&self) -> Result<Categories, Error> {
+    fn load_source_metadata(&self) -> Result<Categories, Error> {
         let package_path = self.source_package_path.clone();
 
         let returned_meta = match self.package_type {
@@ -252,7 +252,7 @@ impl Package {
     ) -> Result<(), Error> {
         println!("    Loading package...");
 
-        let metadata = self.clone().load_metadata()?;
+        let metadata = self.clone().load_source_metadata()?;
         let source_package_path = &self.source_package_path;
 
         match self.package_type {

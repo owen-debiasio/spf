@@ -31,7 +31,7 @@ use std::{
 ///
 /// remove_spf_package(packages_to_remove)
 /// ```
-pub fn remove_spf_package(mut packages_to_remove: Vec<String>) -> Result<(), Error> {
+pub fn remove_packages(mut packages_to_remove: Vec<String>) -> Result<(), Error> {
     if !is_root()? {
         error("To execute this action, please run spf as root.")
     }
