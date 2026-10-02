@@ -91,8 +91,6 @@ fn verify_input_paths(source_package_path: &str, output_package_path: &str) -> S
 }
 
 pub fn convert(source_package_path: &str, output_package_path: &str) -> Result<(), Error> {
-    disclaimer()?;
-
     if source_package_path.is_empty() {
         error("Please provide an input package path!")
     }
@@ -104,6 +102,8 @@ pub fn convert(source_package_path: &str, output_package_path: &str) -> Result<(
     }
 
     let output_extension = verify_input_paths(source_package_path, output_package_path);
+
+    disclaimer()?;
 
     println!("Converting \"{source_package_path}\" -> \"{output_package_path}\"...");
 
