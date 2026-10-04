@@ -15,8 +15,7 @@ Related:
 > [!NOTE]  
 > Completed tasks will be removed
 
-- [src/convert.rs](src/convert.rs), [src/metadata.rs](src/metadata.rs)
+- [src/convert.rs](src/convert.rs), [src/metadata.rs](src/metadata.rs), ad
+  everything else
   - Document structs and enums and stuff
-  - Clean up code
-- [src/main.rs](src/main.rs)
-  - Fix command/argument/flag parsing
+  - Clean up and refactor code
