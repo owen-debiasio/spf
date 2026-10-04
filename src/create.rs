@@ -196,14 +196,14 @@ fn write_project_meta_config(
         // - Invalid entry formatting, where the meta category and value are not
         // separated correctly
         // - The metadata category found is not a valid category.
-        panic!(
+        error(&format!(
             "Failed to parse entry \"{entry}\": {}",
             if entry.contains(" = ") {
                 "Invalid metadata category"
             } else {
                 "Invalid entry formatting"
             }
-        );
+        ))
     }
 
     println!("Writing package metadata...");

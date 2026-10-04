@@ -3,7 +3,7 @@ use std::{io::Error, process::exit};
 use crate::{
     convert::convert,
     list::list_packages,
-    package::SpfPackage,
+    package::Package,
     sys::{error, return_args},
     template::gen_meta_template,
 };
@@ -48,17 +48,17 @@ fn main() -> Result<(), Error> {
     // Parse args
     // If there are more args than the root arg, pass them on to the desired function
     match root_arg.as_str() {
-        "create" => SpfPackage::create(&secondary_arg, &tertiary_arg)?,
+        "create" => Package::create(&secondary_arg, &tertiary_arg)?,
 
-        "install" => SpfPackage::install(secondary_arg)?,
+        "install" => Package::install(secondary_arg)?,
 
-        "remove" => SpfPackage::remove(collected_args)?,
+        "remove" => Package::remove(collected_args)?,
 
         "list" => list_packages(&secondary_arg)?,
 
         "template" => gen_meta_template(secondary_arg)?,
 
-        "inspect" => SpfPackage::inspect(&secondary_arg)?,
+        "inspect" => Package::inspect(&secondary_arg)?,
 
         "convert" => convert(&secondary_arg, &tertiary_arg)?,
 

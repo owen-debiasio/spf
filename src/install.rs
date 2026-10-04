@@ -333,10 +333,13 @@ fn install_files(
     // Write the header for defining installed paths
     project_meta_file.write_all(b"\n:::PATH DEFINE START:::\n")?;
 
+    let collected_paths = match glob(&format!("./{extracted_package_path}/**/*")) {
+        Ok(paths) => paths,
+        Err(err) => error(&format!("Failed to collect paths: {err}")),
+    };
+
     // Go through and install packaged paths
-    for found_path in
-        glob(&format!("./{extracted_package_path}/**/*")).expect("Failed to collect directories")
-    {
+    for found_path in collected_paths {
         // File/folder to be copied
         let file_from_archive = found_path?.display().to_string();
 

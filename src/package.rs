@@ -4,10 +4,10 @@ use crate::{
     create::create_spf_package, inspect::inspect, install::spf_install, remove::remove_packages,
 };
 
-pub struct SpfPackage;
+pub struct Package;
 
 #[allow(clippy::new_ret_no_self)]
-impl SpfPackage {
+impl Package {
     pub fn create(package_config: &str, output_location: &str) -> Result<(), Error> {
         create_spf_package(package_config, output_location)?;
 

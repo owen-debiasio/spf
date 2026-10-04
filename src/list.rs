@@ -39,9 +39,14 @@ pub fn list_packages(optional_string: &str) -> Result<(), std::io::Error> {
     // packages are installed
     let mut packages_to_list = vec![];
 
+    let collected_packages = match glob(path_to_search) {
+        Ok(packages) => packages,
+        Err(err) => error(&format!("Failed to collect packages: {err}")),
+    };
+
     // Collect paths and add them to the vec
-    for dir in glob(path_to_search).expect("Failed to collect directories") {
-        packages_to_list.push(dir?.display().to_string());
+    for package in collected_packages {
+        packages_to_list.push(package?.display().to_string());
     }
 
     // If there are no paths found, that means no packages are installed.
@@ -53,8 +58,13 @@ pub fn list_packages(optional_string: &str) -> Result<(), std::io::Error> {
     // Clear the vec to be used for its main purpose
     packages_to_list.clear();
 
+    let collected_raw_paths = match glob(path_to_search) {
+        Ok(raw_paths) => raw_paths,
+        Err(err) => error(&format!("Failed to collect package paths: {err}")),
+    };
+
     // Go through the package metadata install directory
-    for package_path_raw in glob(path_to_search).expect("Failed to collect directories") {
+    for package_path_raw in collected_raw_paths {
         // The path of the package metadata. The name of the metadata file is the name
         // of the package.
         let package_metadata_path = package_path_raw?.display().to_string();

@@ -80,11 +80,10 @@ impl FileProperty {
     /// println!("{file_name}");
     /// ```
     pub fn name(path: &str) -> Result<String, Error> {
-        let file_name = PathBuf::from(path)
-            .file_name()
-            .expect("Failed to retrieve file name")
-            .display()
-            .to_string();
+        let file_name = match PathBuf::from(path).file_name() {
+            Some(name) => name.display().to_string(),
+            None => error("Failed to retrieve path name"),
+        };
 
         Ok(file_name)
     }
