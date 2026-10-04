@@ -4,7 +4,7 @@
 > Last updated: `September 23, 2026 @ 05:09 PM EST`
 
 Here's an idea list that I've thrown together of things I want to add/change
-over time. These are only IDEAS and are not guarenteed to be implemented.
+over time. These are only IDEAS and are not guaranteed to be implemented.
 
 Related:
 
