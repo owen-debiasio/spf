@@ -14,12 +14,25 @@ pub static PACKAGE_INSTALL_PATH: &str = "/usr/share/spf/packages/";
 /// Every entry is stored as [`String`], and is public.
 #[derive(Clone, Debug)]
 pub struct Categories {
+    /// Package name
     pub name: String,
+
+    /// Package version
     pub version: String,
+
+    /// Package description
     pub description: String,
+
+    /// Package homepage, repository, or source
     pub source: String,
+
+    /// Package license
     pub license: String,
+
+    /// Package authors/maintainers
     pub authors: String,
+
+    /// Package architecture
     pub arch: String,
 }
 

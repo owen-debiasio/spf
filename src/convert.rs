@@ -21,7 +21,7 @@ use deb_rs2::file::Deb;
 use glob::glob;
 
 use deb_rust::{DebArchitecture, DebFile, binary::DebPackage};
-use rpm::{PackageBuilder, PackageMetadata};
+use rpm::{FileOptions, PackageBuilder, PackageMetadata};
 
 use crate::{
     VERSION,
@@ -90,6 +90,15 @@ fn verify_input_paths(source_package_path: &str, output_package_path: &str) -> S
     output_file_ext
 }
 
+/// Convert `.spf`, `.deb`, and `.rpm` packages to and from each other.
+///
+/// Example: Converting `.spf` to `.deb`:
+/// ```
+/// let package_to_convert = "sample.spf";
+/// let output_package = "output.deb";
+///
+/// convert(package_to_convert, output_package)?;
+/// ```
 pub fn convert(source_package_path: &str, output_package_path: &str) -> Result<(), Error> {
     if source_package_path.is_empty() {
         error("Please provide an input package path!")
@@ -124,6 +133,9 @@ pub fn convert(source_package_path: &str, output_package_path: &str) -> Result<(
     exit(0)
 }
 
+/// Identifies packages
+///
+/// Entries correspond with what they mean
 #[derive(Clone, Debug)]
 pub enum PackageType {
     Spf,
@@ -131,13 +143,67 @@ pub enum PackageType {
     Rpm,
 }
 
+/// The core converter functionality.
+///
+/// - [Converter::from]:
+///
+///   Loads the package that you want to convert.
+///
+///   The package to load (`package_path`) is an input as [String].
+///
+///   ```
+///   let package_path = String::from("sample_package.spf");
+///   let package_to_convert = Converter::from(package_path)?;
+///   ```
+///
+/// - [Converter::load_source_metadata]:
+///
+///   Loads the metadata from the loaded package. The metadata is loaded using the struct
+///   [Categories].
+///
+///   Example: Loading metadata from `.deb` package:
+///   ```
+///   let package_path = String::from("sample_package.deb");
+///   let loaded_package = Converter::from(package_path)?;
+///
+///   let loaded_metadata = loaded_package.load_source_metadata()?;
+///   ```
+///   Example: Pulling individual values from loaded metadata:
+///   ```
+///   let package_name = loaded_metadata.name;
+///   assert_eq(package_name, "sample_package");
+///   ```
+/// - [Converter::convert]
+///   The actual conversion process.
+///
+///   Example: Converting `.rpm` -> `.spf`
+///   ```
+///   let package_path = String::from("sample_package.rpm");
+///   let loaded_package = Converter::from(package_path)?;
+///
+///   let output_package_path = String::from("sample_package.spf");
+///   let output_package_type = PackageType::Spf;
+///
+///   loaded_package.convert(output_package_type, output_package_path)?;
+///   ```
 #[derive(Clone, Debug)]
 struct Converter {
+    /// The path of the package to be converted
     source_package_path: String,
+
+    /// The type of package to convert to or from
     package_type: PackageType,
 }
 
 impl Converter {
+    /// Loads the package that you want to convert.
+    ///
+    /// The package to load (`package_path`) is an input as [String].
+    ///
+    /// ```
+    /// let package_path = String::from("sample_package.spf");
+    /// let package_to_convert = Converter::from(package_path)?;
+    /// ```
     pub fn from(package_path: String) -> Result<Converter, Error> {
         let source_package_ext = FileProperty::extension(&package_path)?;
 
@@ -156,6 +222,21 @@ impl Converter {
         })
     }
 
+    /// Loads the metadata from the loaded package. The metadata is loaded using the struct
+    /// [Categories].
+    ///
+    /// Example: Loading metadata from `.deb` package:
+    /// ```
+    /// let package_path = String::from("sample_package.deb");
+    /// let loaded_package = Converter::from(package_path)?;
+    ///
+    /// let loaded_metadata = loaded_package.load_source_metadata()?;
+    /// ```
+    /// Example: Pulling individual values from loaded metadata:
+    /// ```
+    /// let package_name = loaded_metadata.name;
+    /// assert_eq(package_name, "sample_package");
+    /// ```
     fn load_source_metadata(&self) -> Result<Categories, Error> {
         let package_path = self.source_package_path.clone();
 
@@ -163,7 +244,7 @@ impl Converter {
             // Get spf package metadata
             PackageType::Spf => {
                 if !package_path.ends_with(".spf") {
-                    panic!("must be .spf file")
+                    error("must be .spf file")
                 }
 
                 extract_archive(&package_path, ".", ArchiveType::Tar)?;
@@ -245,6 +326,18 @@ impl Converter {
         Ok(returned_meta)
     }
 
+    /// The actual conversion process.
+    ///
+    /// Example: Converting `.rpm` -> `.spf`
+    /// ```
+    /// let package_path = String::from("sample_package.rpm");
+    /// let loaded_package = Converter::from(package_path)?;
+    ///
+    /// let output_package_path = String::from("sample_package.spf");
+    /// let output_package_type = PackageType::Spf;
+    ///
+    /// loaded_package.convert(output_package_type, output_package_path)?;
+    /// ```
     pub fn convert(
         self,
         output_package_type: PackageType,
@@ -300,9 +393,12 @@ impl Converter {
                         println!("    Collecting paths...");
 
                         // Collect paths and add them to the package
-                        for path in
-                            glob(&format!("{extracted_source}/**/*")).expect("Failed to get paths")
-                        {
+                        let collected_paths = match glob(&format!("{extracted_source}/**/*")) {
+                            Ok(paths) => paths,
+                            Err(err) => error(&format!("Failed to load paths: {err}")),
+                        };
+
+                        for path in collected_paths {
                             let current_path = path?.display().to_string();
 
                             print!("\r\x1B[K        Writing path: \"{current_path}\"");
@@ -349,9 +445,13 @@ impl Converter {
                         let direct_source_path = FileProperty::name(source_package_path)?;
                         let extracted_spf = direct_source_path.trim_end_matches(".spf");
 
-                        for path in
-                            glob(&format!("{extracted_spf}/**/*")).expect("Failed to find paths")
-                        {
+                        // Collect paths and add them to the package
+                        let collected_paths = match glob(&format!("{extracted_spf}/**/*")) {
+                            Ok(paths) => paths,
+                            Err(err) => error(&format!("Failed to load paths: {err}")),
+                        };
+
+                        for path in collected_paths {
                             let path = path?.display().to_string();
                             let destination = path.trim_start_matches(extracted_spf);
 
@@ -362,13 +462,13 @@ impl Converter {
                                 package
                                     .with_file(
                                         &path,
-                                        rpm::FileOptions::new(
-                                            path.trim_start_matches(extracted_spf),
-                                        )
-                                        .config()
-                                        .noreplace(),
+                                        FileOptions::new(path.trim_start_matches(extracted_spf))
+                                            .config()
+                                            .noreplace(),
                                     )
-                                    .unwrap_or_else(|_| error("no"));
+                                    .unwrap_or_else(|err| {
+                                        error(&format!("Failed to copy path: {err}"))
+                                    });
                             } else {
                                 package
                                     .with_dir(path.clone(), destination, |path| path.config())
@@ -418,10 +518,10 @@ impl Converter {
                     remove_file("data.tar.xz")?;
 
                     let output_location_name = FileProperty::name(output_location)?;
-                    let new_package_dir = output_location_name
-                        .split('.')
-                        .next()
-                        .expect("Expected file name");
+                    let new_package_dir = match output_location_name.split('.').next() {
+                        Some(dir) => dir,
+                        None => error("Failed to get new package directory"),
+                    };
 
                     rename("data", new_package_dir)?;
 
@@ -526,10 +626,24 @@ impl Converter {
     }
 }
 
-pub fn convert_arch(
-    input_arch: &str,
-    output_package_type: PackageType,
-) -> Result<&'static str, Error> {
+/// Converts the package architecture type to another packages.
+///
+/// - `input_arch` ([str]) is the architecture you want converted
+/// - `output_package_type` ([PackageType]) is the output format.
+///
+/// Returns as [str]
+///
+/// Example: Convert `.spf` arch to `.deb` equivalent
+/// ```
+/// let arch_to_convert = "x86_64";
+/// let output_type = PackageType::Deb;
+///
+/// let converted_arch = convert_arch(arch_to_convert, output_type)?;
+///
+/// assert_eq!("amd64", converted_arch);
+/// ```
+pub fn convert_arch(input_arch: &str, output_package_type: PackageType) -> Result<&str, Error> {
+    // Reusable error for failed conversion
     let arch_error = || {
         error(&format!(
             "Failed to convert arch \"{input_arch}\" to \"{output_package_type:?}\" equivalent"
@@ -537,6 +651,7 @@ pub fn convert_arch(
     };
 
     let arch = match output_package_type {
+        // .deb/.rpm -> .spf
         PackageType::Spf => match input_arch {
             "all" | "noarch" | "src" | "nosrc" => "universal",
             "amd64" | "x86_64" => "x86_64",
@@ -545,6 +660,7 @@ pub fn convert_arch(
             "armhf" | "armv7hl" | "armvhl" => "arm",
             _ => arch_error(),
         },
+        // .spf/.rpm -> .deb
         PackageType::Deb => match input_arch {
             "universal" | "noarch" | "src" | "nosrc" => "all",
             "x86_64" => "amd64",
@@ -553,6 +669,7 @@ pub fn convert_arch(
             "arm" | "armv7hl" | "armvhl" => "armhf",
             _ => arch_error(),
         },
+        // .spf/.deb -> .rpm
         PackageType::Rpm => match input_arch {
             "universal" | "all" => "noarch",
             "x86_64" => "amd64",
