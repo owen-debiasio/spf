@@ -2,3 +2,5 @@
 
 *.rs eol=lf
 *.bash eol=lf
+
+.kateproject linguist-language=json
