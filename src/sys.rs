@@ -9,6 +9,8 @@ use std::{
     process::exit,
 };
 
+use crate::convert::PackageType;
+
 /// Provides env variables that are used in various situations
 /// (Ex. detecting if user is root (See [`is_root()`])).
 ///
@@ -197,3 +199,60 @@ pub fn return_args() -> Result<Vec<String>, Error> {
 ///
 /// Stored as [[`str`]; 5]
 pub static SUPPORTED_ARCHS: [&str; 5] = ["universal", "x86", "x86_64", "arm", "aarch64"];
+
+/// Converts the package architecture type to another packages.
+///
+/// - `input_arch` ([str]) is the architecture you want converted
+/// - `output_package_type` ([PackageType]) is the output format.
+///
+/// Returns as [str]
+///
+/// Example: Convert `.spf` arch to `.deb` equivalent
+/// ```
+/// let arch_to_convert = "x86_64";
+/// let output_type = PackageType::Deb;
+///
+/// let converted_arch = convert_arch(arch_to_convert, output_type)?;
+///
+/// assert_eq!("amd64", converted_arch);
+/// ```
+pub fn convert_arch(input_arch: &str, output_package_type: PackageType) -> Result<&str, Error> {
+    // Reusable error for failed conversion
+    let arch_error = || {
+        error(&format!(
+            "Failed to convert arch \"{input_arch}\" to \"{output_package_type:?}\" equivalent"
+        ))
+    };
+
+    let arch = match output_package_type {
+        // .deb/.rpm -> .spf
+        PackageType::Spf => match input_arch {
+            "all" | "noarch" | "src" | "nosrc" => "universal",
+            "amd64" | "x86_64" => "x86_64",
+            "i386" | "i686" => "x86",
+            "arm64" | "aarch64" => "aarch64",
+            "armhf" | "armv7hl" | "armvhl" => "arm",
+            _ => arch_error(),
+        },
+        // .spf/.rpm -> .deb
+        PackageType::Deb => match input_arch {
+            "universal" | "noarch" | "src" | "nosrc" => "all",
+            "x86_64" => "amd64",
+            "x86" | "i386" | "i686" => "i386",
+            "aarch64" => "arm64",
+            "arm" | "armv7hl" | "armvhl" => "armhf",
+            _ => arch_error(),
+        },
+        // .spf/.deb -> .rpm
+        PackageType::Rpm => match input_arch {
+            "universal" | "all" => "noarch",
+            "x86_64" => "amd64",
+            "x86" | "i386" => "i686",
+            "aarch64" | "arm64" => "aarch64",
+            "arm" | "armhf" => "armv7hl",
+            _ => arch_error(),
+        },
+    };
+
+    Ok(arch)
+}

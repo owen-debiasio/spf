@@ -60,14 +60,14 @@ pub fn create_spf_package(package_config: &str, mut output_location: &str) -> Re
 
     println!("Compiling files and directories...\n");
 
-    let package_config_contents = &*read_to_string(package_config)?;
+    let package_config_contents = read_to_string(package_config)?;
 
     let project_meta_file_path = File::create(format!("{output_location}/META"))?;
 
     // Collect the package metadata, and write them to the packages metadata file (`project_meta_file_path`)
-    write_project_meta_config(package_config_contents, &project_meta_file_path)?;
+    write_project_meta_config(&package_config_contents, &project_meta_file_path)?;
 
-    copy_package_paths(package_config_contents, output_location)?;
+    copy_package_paths(&package_config_contents, output_location)?;
 
     // Zip the output folder into a .spf package
     println!("Packaging...");

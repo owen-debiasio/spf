@@ -24,10 +24,9 @@ use deb_rust::{DebArchitecture, DebFile, binary::DebPackage};
 use rpm::{FileOptions, PackageBuilder, PackageMetadata};
 
 use crate::{
-    VERSION,
     fs::{ArchiveType, FileProperty, create_archive, extract_archive},
     metadata::{Categories, Meta},
-    sys::error,
+    sys::{convert_arch, error},
 };
 
 /// Lets user know that this program has no warranty, and is not responsible
@@ -257,12 +256,12 @@ impl Converter {
                 let package = Meta::from(metadata_path)?;
 
                 Categories {
-                    name: package.clone().load_value("PROJECT_NAME")?,
-                    version: package.clone().load_value("VERSION")?,
-                    description: package.clone().load_value("DESCRIPTION")?,
-                    source: package.clone().load_value("REPOSITORY")?,
-                    license: package.clone().load_value("LICENSE")?,
-                    authors: package.clone().load_value("AUTHORS")?,
+                    name: package.load_value("PROJECT_NAME")?,
+                    version: package.load_value("VERSION")?,
+                    description: package.load_value("DESCRIPTION")?,
+                    source: package.load_value("REPOSITORY")?,
+                    license: package.load_value("LICENSE")?,
+                    authors: package.load_value("AUTHORS")?,
                     arch: package.load_value("ARCH")?,
                 }
             }
@@ -345,7 +344,7 @@ impl Converter {
     ) -> Result<(), Error> {
         println!("    Loading package...");
 
-        let metadata = self.clone().load_source_metadata()?;
+        let metadata = self.load_source_metadata()?;
         let source_package_path = &self.source_package_path;
 
         match self.package_type {
@@ -526,26 +525,13 @@ impl Converter {
 
                     println!("        Generating...");
 
-                    // Convert arch to spf equivelent
-
-                    let metadata_file_contents: Vec<String> = vec![
-                        format!("### CONVERTED & PACKAGED WITH SPF {VERSION} ###\n"),
-                        format!("PROJECT_NAME = {}", metadata.name),
-                        format!("VERSION = {}", metadata.version),
-                        format!("DESCRIPTION = {}", metadata.description),
-                        format!("REPOSITORY = {}", metadata.source),
-                        format!("LICENSE = {}", metadata.license),
-                        format!("AUTHORS = {}", metadata.authors),
-                        format!(
-                            "ARCH = {}",
-                            convert_arch(&metadata.arch, output_package_type)?
-                        ),
-                    ];
+                    let spf_metadata_constructed =
+                        Meta::construct_contents(metadata, output_package_type)?;
 
                     println!("        Writing...");
 
                     let mut new_meta_file = File::create(format!("{new_package_dir}/META"))?;
-                    new_meta_file.write_all(metadata_file_contents.join("\n").as_bytes())?;
+                    new_meta_file.write_all(spf_metadata_constructed.join("\n").as_bytes())?;
 
                     println!("    Packaging...");
 
@@ -579,28 +565,15 @@ impl Converter {
 
                     remove_file(tgz_file)?;
 
-                    println!("    Converting metadata...");
+                    println!("    Converting metadata...\n        Collecting...");
 
-                    println!("        Collecting...");
-
-                    let metadata_file_contents: Vec<String> = vec![
-                        format!("### CONVERTED & PACKAGED WITH SPF {VERSION} ###\n"),
-                        format!("PROJECT_NAME = {}", metadata.name),
-                        format!("VERSION = {}", metadata.version),
-                        format!("DESCRIPTION = {}", metadata.description),
-                        format!("REPOSITORY = {}", metadata.source),
-                        format!("LICENSE = {}", metadata.license),
-                        format!("AUTHORS = {}", metadata.authors),
-                        format!(
-                            "ARCH = {}",
-                            convert_arch(&metadata.arch, output_package_type)?
-                        ),
-                    ];
+                    let spf_metadata_constructed =
+                        Meta::construct_contents(metadata, output_package_type)?;
 
                     println!("        Writing...");
 
                     let mut new_meta_file = File::create(format!("{extract_dest_clean}/META"))?;
-                    new_meta_file.write_all(metadata_file_contents.join("\n").as_bytes())?;
+                    new_meta_file.write_all(spf_metadata_constructed.join("\n").as_bytes())?;
 
                     println!("    Packaging...");
 
@@ -621,61 +594,4 @@ impl Converter {
 
         Ok(())
     }
-}
-
-/// Converts the package architecture type to another packages.
-///
-/// - `input_arch` ([str]) is the architecture you want converted
-/// - `output_package_type` ([PackageType]) is the output format.
-///
-/// Returns as [str]
-///
-/// Example: Convert `.spf` arch to `.deb` equivalent
-/// ```
-/// let arch_to_convert = "x86_64";
-/// let output_type = PackageType::Deb;
-///
-/// let converted_arch = convert_arch(arch_to_convert, output_type)?;
-///
-/// assert_eq!("amd64", converted_arch);
-/// ```
-pub fn convert_arch(input_arch: &str, output_package_type: PackageType) -> Result<&str, Error> {
-    // Reusable error for failed conversion
-    let arch_error = || {
-        error(&format!(
-            "Failed to convert arch \"{input_arch}\" to \"{output_package_type:?}\" equivalent"
-        ))
-    };
-
-    let arch = match output_package_type {
-        // .deb/.rpm -> .spf
-        PackageType::Spf => match input_arch {
-            "all" | "noarch" | "src" | "nosrc" => "universal",
-            "amd64" | "x86_64" => "x86_64",
-            "i386" | "i686" => "x86",
-            "arm64" | "aarch64" => "aarch64",
-            "armhf" | "armv7hl" | "armvhl" => "arm",
-            _ => arch_error(),
-        },
-        // .spf/.rpm -> .deb
-        PackageType::Deb => match input_arch {
-            "universal" | "noarch" | "src" | "nosrc" => "all",
-            "x86_64" => "amd64",
-            "x86" | "i386" | "i686" => "i386",
-            "aarch64" => "arm64",
-            "arm" | "armv7hl" | "armvhl" => "armhf",
-            _ => arch_error(),
-        },
-        // .spf/.deb -> .rpm
-        PackageType::Rpm => match input_arch {
-            "universal" | "all" => "noarch",
-            "x86_64" => "amd64",
-            "x86" | "i386" => "i686",
-            "aarch64" | "arm64" => "aarch64",
-            "arm" | "armhf" => "armv7hl",
-            _ => arch_error(),
-        },
-    };
-
-    Ok(arch)
 }

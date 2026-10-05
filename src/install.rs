@@ -15,7 +15,7 @@ use std::{
 
 use crate::{
     fs::{ArchiveType, FileProperty, extract_archive},
-    metadata::{Meta, PACKAGE_INSTALL_PATH},
+    metadata::{Categories, Meta, PACKAGE_INSTALL_PATH},
     sys::{args_contains, error, get_binary_path, is_root},
 };
 
@@ -67,25 +67,29 @@ pub fn spf_install(mut spf_package_path: String) -> Result<(), Error> {
 
     let package_metadata = Meta::from(&packaged_metadata_file)?;
 
-    // Retrieve the metadata. Wish there was a better way to do this
-    let package_name = package_metadata.clone().load_value("PROJECT_NAME")?;
-    let package_version = package_metadata.clone().load_value("VERSION")?;
-    let package_desc = package_metadata.clone().load_value("DESCRIPTION")?;
-    let package_repository = package_metadata.clone().load_value("REPOSITORY")?;
-    let package_license = package_metadata.clone().load_value("LICENSE")?;
-    let package_authors = package_metadata.clone().load_value("AUTHORS")?;
-    let package_arch = package_metadata.clone().load_value("ARCH")?;
+    let collected_metadata = Categories {
+        name: package_metadata.load_value("PROJECT_NAME")?,
+        version: package_metadata.load_value("VERSION")?,
+        description: package_metadata.load_value("DESCRIPTION")?,
+        source: package_metadata.load_value("REPOSITORY")?,
+        license: package_metadata.load_value("LICENSE")?,
+        authors: package_metadata.load_value("AUTHORS")?,
+        arch: package_metadata.load_value("ARCH")?,
+    };
 
     // The extracted path has no extension, so remove it
     let extracted_package_path = spf_package_path.replace(".spf", "");
 
     // Check to make sure the system architecture matches or is compatible the package architecture
-    if !matches!(package_arch.as_str(), ARCH | "universal") && !args_contains("--ignore-arch")? {
+    if !matches!(collected_metadata.arch.as_str(), ARCH | "universal")
+        && !args_contains("--ignore-arch")?
+    {
         remove_dir_all(extracted_package_path)?;
 
         error(&format!(
-            "Package architecture: {package_arch} doesn't match current system architecture ({ARCH}).\n\
-            Bypass by passing: `--ignore-arch`"
+            "Package architecture: {} doesn't match current system architecture ({ARCH}).\n\
+            Bypass by passing: `--ignore-arch`",
+            collected_metadata.arch
         ))
     }
 
@@ -94,17 +98,23 @@ pub fn spf_install(mut spf_package_path: String) -> Result<(), Error> {
     // spf-v0.1.0, or my_project-v0.0.1
     //
     // Formatted by <project name>-<project_ version>
-    let package_name_formatted = &format!("{package_name}-{package_version}");
+    let package_name_formatted =
+        &format!("{}-{}", collected_metadata.name, collected_metadata.version);
 
     // Display project info/metadata
     println!(
         "Do you want to proceed to install {package_name_formatted}?\n\n\
-        Description: {package_desc}\n\
-        Repository: {package_repository}\n\
-        License(s): {package_license}\n\
-        Author(s): {package_authors}\n\
-        Arch: {package_arch}\n\n\
-        (Y/N)"
+        Description: {}\n\
+        Repository: {}\n\
+        License(s): {}\n\
+        Author(s): {}\n\
+        Arch: {}\n\n\
+        (Y/N)",
+        collected_metadata.description,
+        collected_metadata.source,
+        collected_metadata.license,
+        collected_metadata.authors,
+        collected_metadata.arch
     );
 
     let mut proceed_to_install = String::new();
@@ -120,15 +130,16 @@ pub fn spf_install(mut spf_package_path: String) -> Result<(), Error> {
     }
 
     // To be safe, move the metadata file. But check if it's already installed first.
-    let package_meta_path_install_location = format!("{PACKAGE_INSTALL_PATH}{package_name}");
+    let package_meta_path_install_location =
+        format!("{PACKAGE_INSTALL_PATH}{}", collected_metadata.name);
 
     // Check if the package is already installed. If so, proceed to check version conflicts.
     // Otherwise, skip and proceed to copying files.
     if Path::new(&package_meta_path_install_location).exists() {
         match check_version(
             &package_meta_path_install_location,
-            &package_name,
-            &package_version,
+            &collected_metadata.name,
+            &collected_metadata.version,
             &spf_package_path,
         ) {
             Ok(_) => (),
@@ -140,7 +151,7 @@ pub fn spf_install(mut spf_package_path: String) -> Result<(), Error> {
     }
 
     // Start creating directories and copying files
-    println!("Installing: {package_name}-{package_version} from ./{spf_package_path}");
+    println!("Installing: {package_name_formatted} from ./{spf_package_path}");
 
     // Install all the necessary paths, including the metadata file.
     install_files(
@@ -154,7 +165,7 @@ pub fn spf_install(mut spf_package_path: String) -> Result<(), Error> {
     // Clean up by removing the extracted package
     remove_dir_all(&extracted_package_path)?;
 
-    println!("\nSuccessfully installed {package_name}-{package_version}!");
+    println!("\nSuccessfully installed {package_name_formatted}!");
 
     exit(0)
 }
@@ -189,13 +200,12 @@ fn check_version(
 ) -> Result<(), Error> {
     // Loads package version
     let installed_version = Meta::from(package_meta_path)?.load_value("VERSION")?;
+    let package_name_formatted = &format!("{packaged_project_name}-{packaged_project_version}");
 
     // Check for version differences
     if packaged_project_version == installed_version {
         // If no version differences, let the user know that the package is already installed.
-        println!(
-            "{packaged_project_name}-{packaged_project_version} is already installed. Continue?"
-        );
+        println!("{package_name_formatted} is already installed. Continue?");
     } else {
         // Compare versions by leaving only numbers, combine them together,
         // then parsing them as `usize`.
@@ -214,7 +224,7 @@ fn check_version(
 
         // Prompt the user if they actually want to update
         println!(
-            "Do you want to {} {packaged_project_name}-{installed_version} -> {packaged_project_name}-{packaged_project_version}?",
+            "Do you want to {} {packaged_project_name}-{installed_version} -> {package_name_formatted}?",
             // Determine action the user is taking.
             //
             // if `project_version_num` > `installed_version_num`, it means that the

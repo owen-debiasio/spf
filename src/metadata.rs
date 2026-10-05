@@ -4,6 +4,7 @@
 //! Copyright (C) 2026 Owen Debiasio <owen.debiasio@gmail.com>
 //! SPDX-License-Identifier: GPL-3.0-or-later
 
+use crate::{VERSION, convert::PackageType, sys::convert_arch};
 use std::{fs::read_to_string, io::Error};
 
 /// Where spf package metadata is installed to.
@@ -44,8 +45,6 @@ pub struct Categories {
 /// You can load package metadata by using [`Meta::from`], and then you can extract a value from
 /// a category by using [`Meta::load_value`].
 ///
-/// Both functions are public, and derive [`Clone`]. Because of that, you will need to use `.clone()`
-/// a lot if you want to retrieve the values.
 /// ```
 /// // Example: Loading the package's name
 ///
@@ -103,9 +102,7 @@ impl Meta {
     /// // Retrieved the stored architecture
     /// let extracted_value = metadata_contents.load_value(category_to_extract_value)?
     /// ```
-    ///
-    /// NOTE: You may need to use `clone`
-    pub fn load_value(self, category_to_find: &'static str) -> Result<String, Error> {
+    pub fn load_value(&self, category_to_find: &'static str) -> Result<String, Error> {
         let string_prior_to_value = &format!("{category_to_find} =");
 
         let meta_contents = self
@@ -123,5 +120,49 @@ impl Meta {
             .to_string();
 
         Ok(meta_contents)
+    }
+
+    /// Create the contents of the spf package metadata. All fields required.
+    ///
+    /// Inputs:
+    /// - `metadata` ([`Categories`]): The metadata you want to be constructed
+    /// - `output_package_type` ([`PackageType`]): (Used in conversion) Determines the output of the
+    ///
+    /// ```
+    /// let package = Meta::from("sample.spf")?;
+    ///
+    /// let metadata = Categories {
+    ///     name: package.load_value("PROJECT_NAME")?,
+    ///     version: package.load_value("VERSION")?,
+    ///     description: package.load_value("DESCRIPTION")?,
+    ///     source: package.load_value("REPOSITORY")?,
+    ///     license: package.load_value("LICENSE")?,
+    ///     authors: package.load_value("AUTHORS")?,
+    ///     arch: package.load_value("ARCH")?,
+    /// };
+    ///
+    /// let output_package_type = PackageType::Spf;
+    ///
+    /// let metadata_contents = construct_contents(metadata, output_package_type)?
+    /// ```
+    pub fn construct_contents(
+        metadata: Categories,
+        output_package_type: PackageType,
+    ) -> Result<Vec<String>, Error> {
+        let constructed_meta = vec![
+            format!("### PACKAGED WITH SPF {VERSION} ###\n"),
+            format!("PROJECT_NAME = {}", metadata.name),
+            format!("VERSION = {}", metadata.version),
+            format!("DESCRIPTION = {}", metadata.description),
+            format!("REPOSITORY = {}", metadata.source),
+            format!("LICENSE = {}", metadata.license),
+            format!("AUTHORS = {}", metadata.authors),
+            format!(
+                "ARCH = {}",
+                convert_arch(&metadata.arch, output_package_type)?
+            ),
+        ];
+
+        Ok(constructed_meta)
     }
 }
