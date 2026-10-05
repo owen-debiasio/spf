@@ -562,7 +562,7 @@ impl Converter {
                 // rpm -> spf
                 PackageType::Spf => {
                     cmd_exists("rpm2archive")
-                        .unwrap_or_else(|err| error(&format!("Cannot run \"rpm2cpio\": {err}")));
+                        .unwrap_or_else(|err| error(&format!("Cannot run \"rpm2archive\": {err}")));
 
                     println!("        Extracting...");
 
