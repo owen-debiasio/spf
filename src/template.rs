@@ -57,15 +57,13 @@ pub fn gen_meta_template(mut output_location: String) -> Result<(), Error> {
         error("Please enter a directory to generate to.");
     }
 
-    output_location = format!("{output_location}/spf_template");
+    output_location =
+        format!("{output_location}/spf_template").replace("//spf_template", "/spf_template");
 
     // Write the contents
     write(&output_location, TEMPLATE_CONTENTS)?;
 
-    println!(
-        "Generated template at: {}",
-        output_location.replace("//spf_template", "/spf_template")
-    );
+    println!("Generated template at: {output_location}");
 
     exit(0)
 }
