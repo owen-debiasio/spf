@@ -498,30 +498,27 @@ impl Converter {
                 // deb -> spf
                 PackageType::Spf => {
                     println!("        Extracting...");
-
                     extract_archive(source_package_path, ".", ArchiveType::Ar)?;
+
+                    println!("            Extracting \"./data.tar.xz\"...");
+                    extract_archive("data.tar.xz", "./data", ArchiveType::Xz)?;
 
                     println!(
                         "    Converting package files...\n        Removing unused data files..."
                     );
 
-                    println!("            Removing \"./debian-binary\"...");
-                    remove_file("debian-binary")?;
+                    let deb_files = ["debian-binary", "control.tar.xz", "data.tar.xz"];
 
-                    println!("            Removing \"./control.tar.xz\"...");
-                    remove_file("control.tar.xz")?;
-
-                    println!("        Extracting \"./data.tar.xz\"...");
-                    extract_archive("data.tar.xz", "./data", ArchiveType::Xz)?;
-
-                    println!("            Removing \"./data.tar.xz\"...");
-                    remove_file("data.tar.xz")?;
+                    for file in deb_files {
+                        println!("            Removing \"./{file}\"...");
+                        remove_file(file)?;
+                    }
 
                     let output_location_name = FileProperty::name(output_location)?;
-                    let new_package_dir = match output_location_name.split('.').next() {
-                        Some(dir) => dir,
-                        None => error("Failed to get new package directory"),
-                    };
+                    let new_package_dir = output_location_name
+                        .split('.')
+                        .next()
+                        .unwrap_or_else(|| error("Failed to get new package directory"));
 
                     rename("data", new_package_dir)?;
 
