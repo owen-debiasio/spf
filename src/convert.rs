@@ -439,6 +439,9 @@ impl Converter {
                             &metadata.description,
                         );
 
+                        package_details.url(metadata.source);
+                        package_details.packager(metadata.authors);
+
                         let package = package_details.build_host(build_host);
 
                         let direct_source_path = FileProperty::name(source_package_path)?;
