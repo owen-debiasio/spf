@@ -425,7 +425,7 @@ impl Converter {
                     PackageType::Rpm => {
                         println!("    Setting metadata...");
                         let hostname = hostname::get()
-                            .unwrap_or(OsStr::from_bytes("Unknown".as_bytes()).to_owned())
+                            .unwrap_or(OsStr::from_bytes(b"Unknown").to_owned())
                             .display()
                             .to_string();
 
