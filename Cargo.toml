@@ -52,6 +52,8 @@ assets = [
 auto-req = "auto"
 group = "Applications/Utilities"
 release = "1"
+url = "https://github.com/owen-debiasio/spf"
+vendor = "owen-debiasio"
 assets = [
     { source = "target/release/spf", dest = "/usr/bin/spf", mode = "755" },
     { source = "LICENSE", dest = "/usr/share/doc/spf/copyright", mode = "644" },
