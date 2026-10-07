@@ -281,8 +281,8 @@ impl Converter {
                         .next()
                         .unwrap_or(&unknown)
                         .to_string(),
-                    source: loaded_metadata.homepage.unwrap_or(unknown.clone()),
-                    license: unknown, // There is no license field for Debian packages, so return an empty string.
+                    source: loaded_metadata.homepage.unwrap_or(String::from("Unknown")),
+                    license: String::from("Not Applicable (converted using spf)"),
                     authors: loaded_metadata.maintainer,
                     arch: loaded_metadata.architecture,
                 }
