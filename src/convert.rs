@@ -291,31 +291,17 @@ impl Converter {
             PackageType::Rpm => {
                 let package = PackageMetadata::open(package_path)
                     .unwrap_or_else(|err| error(&format!("Failed to open rpm package: {err}")));
+                const UNKNOWN: &str = "Unknown (likely lost in conversion)";
 
                 Categories {
-                    name: package
-                        .get_name()
-                        .unwrap_or("Unknown (likely lost in conversion)")
-                        .to_string(),
-                    version: package
-                        .get_version()
-                        .unwrap_or("Unknown (likely lost in conversion)")
-                        .to_string(),
-                    description: package
-                        .get_description()
-                        .unwrap_or("Unknown (likely lost in conversion)")
-                        .to_string(),
-                    source: package
-                        .get_vendor()
-                        .unwrap_or("Unknown (likely lost in conversion)")
-                        .to_string(),
-                    license: package
-                        .get_license()
-                        .unwrap_or("Unknown (likely lost in conversion)")
-                        .to_string(),
+                    name: package.get_name().unwrap_or(UNKNOWN).to_string(),
+                    version: package.get_version().unwrap_or(UNKNOWN).to_string(),
+                    description: package.get_description().unwrap_or(UNKNOWN).to_string(),
+                    source: package.get_url().unwrap_or(UNKNOWN).to_string(),
+                    license: package.get_license().unwrap_or(UNKNOWN).to_string(),
                     authors: package
                         .get_packager()
-                        .unwrap_or("Unknown (likely lost in conversion)")
+                        .unwrap_or(package.get_vendor().unwrap_or(UNKNOWN))
                         .to_string(),
                     arch: package.get_arch().unwrap_or("noarch").to_string(),
                 }
@@ -561,10 +547,12 @@ impl Converter {
 
                     let tgz_file = &format!("{source_package_path}.tgz");
 
-                    let extract_dest = &format!("./{}", FileProperty::name(tgz_file)?);
-                    let extract_dest_clean = &extract_dest.trim_end_matches(".rpm.tgz").to_string();
+                    //let extract_dest = &format!("./{}", FileProperty::name(tgz_file)?);
+                    let extract_dest = &FileProperty::name(tgz_file)?
+                        .trim_end_matches(".rpm.tgz")
+                        .to_string();
 
-                    extract_archive(tgz_file, extract_dest_clean, ArchiveType::Gz)?;
+                    extract_archive(tgz_file, extract_dest, ArchiveType::Gz)?;
 
                     remove_file(tgz_file)?;
 
@@ -575,14 +563,14 @@ impl Converter {
 
                     println!("        Writing...");
 
-                    let mut new_meta_file = File::create(format!("{extract_dest_clean}/META"))?;
+                    let mut new_meta_file = File::create(format!("{extract_dest}/META"))?;
                     new_meta_file.write_all(spf_metadata_constructed.join("\n").as_bytes())?;
 
                     println!("    Packaging...");
 
                     let new_extracted_folder_name = output_location.trim_end_matches(".spf");
 
-                    rename(extract_dest_clean, new_extracted_folder_name)?;
+                    rename(extract_dest, new_extracted_folder_name)?;
 
                     create_archive(output_location, new_extracted_folder_name, ArchiveType::Tar)?;
 
