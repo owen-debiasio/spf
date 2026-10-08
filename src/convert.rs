@@ -48,7 +48,7 @@ fn disclaimer() -> Result<(), Error> {
 /// - Package formats are supported
 /// - User tries to convert a package to the same format
 /// - User tries to convert `.deb` packages to `rpm` packages (and vice versa)
-fn verify_input_paths(source_package_path: &str, output_package_path: &str) -> String {
+fn verify_input_paths(source_package_path: &str, output_package_path: &str) -> Result<(), Error> {
     let source_file_ext = match FileProperty::extension(source_package_path) {
         Ok(ext) => ext,
         Err(err) => error(&format!("Failed to get source file extension: {err}")),
@@ -60,11 +60,17 @@ fn verify_input_paths(source_package_path: &str, output_package_path: &str) -> S
     };
 
     // Verify supported package formats
-    if !matches!(source_file_ext.as_str(), "spf" | "deb" | "rpm") {
+    if !matches!(
+        source_file_ext.as_str(),
+        PackageType::SPF | PackageType::DEB | PackageType::RPM
+    ) {
         error(&format!(
             "Unsupported input package format: .{source_file_ext}"
         ))
-    } else if !matches!(output_file_ext.as_str(), "spf" | "deb" | "rpm") {
+    } else if !matches!(
+        output_file_ext.as_str(),
+        PackageType::SPF | PackageType::DEB | PackageType::RPM
+    ) {
         error(&format!(
             "Unsupported output package format: {output_file_ext}"
         ))
@@ -80,13 +86,13 @@ fn verify_input_paths(source_package_path: &str, output_package_path: &str) -> S
     }
 
     // Make sure user doesn't attempt to convert `.deb` -> `.rpm` (and vice versa)
-    if (source_file_ext == "rpm" && output_file_ext == "deb")
-        || (source_file_ext == "deb" && output_file_ext == "rpm")
+    if (source_file_ext == PackageType::RPM && output_file_ext == PackageType::DEB)
+        || (source_file_ext == PackageType::DEB && output_file_ext == PackageType::RPM)
     {
         error("\".deb\" and \".rpm\" files can not be converted back and forth!")
     }
 
-    output_file_ext
+    Ok(())
 }
 
 /// Convert `.spf`, `.deb`, and `.rpm` packages to and from each other.
@@ -109,20 +115,13 @@ pub fn convert(source_package_path: &str, output_package_path: &str) -> Result<(
         error(&format!("File \"{source_package_path}\" does not exist!"))
     }
 
-    let output_extension = verify_input_paths(source_package_path, output_package_path);
+    verify_input_paths(source_package_path, output_package_path)?;
 
     disclaimer()?;
 
     println!("Converting \"{source_package_path}\" -> \"{output_package_path}\"...");
 
-    let output_package_type = match output_extension.as_str() {
-        "spf" => PackageType::Spf,
-        "deb" => PackageType::Deb,
-        "rpm" => PackageType::Rpm,
-        _ => {
-            error("Failed to determine output package type? idk bro this probably shouldn't happen")
-        }
-    };
+    let output_package_type = PackageType::get_from_extension(output_package_path)?;
 
     Converter::from(source_package_path.to_string())?
         .convert(output_package_type, output_package_path)?;
@@ -135,11 +134,62 @@ pub fn convert(source_package_path: &str, output_package_path: &str) -> Result<(
 /// Identifies packages
 ///
 /// Entries correspond with what they mean
+///
+/// - [`PackageType::get_from_extension`]:
+///   Retrieves the package type from the package extension.
+///
+///   Returns as [`PackageType`]
+///
+///   ```
+///   let package_path = "test.spf";
+///   let package_type_from_package = PackageType::get_from_extension(package_path)?;
+///
+///   assert_eq!(package_type_from_package, PackageType::Spf);
+///   ```
 #[derive(Clone, Debug)]
 pub enum PackageType {
+    /// `.spf` package
     Spf,
+
+    /// `.deb` package
     Deb,
+
+    /// `.rpm` package
     Rpm,
+}
+
+impl PackageType {
+    /// Package type `spf` as [`str`]
+    pub const SPF: &str = "spf";
+
+    /// Package type `deb` as [`str`]
+    pub const DEB: &str = "deb";
+
+    /// Package type `rpm` as [`str`]
+    pub const RPM: &str = "rpm";
+
+    /// Retrieves the package type from the package extension.
+    ///
+    /// Returns as [`PackageType`]
+    ///
+    /// ```
+    /// let package_path = "test.spf";
+    /// let package_type_from_package = PackageType::get_from_extension(package_path)?;
+    ///
+    /// assert_eq!(package_type_from_package, PackageType::Spf);
+    /// ```
+    pub fn get_from_extension(path_of_package: &str) -> Result<PackageType, Error> {
+        let source_package_ext = FileProperty::extension(path_of_package)?;
+
+        let package_type = match source_package_ext.as_ref() {
+            Self::SPF => Self::Spf,
+            Self::DEB => Self::Deb,
+            Self::RPM => Self::Rpm,
+            _ => error(&format!("Invalid package type: {source_package_ext}")),
+        };
+
+        Ok(package_type)
+    }
 }
 
 /// The core converter functionality.
@@ -204,16 +254,7 @@ impl Converter {
     /// let package_to_convert = Converter::from(package_path)?;
     /// ```
     pub fn from(package_path: String) -> Result<Converter, Error> {
-        let source_package_ext = FileProperty::extension(&package_path)?;
-
-        let source_package_type = match source_package_ext.as_ref() {
-            "spf" => PackageType::Spf,
-            "deb" => PackageType::Deb,
-            "rpm" => PackageType::Rpm,
-            _ => error(&format!(
-                "Invalid source package type: {source_package_ext:?}"
-            )),
-        };
+        let source_package_type = PackageType::get_from_extension(&package_path)?;
 
         Ok(Converter {
             source_package_path: package_path,

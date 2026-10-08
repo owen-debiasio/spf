@@ -5,6 +5,7 @@
 
 use crate::{
     VERSION,
+    convert::PackageType,
     fs::{ArchiveType, FileProperty, create_archive},
     sys::{SUPPORTED_ARCHS, error},
 };
@@ -46,7 +47,7 @@ pub fn create_spf_package(package_config: &str, mut output_location: &str) -> Re
     }
 
     // Make sure the output file is a .spf file
-    if !FileProperty::extension(output_location)?.ends_with("spf") {
+    if !FileProperty::extension(output_location)?.ends_with(PackageType::SPF) {
         error(&format!(
             "Your provided output location (\"{output_location}\") must be a .spf file."
         ))
@@ -78,7 +79,7 @@ pub fn create_spf_package(package_config: &str, mut output_location: &str) -> Re
         "{output_location}{}",
         if Path::new(output_location)
             .extension()
-            .is_some_and(|ext| ext.eq_ignore_ascii_case("spf"))
+            .is_some_and(|ext| ext.eq_ignore_ascii_case(PackageType::SPF))
         {
             ""
         } else {

@@ -12,6 +12,7 @@ use std::{
 };
 
 use crate::{
+    convert::PackageType,
     fs::{ArchiveType, FileProperty, extract_archive},
     metadata::PACKAGE_INSTALL_PATH,
     sys::error,
@@ -29,7 +30,7 @@ pub fn inspect(package: &str) -> Result<(), Error> {
 
     if Path::new(&package)
         .extension()
-        .is_some_and(|ext| ext.eq_ignore_ascii_case("spf"))
+        .is_some_and(|ext| ext.eq_ignore_ascii_case(PackageType::SPF))
     {
         inspect_spf_package(package)?;
     } else {

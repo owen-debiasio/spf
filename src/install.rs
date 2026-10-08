@@ -14,6 +14,7 @@ use std::{
 };
 
 use crate::{
+    convert::PackageType,
     fs::{ArchiveType, FileProperty, extract_archive},
     metadata::{Categories, Meta, PACKAGE_INSTALL_PATH},
     sys::{args_contains, error, get_binary_path, is_root},
@@ -50,7 +51,7 @@ pub fn spf_install(mut spf_package_path: String) -> Result<(), Error> {
     if spf_package_path.is_empty()
         || !package_path_check
             .extension()
-            .is_some_and(|ext| ext.eq_ignore_ascii_case("spf"))
+            .is_some_and(|ext| ext.eq_ignore_ascii_case(PackageType::SPF))
         || !package_path_check.exists()
     {
         error("Please provide a .spf package")
