@@ -1,7 +1,7 @@
 # spf TODO
 
 > [!IMPORTANT]  
-> Last updated: `October 04, 2026 @ 10:14 AM EST`
+> Last updated: `October 08, 2026 @ 10:17 AM EST`
 
 Related:
 
@@ -15,6 +15,8 @@ Related:
 > [!NOTE]  
 > Completed tasks will be removed
 
-- [src/convert.rs](src/convert.rs), [src/metadata.rs](src/metadata.rs), ad
-  everything else
-  - Clean up and refactor code
+- [src/convert.rs](src/convert.rs)
+  - comment more things
+
+- [docs/conversion.md](docs/conversion.md)
+  - Update documentation
