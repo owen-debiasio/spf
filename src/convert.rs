@@ -514,8 +514,7 @@ impl Converter {
 
                     println!("        Generating...");
 
-                    let spf_metadata_constructed =
-                        Meta::construct_contents(metadata, output_package_type)?;
+                    let spf_metadata_constructed = Meta::construct_contents(metadata)?;
 
                     println!("        Writing...");
 
@@ -558,8 +557,7 @@ impl Converter {
 
                     println!("    Converting metadata...\n        Collecting...");
 
-                    let spf_metadata_constructed =
-                        Meta::construct_contents(metadata, output_package_type)?;
+                    let spf_metadata_constructed = Meta::construct_contents(metadata)?;
 
                     println!("        Writing...");
 

@@ -4,7 +4,11 @@
 //! Copyright (C) 2026 Owen Debiasio <owen.debiasio@gmail.com>
 //! SPDX-License-Identifier: GPL-3.0-or-later
 
-use crate::{VERSION, convert::PackageType, sys::convert_arch};
+use crate::{
+    VERSION,
+    convert::PackageType,
+    sys::{SUPPORTED_ARCHS, convert_arch},
+};
 use std::{fs::read_to_string, io::Error};
 
 /// Where spf package metadata is installed to.
@@ -122,11 +126,10 @@ impl Meta {
         Ok(meta_contents)
     }
 
-    /// Create the contents of the spf package metadata. All fields required.
+    /// Create the contents of the spf package metadata.
     ///
     /// Inputs:
     /// - `metadata` ([`Categories`]): The metadata you want to be constructed
-    /// - `output_package_type` ([`PackageType`]): (Used in conversion) Determines the output of the
     ///
     /// ```
     /// let package = Meta::from("sample.spf")?;
@@ -141,14 +144,17 @@ impl Meta {
     ///     arch: package.load_value("ARCH")?,
     /// };
     ///
-    /// let output_package_type = PackageType::Spf;
-    ///
-    /// let metadata_contents = construct_contents(metadata, output_package_type)?
+    /// let metadata_contents = construct_contents(metadata)?;
     /// ```
-    pub fn construct_contents(
-        metadata: Categories,
-        output_package_type: PackageType,
-    ) -> Result<Vec<String>, Error> {
+    pub fn construct_contents(metadata: Categories) -> Result<Vec<String>, Error> {
+        // A safeguard to help prevent mismatched arch types. Useful during tyhe
+        // conversion process.
+        let arch = if SUPPORTED_ARCHS.contains(&metadata.arch.as_str()) {
+            &metadata.arch
+        } else {
+            convert_arch(&metadata.arch, PackageType::Spf)?
+        };
+
         let constructed_meta = vec![
             format!("### PACKAGED WITH SPF {VERSION} ###\n"),
             format!("PROJECT_NAME = {}", metadata.name),
@@ -157,10 +163,7 @@ impl Meta {
             format!("REPOSITORY = {}", metadata.source),
             format!("LICENSE = {}", metadata.license),
             format!("AUTHORS = {}", metadata.authors),
-            format!(
-                "ARCH = {}",
-                convert_arch(&metadata.arch, output_package_type)?
-            ),
+            format!("ARCH = {arch}"),
         ];
 
         Ok(constructed_meta)
