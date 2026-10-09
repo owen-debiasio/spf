@@ -1,7 +1,6 @@
 use std::{io::Error, process::exit};
 
 use crate::{
-    convert::convert,
     list::list_packages,
     package::Package,
     sys::{error, return_args},
@@ -50,7 +49,7 @@ fn main() -> Result<(), Error> {
     match root_arg.as_str() {
         "create" => Package::create(&secondary_arg, &tertiary_arg)?,
 
-        "install" => Package::install(secondary_arg)?,
+        "install" => Package::from(secondary_arg)?.install()?,
 
         "remove" => Package::remove(collected_args)?,
 
@@ -60,7 +59,7 @@ fn main() -> Result<(), Error> {
 
         "inspect" => Package::inspect(&secondary_arg)?,
 
-        "convert" => convert(&secondary_arg, &tertiary_arg)?,
+        "convert" => Package::from(secondary_arg)?.convert(&tertiary_arg)?,
 
         // Version is already mentioned at the top of this file
         "--version" | "-v" => println!(

@@ -88,6 +88,20 @@ impl Meta {
         Ok(Self { meta_file_contents })
     }
 
+    pub fn categories(&self) -> Result<Categories, Error> {
+        let retrieved_categories = Categories {
+            name: self.load_value("PROJECT_NAME")?,
+            version: self.load_value("VERSION")?,
+            description: self.load_value("DESCRIPTION")?,
+            source: self.load_value("REPOSITORY")?,
+            license: self.load_value("LICENSE")?,
+            authors: self.load_value("AUTHORS")?,
+            arch: self.load_value("ARCH")?,
+        };
+
+        Ok(retrieved_categories)
+    }
+
     /// Extracts the desired value from the metadata loaded by [`Meta::from`].
     ///
     /// Returned as [`String`].

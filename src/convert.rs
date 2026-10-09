@@ -26,6 +26,7 @@ use rpm::{FileOptions, PackageBuilder, PackageMetadata};
 use crate::{
     fs::{ArchiveType, FileProperty, create_archive, extract_archive},
     metadata::{Categories, Meta},
+    package::Package,
     sys::{convert_arch, error},
 };
 
@@ -287,24 +288,14 @@ impl Converter {
                     error("must be .spf file")
                 }
 
-                extract_archive(&package_path, ".", ArchiveType::Tar)?;
+                Package::from(package_path.clone())?.extract()?;
 
                 let metadata_path = &format!(
                     "{}/META",
-                    FileProperty::name(&package_path)?.trim_end_matches(".spf")
+                    FileProperty::name(package_path.clone().as_str())?.trim_end_matches(".spf")
                 );
 
-                let package = Meta::from(metadata_path)?;
-
-                Categories {
-                    name: package.load_value("PROJECT_NAME")?,
-                    version: package.load_value("VERSION")?,
-                    description: package.load_value("DESCRIPTION")?,
-                    source: package.load_value("REPOSITORY")?,
-                    license: package.load_value("LICENSE")?,
-                    authors: package.load_value("AUTHORS")?,
-                    arch: package.load_value("ARCH")?,
-                }
+                Meta::from(metadata_path)?.categories()?
             }
 
             // Get Debian package metadata
