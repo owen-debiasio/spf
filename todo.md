@@ -17,6 +17,7 @@ Related:
 
 - [src/package.rs](src/package.rs)
   - Make things more idiomatic
+  - Document functions and things
 
 - [src/convert.rs](src/convert.rs)
   - comment more things
