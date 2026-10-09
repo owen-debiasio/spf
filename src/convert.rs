@@ -178,7 +178,7 @@ impl PackageType {
     ///
     /// assert_eq!(package_type_from_package, PackageType::Spf);
     /// ```
-    pub fn get_from_extension(path_of_package: &str) -> Result<PackageType, Error> {
+    pub fn get_from_extension(path_of_package: &str) -> Result<Self, Error> {
         let source_package_ext = FileProperty::extension(path_of_package)?;
 
         let package_type = match source_package_ext.as_ref() {
@@ -253,10 +253,10 @@ impl Converter {
     /// let package_path = String::from("sample_package.spf");
     /// let package_to_convert = Converter::from(package_path)?;
     /// ```
-    pub fn from(package_path: String) -> Result<Converter, Error> {
+    pub fn from(package_path: String) -> Result<Self, Error> {
         let source_package_type = PackageType::get_from_extension(&package_path)?;
 
-        Ok(Converter {
+        Ok(Self {
             source_package_path: package_path,
             package_type: source_package_type,
         })

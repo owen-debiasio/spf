@@ -82,10 +82,10 @@ impl Meta {
     /// // (`metadata_file` in this case).
     /// let metadata_contents = Meta::from(metadata_file)?;
     /// ```
-    pub fn from(loaded_meta_file: &str) -> Result<Meta, Error> {
+    pub fn from(loaded_meta_file: &str) -> Result<Self, Error> {
         let meta_file_contents = read_to_string(loaded_meta_file)?;
 
-        Ok(Meta { meta_file_contents })
+        Ok(Self { meta_file_contents })
     }
 
     /// Extracts the desired value from the metadata loaded by [`Meta::from`].
