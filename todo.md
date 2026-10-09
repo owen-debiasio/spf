@@ -1,7 +1,7 @@
 # spf TODO
 
 > [!IMPORTANT]  
-> Last updated: `October 08, 2026 @ 10:17 AM EST`
+> Last updated: `October 09, 2026 @ 8:50 AM EST`
 
 Related:
 
@@ -14,6 +14,9 @@ Related:
 
 > [!NOTE]  
 > Completed tasks will be removed
+
+- [src/package.rs](src/package.rs)
+  - Make things more idiomatic
 
 - [src/convert.rs](src/convert.rs)
   - comment more things
