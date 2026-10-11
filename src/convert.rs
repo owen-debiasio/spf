@@ -288,7 +288,7 @@ impl Converter {
                     error("must be .spf file")
                 }
 
-                Package::from(package_path.clone())?.extract()?;
+                Package::from(package_path.clone())?.extract(".")?;
 
                 let metadata_path = &format!(
                     "{}/META",

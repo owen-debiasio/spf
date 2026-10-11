@@ -9,24 +9,51 @@ use crate::{
     remove::remove_packages,
 };
 
+/// Implementation of an spf package
 pub struct Package {
+    /// SPF package to inspect, create, or modify
     package_path: String,
 }
 
-#[allow(clippy::new_ret_no_self)]
 impl Package {
+    /// Extracts an spf package to a location.
+    ///
+    /// Since the package is a `tar` file, use [`extract_archive`] with
+    /// [`ArchiveType::Tar`].
+    ///
+    /// ```
+    /// let package_path = String::from("test/spf.spf");
+    /// let package = Package::from(package_path)?;
+    ///
+    /// let destination = "./output";
+    /// package.extract(destination)?;
+    /// ```
+    pub fn extract(&self, destination: &str) -> Result<(), Error> {
+        extract_archive(&self.package_path, destination, ArchiveType::Tar)?;
+
+        Ok(())
+    }
+}
+
+impl Package {
+    /// Loads an spf package.
+    ///
+    /// ```
+    /// let package_path = String::from("test/spf.spf");
+    /// let package = Package::from(package_path)?;
+    /// ```
     pub fn from(package_path: String) -> Result<Self, Error> {
         let details = Self { package_path };
 
         Ok(details)
     }
 
-    pub fn extract(&self) -> Result<(), Error> {
-        extract_archive(&self.package_path, ".", ArchiveType::Tar)?;
-
-        Ok(())
-    }
-
+    /// Creates an spf package.
+    ///
+    /// ```
+    /// let package_path = String::from("test/spf.spf");
+    /// let package = Package::from(package_path)?;
+    /// ```
     pub fn create(package_config: &str, output_location: &str) -> Result<(), Error> {
         create_spf_package(package_config, output_location)?;
 
