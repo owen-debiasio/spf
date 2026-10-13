@@ -48,12 +48,6 @@ impl Package {
         Ok(details)
     }
 
-    /// Creates an spf package.
-    ///
-    /// ```
-    /// let package_path = String::from("test/spf.spf");
-    /// let package = Package::from(package_path)?;
-    /// ```
     pub fn create(package_config: &str, output_location: &str) -> Result<(), Error> {
         create_spf_package(package_config, output_location)?;
 
@@ -74,11 +68,6 @@ impl Package {
         // The first two args that are skipped are `spf remove`. Everything
         // else after that is a package to check.
         for package_arg in collected_args.into_iter().skip(1) {
-            // Don't process args
-            if package_arg.starts_with('-') {
-                continue;
-            }
-
             packages.push(package_arg);
         }
 
@@ -93,8 +82,25 @@ impl Package {
         Ok(())
     }
 
+    /// Converts package formats.
+    ///
+    /// Supports conversion in the following orientations:
+    ///
+    /// - `.spf` -> `.deb`
+    /// - `.deb` -> `.spf`
+    /// - `.rpm` -> `.spf`
+    /// - `.spf` -> `.rpm`
+    ///
+    /// ```
+    /// let package_path = String::from("test/spf.spf");
+    /// let package = Package::from(package_path)?;
+    ///
+    /// let output_file = "test.deb";
+    /// package.convert(output_file)?;
+    /// ```
     pub fn convert(&self, output_file: &str) -> Result<(), Error> {
         convert(&self.package_path, output_file)?;
+
         Ok(())
     }
 }
