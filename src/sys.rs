@@ -193,6 +193,41 @@ pub fn return_args() -> Result<Vec<String>, Error> {
     Ok(collected_args)
 }
 
+/// Defines the collected args passed through the CLI.
+///
+/// All are stored as [`String`].
+///
+/// The only entries are the arg positions used.
+///
+/// ```
+/// let args = vec![String::from("arg1"), String::from("arg1"), String::from("arg1")];
+///
+/// let collected_args = Args {
+///    all: args,
+///    root: args.first(),
+///    second: args.get(1),
+///    third: args.get(2),
+/// };
+///
+/// assert_eq!(args, collected_args.all);
+/// assert_eq!(args.first(), collected_args.root);
+/// assert_eq!(args.get(1), collected_args.second);
+/// assert_eq!(args.get(2), collected_args.third);
+/// ```
+pub struct Args {
+    /// Every argument passed
+    pub all: Vec<String>,
+
+    /// The root action (Passed arg #1)
+    pub root: String,
+
+    /// Passed arg #2
+    pub second: String,
+
+    /// Passed arg #3
+    pub third: String,
+}
+
 /// A list of supported architectures.
 ///
 /// Entry `universal` means to work on any system.

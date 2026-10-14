@@ -3,7 +3,7 @@ use std::{io::Error, process::exit};
 use crate::{
     list::list_packages,
     package::Package,
-    sys::{error, return_args},
+    sys::{Args, error, return_args},
     template::gen_meta_template,
 };
 
@@ -23,6 +23,12 @@ mod list;
 mod remove;
 mod template;
 
+/// Retrieve spf version as a minimal string
+///
+/// ```
+/// let spf_version = VERSION;
+/// println!("{spf_version}")
+/// ```
 pub static VERSION: &str = "v0.7.0";
 
 fn main() -> Result<(), Error> {
@@ -30,36 +36,51 @@ fn main() -> Result<(), Error> {
     println!("spf-{VERSION}\n");
 
     // Collect user args
-    let mut collected_args = return_args()?;
-    collected_args.retain(|arg| !arg.as_str().starts_with("-"));
+    let mut parsed_args = return_args()?;
+    parsed_args.retain(|arg| !arg.as_str().starts_with("-"));
 
-    /*
-    The first action after running `spf` in a cli:
-    $ spf <root arg> <other actions>
+    let collected_args = Args {
+        all: parsed_args.clone(),
+        root: parsed_args.first().unwrap_or(&String::new()).to_string(),
+        second: parsed_args.get(1).unwrap_or(&String::new()).to_string(),
+        third: parsed_args.get(2).unwrap_or(&String::new()).to_string(),
+    };
 
-    Note: I'm not sure why `.map_or` works, but it
-    does, so I'm keeping it.
-    */
-    let root_arg = collected_args.first().map_or("", |a| a).to_string();
-    let secondary_arg = collected_args.get(1).map_or("", |a| a).to_string();
-    let tertiary_arg = collected_args.get(2).map_or("", |a| a).to_string();
+    parse_spf_cli(collected_args)?;
 
-    // Parse args
-    // If there are more args than the root arg, pass them on to the desired function
-    match root_arg.as_str() {
-        "create" => Package::create(&secondary_arg, &tertiary_arg)?,
+    exit(0)
+}
 
-        "install" => Package::from(secondary_arg)?.install()?,
+/// Parses arguments passed, and maps them to the available commands and actions
+/// in spf.
+///
+/// ```
+/// let args = vec![String::from("arg1"), String::from("arg1"), String::from("arg1")];
+///
+/// let collected_args = Args {
+///    all: args,
+///    root: args.first(),
+///    second: args.get(1),
+///    third: args.get(2),
+/// };
+///
+/// parse_spf_cli(collected_args)?;
+/// ```
+fn parse_spf_cli(collected_args: Args) -> Result<(), Error> {
+    match collected_args.root.as_str() {
+        "create" => Package::create(&collected_args.second, &collected_args.third)?,
 
-        "remove" => Package::remove(collected_args)?,
+        "install" => Package::from(collected_args.second)?.install()?,
 
-        "list" => list_packages(&secondary_arg)?,
+        "remove" => Package::remove(collected_args.all)?,
 
-        "template" => gen_meta_template(secondary_arg)?,
+        "list" => list_packages(&collected_args.second)?,
 
-        "inspect" => Package::inspect(&secondary_arg)?,
+        "template" => gen_meta_template(collected_args.second)?,
 
-        "convert" => Package::from(secondary_arg)?.convert(&tertiary_arg)?,
+        "inspect" => Package::inspect(&collected_args.second)?,
+
+        "convert" => Package::from(collected_args.second)?.convert(&collected_args.third)?,
 
         // Version is already mentioned at the top of this file
         "--version" | "-v" => println!(
@@ -71,10 +92,10 @@ fn main() -> Result<(), Error> {
         "" => available_commands(),
 
         // If the arg provided isn't provided, throw error
-        _ => error(&format!("Invalid command: {root_arg}")),
+        _ => error(&format!("Invalid command: {}", collected_args.root)),
     }
 
-    exit(0)
+    Ok(())
 }
 
 /// All this does is list the available commands, flags, and args for spf. Does nothing else.
