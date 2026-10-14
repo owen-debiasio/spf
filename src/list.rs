@@ -4,7 +4,7 @@
 //! Copyright (C) 2026 Owen Debiasio <owen.debiasio@gmail.com>
 //! SPDX-License-Identifier: GPL-3.0-or-later
 
-use std::process::exit;
+use std::{io::Error, process::exit};
 
 use glob::glob;
 
@@ -29,7 +29,7 @@ use crate::{
 ///
 /// // Every package installed that contains `spf` is listed
 /// ```
-pub fn list_packages(optional_string: &str) -> Result<(), std::io::Error> {
+pub fn list_packages(optional_string: &str) -> Result<(), Error> {
     // where to search for packages
     let path_to_search = &format!("{PACKAGE_INSTALL_PATH}/*");
 
@@ -72,7 +72,7 @@ pub fn list_packages(optional_string: &str) -> Result<(), std::io::Error> {
         // Name of the package to be listed
         let package_meta = Meta::from(&package_metadata_path)?;
 
-        let package_name = package_meta.load_value("PROJECT_NAME")?.clone();
+        let package_name = package_meta.load_value("PROJECT_NAME")?;
 
         // Checks if the entered optional string is in the package name.
         // If not, move to next package.
@@ -82,7 +82,7 @@ pub fn list_packages(optional_string: &str) -> Result<(), std::io::Error> {
 
         // Retrieve the package version and description
         let package_version = package_meta.load_value("VERSION")?;
-        let package_desc = package_meta.load_value("DESCRIPTION")?.clone();
+        let package_desc = package_meta.load_value("DESCRIPTION")?;
 
         // Add the package name, version, and description
         packages_to_list.push(format!(
