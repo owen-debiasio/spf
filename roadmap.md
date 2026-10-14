@@ -1,7 +1,7 @@
 # spf Roadmap
 
 > [!IMPORTANT]  
-> Last updated: `September 23, 2026 @ 05:09 PM EST`
+> Last updated: `October 14, 2026 @ 04:35 PM EST`
 
 Here's an idea list that I've thrown together of things I want to add/change
 over time. These are only IDEAS and are not guaranteed to be implemented.
@@ -13,33 +13,42 @@ Related:
 
 ## Work in progress
 
-- Add converting `.spf` packages -> `.rpm` packages (and vice versa)
+These are some features that are currently being worked on. Things may be
+delayed, removed, or added to the list.
 
-## List of proposed features
+| Feature                           | Priority | Due Date (version) |
+| --------------------------------- | -------- | ------------------ |
+| Restructure and clean up codebase | Medium   | v1.0.0             |
 
-- Pre/Post install/uninstall jobs
-  - Such as running scripts, or handling things spf doesn't
-- Intel x86_64 and M-series Apple Silicon (aarch64) Mac support
-- Command `verify`
-  - Verifies one of the following:
-    - `.spf` package metadata
-    - Package config
-    - Installed package metadata
-- Restructure and clean up codebase
-  - It's spaghetti code right now
-  - Hopefully by `v1.0.0`
-- Unit tests (for `cargo test`)
-- Remote package repository support
-  - Ubuntu PPA
-  - Arch Linux AUR
-  - Cargo
-- Ability to install packages through a remote repostory
-- Converting in between `.spf` packages and Arch Linux packages
+## List of Proposed Features
+
+This is an ambitious list of features I want to add to spf. Entries can be
+dropped out of the list at any point.
+
+> [!NOTE]  
+> If the entry due date is `NaN`, this means that it is not guaranteed, and are
+> more likely drop out of the list at any point.
+
+<!-- markdownlint-disable MD013 -->
+
+| Feature                                                               | Priority | Due Date (version) |
+| --------------------------------------------------------------------- | -------- | ------------------ |
+| Pre/Post install/uninstall jobs                                       | High     | v0.8.0             |
+| Command `verify`: Verify `.spf`/installed package metadata and config | Medium   | v0.8.0             |
+| Conversion in between `.spf` and Arch Linux `PKGBUILD` packages       | Low      | v0.8.0             |
+| Ability to install packages through a remote repository               | High     | v1.0.0             |
+| Unit Tests (via `cargo test`)                                         | Low      | v1.0.0             |
+| Remote package repository support (Ubuntu PPA, AUR, Cargo)            | Low      | NaN                |
+| Intel x86_64 and M-series Apple Silicon (aarch64) MacOS support       | Low      | NaN                |
+| GUI Package install tool (GTK4)                                       | Low      | NaN                |
+
+<!-- markdownlint-enable MD013 -->
 
 ## Previously Completed
 
 Here are some features that were previously on here, and are now completed.
 
-| Feature                                              | Version Completed |
-| ---------------------------------------------------- | ----------------- |
-| Converting `.spf` and `.deb` packages back and forth | v0.6.0            |
+| Feature                                          | Version Completed |
+| ------------------------------------------------ | ----------------- |
+| Conversion in between `.spf` and `.deb` packages | v0.6.0            |
+| Conversion in between `.spf` and `.rpm` packages | v0.7.0            |
