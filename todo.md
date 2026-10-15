@@ -1,7 +1,7 @@
 # spf TODO
 
 > [!IMPORTANT]  
-> Last updated: `October 09, 2026 @ 8:50 AM EST`
+> Last updated: `October 15, 2026 @ 5:06 PM EST`
 
 Related:
 
@@ -13,14 +13,18 @@ Related:
 ## Current goals for v0.7.0
 
 > [!NOTE]  
-> Completed tasks will be removed
-
-- [src/package.rs](src/package.rs)
-  - Make things more idiomatic
-  - Document functions and things
+> Completed/Dropped tasks will be removed
 
 - [src/convert.rs](src/convert.rs)
-  - comment more things
+  - Comment more code, update function/impl/struct documentation if needed
 
 - [docs/conversion.md](docs/conversion.md)
+
+  > [!NOTE]  
+  > Completed tasks are marked as ✅, next task is ⭕, not started being worked
+  > on is ❌.
   - Update documentation
+    - Path Evaluation ✅
+    - Init Conversion ⭕
+    - Collect Metadata ❌
+    - Build & Package ❌
