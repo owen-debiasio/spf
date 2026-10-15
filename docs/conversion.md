@@ -10,153 +10,92 @@ The following is converted:
 
 The way paths are copied remains the same for both directions.
 
-## .deb -> .spf
+## Conversion
 
-It starts out by extracting the selected `.spf` file (seen in
-[src/convert.rs](src/convert.rs) as `source_package_path`.)
-
-It should look something like this:
+Whether you are converting `.spf` to `.rpm`, or `.deb` -> `.rpm`, conversion
+follows this flow:
 
 ```none
-source_package.deb
-    L control.tar.xz
-    L data.tar.xz
-    L debian-binary
+Path Evaluation -> Init Conversion -> Collect Metadata -> Build & Package
 ```
 
-Then `debian-binary` is deleted. Converting to `.spf` does not need that file.
+### Path Evaluation
 
-### Extracting and Loading Metadata
+When the paths are being evaluated, the following conditions are met:
 
-When the source `.spf` file is extracted, extract `control.tar.xz`. This holds
-the metadata inside the `.deb` file, and reveals the singular `control` file.
-
-You can read more about the package metadata at
-[the metadata documentation](metadata.md)
-
-#### Loading
-
-The metadata inside `control` is loaded into memory first. After, the `control`
-file is deleted.
-
-#### Conversion
-
-With the metadata loaded, the category headers are converted to the `.spf`
-counterparts.
-
-For example, `Package` is changed to `PROJECT_NAME`, `Version` is changed to
-`VERSION`, and so on.
-
-For example,
-
-This...:
+<!-- markdownlint-disable MD013 -->
 
 ```none
-Package: sample name
-Version: sample version
-Architecture: sample arch
-Maintainer: sample name <sample email>
-Description: sample desc
+
+  ---------------------------------------------
+  | Are the source and output paths provided? |
+  ---------------------------------------------
+      |       |
+      v       v
+    -----   ------           ----------------
+    |yes|   | no | -------> | Exit w/ Error |
+    -----   ------           ----------------
+      |
+      v
+  -------------------------------
+  | Does the source path exist? |
+  -------------------------------
+      |       |
+      v       v
+    -----   ------           ----------------
+    |yes|   | no | -------> | Exit w/ Error |
+    -----   ------           ----------------
+      |
+      v
+  ------------------------------------
+  | Collect provided file extensions |
+  ------------------------------------
+      |
+      v
+  -----------------------------------         ---------------------------------------
+  | Are the source and output       | ------> | Are they .spf, .deb, or .rpm files? |
+  | files supported package types?  |         ---------------------------------------
+  -----------------------------------
+      |       |
+      v       v
+    -----   ------           ----------------
+    |yes|   | no | -------> | Exit w/ Error |
+    -----   ------           ----------------
+      |
+      v
+  ----------------------------------------------------------------
+  | Is the user trying to convert two packages of the same type? |
+  ----------------------------------------------------------------
+      |       |
+      v       v
+    -----   ------           ----------------
+    |yes|   | no | -------> | Exit w/ Error |
+    -----   ------           ----------------
+      |
+      v
+  ---------------------------------------------------------------
+  | Is the user trying to convert .deb -> .rpm or .deb -> .rpm? |
+  ---------------------------------------------------------------
+      |       |
+      v       v
+    -----   ------           ----------------
+    |yes|   | no | -------> | Exit w/ Error |
+    -----   ------           ----------------
+      |
+      v
+  -------------------------
+  | Initialize Conversion |
+  -------------------------
 ```
 
-...is converted to this:
+<!-- markdownlint-enable MD013 -->
 
-```none
-PROJECT_NAME = sample name
-VERSION = sample version
-ARCH = sample arch
-AUTHORS = sample name <sample email>
-DESCRIPTION = sample desc
-```
+### Init conversion
 
-Because there is no proper `LICENSE` equivalent category, just drop it.
+There are few steps that must be followed before conversion is initialized.
 
-When the category `Architecture` is encountered, convert the `.deb` architecture
-names to the `.spf` counterparts.
-
-If something is encountered that isn't allowed or available, comment that line
-with a `#`. After the metadata is finished converting, any line that starts with
-`#` is removed.
-
-### Extracting Data
-
-This is a very quick process. Instead of copying files to a location, simply
-rename the extracted `.deb` to the output `.spf` file name (minus the
-extension).
-
-Because `debian-binary` and `control.tar.xz` have already been deleted, there is
-no problem with that.
-
-### Packaging and Saving
-
-The metadata collected earlier is saved into the now to-be-archived directory.
-
-At this point, the contents of that directory is:
-
-- The package filesystem
-- The metadata file (`META`)
-
-It looks something like this:
-
-```none
-package.spf
-    L /usr
-    L META
-```
-
-Finally, the directory is compressed into the file output, which serves as the
-`.spf` package.
-
-## .spf -> .deb
-
-This process has much less steps due to the advantage of using external crates
-and already-established libraries.
-
-### Metadata Conversion and Loading
-
-When the source `.spf` is extracted, the metadata is first loaded into memory.
-Then the file is deleted.
-
-Now with the metadata in memory, the only thing that has to be converted is the
-package architecture.
-
-The following metadata is loaded:
-
-- Name
-- Version
-- Description
-- Maintainer
-- Homepage
-- Architecture
-
-The loaded metadata is then applied to the `.deb` package.
-
-You can read more about the package metadata at
-[the metadata documentation](metadata.md)
-
-### Paths
-
-Paths located inside the extracted `.spf` file are cycled and added to the list
-of what paths are to be added.
-
-It's a quick and simple process.
-
-### Building Package
-
-The package is finally built to the output location.
-
-## Risks
-
-There are a few risks when installing an spf-converted package. Those could be:
-
-- Lost files
-- Potential incorrect path mapping
-
-What is why before any package is converted, a disclaimer is shown to basically
-say that `spf` has no warranty and is not responsible for any damage.
-
-You should only install these converted packages if you know what you are doing.
+> **TODO:** Make flowchart of events
 
 ---
 
-Last Updated: `September 13, 2026 @ 1:54 PM EST`
+Last Updated: `October 15, 2026 @ 5:05 PM EST`
