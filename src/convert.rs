@@ -47,16 +47,14 @@ fn disclaimer() -> Result<(), Error> {
 ///
 /// It specifically checks if:
 /// - Source / Input packages are provided
-/// - Source / Input packages exist
+/// - Verify if the source package exists
 /// - Source / Input packages are supported package types
 /// - Source / Input packages are the same type (`.spf` -> `.spf`)
 /// - User tries conversion between `.rpm` and `.deb`
 fn verify_input_paths(source_package_path: &str, output_package_path: &str) -> Result<(), Error> {
-    // Verify the paths exist
+    // Verify if the source package exists
     if source_package_path.is_empty() {
         error("Please provide a source package path!")
-    } else if output_package_path.is_empty() {
-        error("Please provide an output package path!")
     }
 
     // Verify if provided package paths exist
