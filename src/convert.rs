@@ -46,21 +46,37 @@ fn disclaimer() -> Result<(), Error> {
 /// Checks if the input/output packages are supported.
 ///
 /// It specifically checks if:
-/// - Package formats are supported
-/// - User tries to convert a package to the same format
-/// - User tries to convert `.deb` packages to `rpm` packages (and vice versa)
+/// - Source / Input packages are provided
+/// - Source / Input packages exist
+/// - Source / Input packages are supported package types
+/// - Source / Input packages are the same type (`.spf` -> `.spf`)
+/// - User tries conversion between `.rpm` and `.deb`
 fn verify_input_paths(source_package_path: &str, output_package_path: &str) -> Result<(), Error> {
-    let source_file_ext = match FileProperty::extension(source_package_path) {
-        Ok(ext) => ext,
-        Err(err) => error(&format!("Failed to get source file extension: {err}")),
-    };
+    // Verify the paths exist
+    if source_package_path.is_empty() {
+        error("Please provide a source package path!")
+    } else if output_package_path.is_empty() {
+        error("Please provide an output package path!")
+    }
 
-    let output_file_ext = match FileProperty::extension(output_package_path) {
-        Ok(ext) => ext,
-        Err(err) => error(&format!("Failed to get output file extension: {err}")),
-    };
+    // Verify if provided package paths exist
+    if !Path::new(source_package_path).exists() {
+        error(&format!(
+            "Source package \"{source_package_path}\" does not exist!"
+        ))
+    } else if !Path::new(output_package_path).exists() {
+        error(&format!(
+            "Output package \"{output_package_path}\" does not exist!"
+        ))
+    }
 
-    // Verify supported package formats
+    // Get package file extensions
+    let source_file_ext = FileProperty::extension(source_package_path)
+        .unwrap_or_else(|err| error(&format!("Failed to get source file extension: {err}")));
+    let output_file_ext = FileProperty::extension(output_package_path)
+        .unwrap_or_else(|err| error(&format!("Failed to get output file extension: {err}")));
+
+    // Verify supported package formats using the extensions
     if !matches!(
         source_file_ext.as_str(),
         PackageType::SPF | PackageType::DEB | PackageType::RPM
@@ -75,10 +91,6 @@ fn verify_input_paths(source_package_path: &str, output_package_path: &str) -> R
         error(&format!(
             "Unsupported output package format: {output_file_ext}"
         ))
-    }
-
-    if output_package_path.is_empty() {
-        error("Please provide an output package path!")
     }
 
     // Makes sure the use doesn't try to convert 2 of the same package types
@@ -108,12 +120,6 @@ fn verify_input_paths(source_package_path: &str, output_package_path: &str) -> R
 pub fn convert(source_package_path: &str, output_package_path: &str) -> Result<(), Error> {
     if source_package_path.is_empty() {
         error("Please provide an input package path!")
-    }
-
-    let source_file = Path::new(source_package_path);
-
-    if !source_file.exists() {
-        error(&format!("File \"{source_package_path}\" does not exist!"))
     }
 
     verify_input_paths(source_package_path, output_package_path)?;
