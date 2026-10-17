@@ -25,6 +25,6 @@ Related:
   > on is ❌.
   - Update documentation
     - Path Evaluation ✅
-    - Init Conversion ⭕
-    - Collect Metadata ❌
+    - Initialization: Collect Package Information & Metadata ✅
+    - Copy Files & Convert Metadata ⭕
     - Build & Package ❌
