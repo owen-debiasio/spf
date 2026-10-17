@@ -62,10 +62,6 @@ fn verify_input_paths(source_package_path: &str, output_package_path: &str) -> R
         error(&format!(
             "Source package \"{source_package_path}\" does not exist!"
         ))
-    } else if !Path::new(output_package_path).exists() {
-        error(&format!(
-            "Output package \"{output_package_path}\" does not exist!"
-        ))
     }
 
     // Get package file extensions
@@ -126,10 +122,7 @@ pub fn convert(source_package_path: &str, output_package_path: &str) -> Result<(
 
     println!("Converting \"{source_package_path}\" -> \"{output_package_path}\"...");
 
-    let output_package_type = PackageType::get_from_extension(output_package_path)?;
-
-    Converter::from(source_package_path.to_string())?
-        .convert(output_package_type, output_package_path)?;
+    Converter::from(source_package_path.to_string())?.convert(output_package_path)?;
 
     println!("\nDone! Converted \"{source_package_path}\" -> \"{output_package_path}\"!");
 
@@ -246,7 +239,7 @@ struct Converter {
     source_package_path: String,
 
     /// The type of package to convert to or from
-    package_type: PackageType,
+    source_package_type: PackageType,
 }
 
 impl Converter {
@@ -258,13 +251,15 @@ impl Converter {
     /// let package_path = String::from("sample_package.spf");
     /// let package_to_convert = Converter::from(package_path)?;
     /// ```
-    pub fn from(package_path: String) -> Result<Self, Error> {
-        let source_package_type = PackageType::get_from_extension(&package_path)?;
+    pub fn from(source_package_path: String) -> Result<Self, Error> {
+        let source_package_type = PackageType::get_from_extension(&source_package_path)?;
 
-        Ok(Self {
-            source_package_path: package_path,
-            package_type: source_package_type,
-        })
+        let source_package_details = Self {
+            source_package_path,
+            source_package_type,
+        };
+
+        Ok(source_package_details)
     }
 
     /// Loads the metadata from the loaded package. The metadata is loaded using the struct
@@ -285,7 +280,7 @@ impl Converter {
     fn load_source_metadata(&self) -> Result<Categories, Error> {
         let package_path = self.source_package_path.clone();
 
-        let returned_meta = match self.package_type {
+        let returned_meta = match self.source_package_type {
             // Get spf package metadata
             PackageType::Spf => {
                 if !package_path.ends_with(".spf") {
@@ -359,22 +354,19 @@ impl Converter {
     ///
     /// loaded_package.convert(output_package_type, output_package_path)?;
     /// ```
-    pub fn convert(
-        self,
-        output_package_type: PackageType,
-        output_location: &str,
-    ) -> Result<(), Error> {
+    pub fn convert(self, output_location: &str) -> Result<(), Error> {
         println!("    Loading package...");
 
         let metadata = self.load_source_metadata()?;
-        let source_package_path = &self.source_package_path;
 
-        match self.package_type {
+        let output_package_type = PackageType::get_from_extension(output_location)?;
+
+        match self.source_package_type {
             PackageType::Spf => {
                 println!("        Extracting...");
-                extract_archive(source_package_path, ".", ArchiveType::Tar)?;
+                extract_archive(&self.source_package_path, ".", ArchiveType::Tar)?;
 
-                let source_name = FileProperty::name(source_package_path)?;
+                let source_name = FileProperty::name(&self.source_package_path)?;
 
                 let extracted_source = source_name.trim_end_matches(".spf");
 
@@ -426,7 +418,7 @@ impl Converter {
                             stdout().flush()?;
 
                             let destination = &current_path
-                                .trim_start_matches(source_package_path)
+                                .trim_start_matches(&self.source_package_path)
                                 .to_string();
 
                             // Adds the paths. Varies depending on if the path is a file or directory.
@@ -466,7 +458,7 @@ impl Converter {
 
                         let package = package_details.build_host(build_host);
 
-                        let direct_source_path = FileProperty::name(source_package_path)?;
+                        let direct_source_path = FileProperty::name(&self.source_package_path)?;
                         let extracted_spf = direct_source_path.trim_end_matches(".spf");
 
                         // Collect paths and add them to the package
@@ -522,7 +514,7 @@ impl Converter {
                 // deb -> spf
                 PackageType::Spf => {
                     println!("        Extracting...");
-                    extract_archive(source_package_path, ".", ArchiveType::Ar)?;
+                    extract_archive(&self.source_package_path, ".", ArchiveType::Ar)?;
 
                     println!("            Extracting \"./data.tar.xz\"...");
                     extract_archive("data.tar.xz", "./data", ArchiveType::Xz)?;
@@ -577,10 +569,10 @@ impl Converter {
                     println!("        Extracting...");
 
                     Command::new("rpm2archive")
-                        .arg(source_package_path)
+                        .arg(&self.source_package_path)
                         .status()?;
 
-                    let tgz_file = &format!("{source_package_path}.tgz");
+                    let tgz_file = &format!("{}.tgz", self.source_package_path);
 
                     //let extract_dest = &format!("./{}", FileProperty::name(tgz_file)?);
                     let extract_dest = &FileProperty::name(tgz_file)?
