@@ -1,7 +1,7 @@
 # spf Roadmap
 
 > [!IMPORTANT]  
-> Last updated: `October 14, 2026 @ 04:35 PM EST`
+> Last updated: `October 17, 2026 @ 01:27 PM EST`
 
 Here's an idea list that I've thrown together of things I want to add/change
 over time. These are only IDEAS and are not guaranteed to be implemented.
@@ -37,6 +37,8 @@ dropped out of the list at any point.
 | Command `verify`: Verify `.spf`/installed package metadata and config | Medium   | v0.8.0             |
 | Conversion in between `.spf` and Arch Linux `PKGBUILD` packages       | Low      | v0.8.0             |
 | Ability to install packages through a remote repository               | High     | v1.0.0             |
+| Move to a `.toml`-based package configuration/metadata                | High     | v1.0.0             |
+| Add a `.toml` configuration system for spf cli and backend            | Medium   | v1.0.0             |
 | Unit Tests (via `cargo test`)                                         | Low      | v1.0.0             |
 | Remote package repository support (Ubuntu PPA, AUR, Cargo)            | Low      | NaN                |
 | Intel x86_64 and M-series Apple Silicon (aarch64) MacOS support       | Low      | NaN                |
