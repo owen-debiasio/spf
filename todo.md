@@ -26,5 +26,5 @@ Related:
   - Update documentation
     - Path Evaluation ✅
     - Initialization: Collect Package Information & Metadata ✅
-    - Copy Files & Convert Metadata ⭕
+    - Data Conversion ⭕
     - Build & Package ❌

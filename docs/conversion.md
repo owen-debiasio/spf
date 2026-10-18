@@ -17,7 +17,7 @@ follows these steps:
 
 1. [Path Evaluation](#path-evaluation)
 2. [Initialization: Collect Package Information & Metadata](#initialization-collect-package-information--metadata)
-3. Copy Files & Convert Metadata
+3. [Data Conversion](#data-conversion)
 4. Build & Package
 
 ### Path Evaluation
@@ -128,7 +128,7 @@ rather than the struct.
 You can read more about the package metadata at
 [the metadata documentation](metadata.md)
 
-### Copy Files & Convert Metadata
+### Data Conversion
 
 TODO: Do this step
 
