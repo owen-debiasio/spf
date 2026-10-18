@@ -104,7 +104,7 @@ To do this, the package type is determined via the file extension.
 
 For example, lets say we have a file named `test.spf`. Using
 `PackageType::get_from_extension()`, it reads the part of the file name that
-says `.spf`, which then returns its cooresponding type as `PackageType::Spf`.
+says `.spf`, which then returns its corresponding type as `PackageType::Spf`.
 
 #### Loading the Package
 
@@ -115,7 +115,7 @@ The following pieces of information of the package are loaded:
 - Metadata
 
 The package location and type are stored in struct `Converter`, while metadata
-is retrieved seperately.
+is retrieved separately.
 
 ##### Metadata
 
