@@ -5,7 +5,7 @@
 //! SPDX-License-Identifier: GPL-3.0-or-later
 
 use crate::sys::error;
-use std::{env::current_dir, fs::write, io::Error, path::Path, process::exit};
+use std::{env::current_dir, fs::write, io::Error, path::Path};
 
 /// Sample metadata contents to be printed. Every possible feature
 /// of the metadata is included.
@@ -65,5 +65,5 @@ pub fn gen_meta_template(mut output_location: String) -> Result<(), Error> {
 
     println!("Generated template at: {output_location}");
 
-    exit(0)
+    Ok(())
 }

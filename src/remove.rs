@@ -63,7 +63,7 @@ pub fn remove_packages(mut packages_to_remove: Vec<String>) -> Result<(), Error>
     stdin().read_line(&mut proceed_to_remove)?;
 
     if proceed_to_remove.trim().to_lowercase() != "y" {
-        println!("Aborted");
+        println!("Aborted.");
 
         exit(0)
     }
@@ -86,7 +86,7 @@ pub fn remove_packages(mut packages_to_remove: Vec<String>) -> Result<(), Error>
 
     println!("\nSuccessfully removed package(s)!");
 
-    exit(0);
+    Ok(())
 }
 
 /// Removes an installed spf package (entries and metadata file).

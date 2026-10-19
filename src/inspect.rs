@@ -8,7 +8,6 @@ use std::{
     fs::{read_to_string, remove_dir_all},
     io::Error,
     path::Path,
-    process::exit,
 };
 
 use crate::{
@@ -81,7 +80,7 @@ fn inspect_spf_package(package_path: &str) -> Result<(), Error> {
     // Clean up by removing extracted directory (`extracted_contents`)
     remove_dir_all(extracted_contents)?;
 
-    exit(0)
+    Ok(())
 }
 
 /// Inspects the metadata of an installed spf package (`package` as [`String`]).
@@ -114,5 +113,5 @@ fn inspect_installed_package(package: &str) -> Result<(), Error> {
         --------"
     );
 
-    exit(0)
+    Ok(())
 }

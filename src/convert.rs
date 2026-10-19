@@ -13,7 +13,7 @@ use std::{
     io::{Error, Write, stdin, stdout},
     os::unix::ffi::OsStrExt,
     path::Path,
-    process::{Command, exit},
+    process::Command,
 };
 
 use cmd_exists::cmd_exists;
@@ -126,7 +126,7 @@ pub fn convert(source_package_path: &str, output_package_path: &str) -> Result<(
 
     println!("\nDone! Converted \"{source_package_path}\" -> \"{output_package_path}\"!");
 
-    exit(0)
+    Ok(())
 }
 
 /// Identifies packages

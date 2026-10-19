@@ -169,7 +169,7 @@ pub fn spf_install(mut spf_package_path: String) -> Result<(), Error> {
 
     println!("\nSuccessfully installed {package_name_formatted}!");
 
-    exit(0)
+    Ok(())
 }
 
 /// Compares versions if the package is already installed. User can

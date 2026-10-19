@@ -4,7 +4,7 @@
 //! Copyright (C) 2026 Owen Debiasio <owen.debiasio@gmail.com>
 //! SPDX-License-Identifier: GPL-3.0-or-later
 
-use std::{io::Error, process::exit};
+use std::io::Error;
 
 use glob::glob;
 
@@ -107,5 +107,5 @@ pub fn list_packages(optional_string: &str) -> Result<(), Error> {
         println!("{package}");
     }
 
-    exit(0)
+    Ok(())
 }

@@ -13,7 +13,6 @@ use std::{
     fs::{File, copy, create_dir_all, read_to_string, remove_dir_all},
     io::{Error, Write},
     path::Path,
-    process::exit,
 };
 
 /// Starts the process of creating a `.spf` package.
@@ -96,7 +95,7 @@ pub fn create_spf_package(package_config: &str, mut output_location: &str) -> Re
 
     println!("\nDone! Packaged to: \"./{archive_name}\"");
 
-    exit(0)
+    Ok(())
 }
 
 /// Write to `project_meta_file`. The metadata written could be one of the following:
