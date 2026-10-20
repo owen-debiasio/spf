@@ -574,7 +574,6 @@ impl Converter {
 
                     let tgz_file = &format!("{}.tgz", self.source_package_path);
 
-                    //let extract_dest = &format!("./{}", FileProperty::name(tgz_file)?);
                     let extract_dest = &FileProperty::name(tgz_file)?
                         .trim_end_matches(".rpm.tgz")
                         .to_string();
