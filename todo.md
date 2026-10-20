@@ -1,7 +1,7 @@
 # spf TODO
 
 > [!IMPORTANT]  
-> Last updated: `October 19, 2026 @ 8:14 PM EST`
+> Last updated: `October 20, 2026 @ 10:28 AM EST`
 
 Related:
 
@@ -10,21 +10,16 @@ Related:
 
 ---
 
-## Current goals for v0.7.0
+## Current Goals
 
 > [!NOTE]  
 > Completed/Dropped tasks will be removed
 
-- [src/convert.rs](src/convert.rs)
-  - Comment more code, update function/impl/struct documentation if needed
+<!-- markdownlint-disable MD013 -->
 
-- [docs/conversion.md](docs/conversion.md)
+| Task                                                                   | Files/Location                   | Status  | Priority | Due Date |
+| ---------------------------------------------------------------------- | -------------------------------- | ------- | -------- | -------- |
+| Comment more code, update function/impl/struct documentation if needed | [src/convert.rs](src/convert.rs) | WIP     | High     | v0.7.0   |
+| Refactor everything, everywhere                                        | [src](./src/)                    | Stalled | Medium   | v1.0.0   |
 
-  > [!NOTE]  
-  > Completed tasks are marked as ✅, next task is ⭕, not started being worked
-  > on is ❌.
-  - Update documentation
-    - Path Evaluation ✅
-    - Initialization: Collect Package Information & Metadata ✅
-    - Data Conversion ✅
-    - Build & Package ⭕
+<!-- markdownlint-enable MD013 -->
