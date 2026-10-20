@@ -123,8 +123,11 @@ Waiting for new features? Check out the status of them in these related pages:
 
 ## v0.7.0
 
-- Code optimizations
+- An overwhelming amount of refactoring, more to come.
 - Use dependency `xz2` by @alexcrichton, replacing `xz`.
 - Add support for converting `.spf` packages to `.rpm` packages (and vice versa)
+- Added a Docker container for use with testing or developing the latest build
+  of spf.
+- Update documentation for conversion.
 - The mirror to Codeberg is now available.
   [Find it here](https://codeberg.org/owen-debiasio/spf)
