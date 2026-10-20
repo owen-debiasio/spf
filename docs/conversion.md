@@ -18,7 +18,7 @@ follows these steps:
 1. [Path Evaluation](#path-evaluation)
 2. [Initialization: Collect Package Information & Metadata](#initialization-collect-package-information--metadata)
 3. [Data Conversion](#data-conversion)
-4. Build & Package
+4. [Build & Package](#build--package)
 
 ### Path Evaluation
 
@@ -117,7 +117,7 @@ The following pieces of information of the package are loaded:
 The package location and type are stored in struct `Converter`, while metadata
 is retrieved separately.
 
-##### Metadata
+##### Metadata Loading
 
 The loaded metadata is no different from what's collected when installing an spf
 package.
@@ -130,8 +130,85 @@ You can read more about the package metadata at
 
 ### Data Conversion
 
-TODO: Do this step
+The package metadata is the only thing "converted", while the actual program
+files are copied. No conversion needed.
+
+#### Metadata Conversion
+
+Below is a chart showing the metadata categories and their equivalents. Compares
+`.spf`, `.rpm`, and `.deb` packages.
+
+<!-- markdownlint-disable MD013 -->
+
+| Category        | .spf Package | .deb Package                                                           | .rpm Package           |
+| --------------- | ------------ | ---------------------------------------------------------------------- | ---------------------- |
+| Name            | PROJECT_NAME | Package                                                                | Name                   |
+| Version         | VERSION      | Version                                                                | Version                |
+| Description     | DESCRIPTION  | Description                                                            | Architecture / Summary |
+| Download Source | REPOSITORY   | Homepage                                                               | URL                    |
+| License         | LICENSE      | **Not Applicable! See [the quirks of the license category](#license)** | License                |
+| Maintainer(s)   | AUTHORS      | Maintainer                                                             | Packager               |
+| Architecture    | ARCH         | Architecture                                                           | Architecture           |
+
+<!-- markdownlint-enable MD013 -->
+
+You can read more about the package metadata at
+[the metadata documentation](metadata.md)
+
+##### Weird Quirks
+
+Due to packaging differences and other limitations, some improvising has to be
+done. This specifically affects the license and architecture metadata fields.
+
+###### License
+
+Converting the license category works a bit differently. Since `.deb` packages
+do not have a native field that identifies the license, we have to improvise.
+
+When converting `.spf` to `.deb`, the `LICENSE` field will be dropped, as there
+is no place for it.
+
+On the other hand, when converting `.deb` to `.spf`, the `LICENSE` field will
+contain a placeholder along the lines of:
+
+`Not Applicable (converted using spf)`.
+
+###### Architecture
+
+Between `.spf`, `.rpm`, and `.deb` packages, they have different methods of
+identifying architectures. Below is a table comparing them.
+
+| Architecture | .spf Package | .deb Package | .rpm Package       |
+| ------------ | ------------ | ------------ | ------------------ |
+| Universal    | universal    | all          | noarch, src, nosrc |
+| 64-bit       | x86_64       | amd64        | x86_64             |
+| 64-bit ARM   | aarch64      | arm64        | aarch64            |
+| 32-bit       | x86          | i386         | i686               |
+| 32-bit ARM   | arm          | armhf        | armv7hl            |
+
+##### Post-Conversion
+
+After the metadata is converted, it is loaded into memory. After, the original
+metadata file is deleted (if applicable).
+
+This becomes helpful when file copying begins.
+
+#### File Copying
+
+This is a really short (depending on the package size) and simple step.
+
+Once the metadata file is gone (if applicable), the rest of the paths inside of
+the extracted package are files for the package itself.
+
+Because of that, the extracted package is renamed to whatever the output file
+name is (minus the extension).
+
+That's the entire step. No files are actually "copied".
+
+### Build & Package
+
+TODO: Write docs for this step
 
 ---
 
-Last Updated: `October 17, 2026 @ 6:41 PM EST`
+Last Updated: `October 19, 2026 @ 8:12 PM EST`

@@ -1,7 +1,7 @@
 # spf TODO
 
 > [!IMPORTANT]  
-> Last updated: `October 15, 2026 @ 5:06 PM EST`
+> Last updated: `October 19, 2026 @ 8:14 PM EST`
 
 Related:
 
@@ -26,5 +26,5 @@ Related:
   - Update documentation
     - Path Evaluation ✅
     - Initialization: Collect Package Information & Metadata ✅
-    - Data Conversion ⭕
-    - Build & Package ❌
+    - Data Conversion ✅
+    - Build & Package ⭕
