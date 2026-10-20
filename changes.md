@@ -123,6 +123,9 @@ Waiting for new features? Check out the status of them in these related pages:
 
 ## v0.7.0
 
+**Full Changelog**:
+<https://github.com/owen-debiasio/spf/compare/v0.6.0...v0.7.0>
+
 - An overwhelming amount of refactoring, more to come.
 - Use dependency `xz2` by @alexcrichton, replacing `xz`.
 - Add support for converting `.spf` packages to `.rpm` packages (and vice versa)
