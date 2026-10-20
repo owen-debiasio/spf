@@ -207,8 +207,20 @@ That's the entire step. No files are actually "copied".
 
 ### Build & Package
 
-TODO: Write docs for this step
+This is the simplest step throughout the conversion process.
+
+Once all the files are in the correct locations and the metadata has been
+converted, the packages can be built.
+
+When converting in any direction, there are specialized functions provided
+through a provided crate for `.deb` and `.rpm` packages, while `.spf` packages
+simply just create an archive from the directory. See
+[`.spf` package creation](./creation.md/#creating-a-spf-package) for more
+details.
+
+If needed, the archive is renamed to the output location provided at the
+beginnning at the process. See the [path evaluation](#path-evaluation) for more.
 
 ---
 
-Last Updated: `October 19, 2026 @ 8:12 PM EST`
+Last Updated: `October 20, 2026 @ 10:23 AM EST`
