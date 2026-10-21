@@ -138,7 +138,7 @@ pub fn create_archive(
             archive.finish()?;
         }
         ArchiveType::Xz => {
-            let mut archive = Builder::new(XzEncoder::new(&archive_file, 6));
+            let mut archive = Builder::new(XzEncoder::new(archive_file, 6));
 
             if Path::new(path_to_archive).is_dir() {
                 archive.append_dir_all(FileProperty::name(path_to_archive)?, path_to_archive)?;
