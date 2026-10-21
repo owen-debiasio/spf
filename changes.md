@@ -111,6 +111,9 @@ Waiting for new features? Check out the status of them in these related pages:
 
 ## v0.6.0
 
+<details>
+<summary>Show details</summary>
+
 - Add support for converting `.deb` packages to `.spf` packages (and vice versa)
   using command `convert`
 - Fix package reinstallation (At the cost of wiping my own drive while fixing
@@ -121,7 +124,13 @@ Waiting for new features? Check out the status of them in these related pages:
   - There is now a list of supported architectures: `x86_64`, `x86`, `aarch64`,
     `arm`
 
+</details>
+
 ## v0.7.0
+
+This is a HUGE release! Looking at this list, it may not be too much.
+Internally, there are lots and lots of important changes that will continue to
+shape spf.
 
 **Full Changelog**:
 <https://github.com/owen-debiasio/spf/compare/v0.6.0...v0.7.0>
