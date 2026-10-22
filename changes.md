@@ -143,3 +143,12 @@ shape spf.
 - Update documentation for conversion.
 - The mirror to Codeberg is now available.
   [Find it here](https://codeberg.org/owen-debiasio/spf)
+
+## v0.8.0
+
+**Full Changelog**:
+<https://github.com/owen-debiasio/spf/compare/v0.7.0...v0.8.0>
+
+- New and improved package builder: [./packages/build.py](./packages/build.py)
+- Retired `./dev/package.bash` as the build script for packages, replaced by
+  [./packages/build.py](./packages/build.py)
