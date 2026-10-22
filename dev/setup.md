@@ -22,6 +22,8 @@ Some stuff to help with development
 - `shfmt` for formatting shell files
 - `shellcheck` for linting shell files
 
+- `python-black` for formatting Python files
+
 ## Cargo packages
 
 - `cargo-deb` for packaging .deb file
