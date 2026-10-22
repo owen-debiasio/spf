@@ -49,8 +49,8 @@ jobs:
         run: |
           TAG="${{ github.ref_name }}"
           awk -v tag="$TAG" '
-            $0 ~ "^## " tag {p=1; next} 
-            p && /^## / {p=0} 
+            $0 ~ "^## " tag {p=1; next}
+            p && /^## / {p=0}
             p {print}
           ' changes.md > latest_changelog.txt
           echo "Changelog extracted for $TAG:"
@@ -61,9 +61,9 @@ jobs:
           echo -e "#!/bin/bash\necho '> Skipping format in CI'\nexit 0" > ./dev/format.bash
           chmod +x ./dev/format.bash
 
-          chmod +x ./dev/package.bash
+          chmod +x ./packages/build.bash
 
-          ./dev/package.bash "${{ github.ref_name }}"
+          ./packages/build.bash "${{ github.ref_name }}"
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v3

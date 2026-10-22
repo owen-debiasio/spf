@@ -10,6 +10,8 @@ set -e
     exit 1
 }
 
+mkdir -p ./packages/artifacts
+
 # Get Rust ready
 echo "Installing dependencies..."
 
@@ -43,19 +45,19 @@ LICENSE:/usr/share/licenses/spf/LICENSE
 :::PATH DEFINE END:::" > spfbuildcfg
 
 # Create .spf package
-./target/release/spf create spfbuildcfg ./packages/"$PACKAGE".spf
+./target/release/spf create spfbuildcfg ./packages/artifacts/"$PACKAGE".spf
 
 # Remove no longer needed metadata
 rm spfbuildcfg
 
 # Create .deb package
-cargo-deb -o "./packages/$PACKAGE.deb"
+cargo-deb -o "./packages/artifacts/$PACKAGE.deb"
 
 # Create .rpm package
-cargo-generate-rpm -o "./packages/$PACKAGE.rpm"
+cargo-generate-rpm -o "./packages/artifacts/$PACKAGE.rpm"
 
 # Copy binary
-cp ./target/release/spf "./packages/$PACKAGE"
+cp ./target/release/spf "./packages/artifacts/$PACKAGE"
 
 echo building aarch64
 
@@ -84,17 +86,17 @@ LICENSE:/usr/share/licenses/spf/LICENSE
 :::PATH DEFINE END:::" > spfbuildcfg
 
 # Create .spf package
-./target/release/spf create spfbuildcfg ./packages/"$PACKAGE".spf
+./target/release/spf create spfbuildcfg ./packages/artifacts/"$PACKAGE".spf
 
 # Remove no longer needed metadata
 rm spfbuildcfg
 
 # Create .deb package
-cargo-deb --target aarch64-unknown-linux-gnu -o "./packages/$PACKAGE.deb"
+cargo-deb --target aarch64-unknown-linux-gnu -o "./packages/artifacts/$PACKAGE.deb"
 
 # Create .rpm package
-cargo-generate-rpm --target aarch64-unknown-linux-gnu -o "./packages/$PACKAGE.rpm"
+cargo-generate-rpm --target aarch64-unknown-linux-gnu -o "./packages/artifacts/$PACKAGE.rpm"
 
 # Copy binary
-cp ./target/aarch64-unknown-linux-gnu/release/spf "./packages/$PACKAGE"
+cp ./target/aarch64-unknown-linux-gnu/release/spf "./packages/artifacts/$PACKAGE"
 echo "done"
