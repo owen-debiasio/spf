@@ -103,62 +103,94 @@ class OutputPackage:
 
         valid_types = {x86_64, aarch64, all, ""}
 
-    def assemble(version, package_type: OutputPackage.Type, arch: OutputPackage.Arch):
-        type_is_str = type(package_type).__name__ == "str"
-        arch_is_str = type(arch).__name__ == "str"
+    def get_extension(type_to_convert) -> str:
+        match type_to_convert:
+            case OutputPackage.Type.bin:
+                return ""
+            case OutputPackage.Type.deb:
+                return f".{OutputPackage.Type.deb}"
+            case OutputPackage.Type.rpm:
+                return f".{OutputPackage.Type.rpm}"
+            case OutputPackage.Type.spf:
+                return f".{OutputPackage.Type.spf}"
 
-        if (
-            type_is_str
-            and arch_is_str
-            and not package_type == OutputPackage.Type.all
-            and not arch == OutputPackage.Arch.all
-        ):
-            match package_type:
-                case OutputPackage.Type.bin:
-                    extension = ""
-                case OutputPackage.Type.deb:
-                    extension = f".{OutputPackage.Type.deb}"
-                case OutputPackage.Type.rpm:
-                    extension = f".{OutputPackage.Type.rpm}"
-                case OutputPackage.Type.spf:
-                    extension = f".{OutputPackage.Type.spf}"
+    def build_spf(pack_version, pack_target, pack_arch, dest):
+        Cargo.build(Cargo.Target.host, is_release=False)
 
-            file_name = f"spf-{version}-{arch}-linux{extension}"
-            dest = f"./packages/artifacts/{file_name}"
+        with open("spfbuildcfg", "a") as meta:
+            meta.write(determine_spf_metadata(pack_version, pack_target, pack_arch))
+        subprocess.run(
+            [
+                f"./target/debug/spf",
+                "create",
+                "spfbuildcfg",
+                dest,
+            ]
+        )
+        os.remove("spfbuildcfg")
 
-            target = Cargo.determine_target(arch)
-            Cargo.build(target, is_release=True)
+    def build_deb(pack_t, pack_dest):
+        subprocess.run(["cargo-deb", "--target", pack_t, "-o", pack_dest])
 
-            print("> Building...\n")
+    def build_rpm(pack_t, pack_dest):
+        subprocess.run(["cargo-generate-rpm", "--target", pack_t, "-o", pack_dest])
 
-            match package_type:
-                case OutputPackage.Type.spf:
-                    Cargo.build(Cargo.Target.host, is_release=False)
+    def build_all_types(package_type, version, target, arch, dest):
+        match package_type:
+            case OutputPackage.Type.spf:
+                OutputPackage.build_spf(version, target, arch, dest)
+            case OutputPackage.Type.deb:
+                OutputPackage.build_deb(target, dest)
+            case OutputPackage.Type.rpm:
+                OutputPackage.build_rpm(target, dest)
+            case OutputPackage.Type.bin:
+                shutil.copy2(f"target/{target}/release/spf", dest)
 
-                    with open("spfbuildcfg", "a") as meta:
-                        meta.write(determine_spf_metadata(version, target, arch))
-                    subprocess.run(
-                        [
-                            f"./target/debug/spf",
-                            "create",
-                            "spfbuildcfg",
-                            dest,
-                        ]
-                    )
-                    os.remove("spfbuildcfg")
-                case OutputPackage.Type.deb:
-                    subprocess.run(["cargo-deb", "--target", target, "-o", dest])
+    def build_and_package(version, package_type, arch):
+        """Helper function to compile and package a specific variant."""
+        file_name = (
+            f"spf-{version}-{arch}-linux{OutputPackage.get_extension(package_type)}"
+        )
+        dest = f"./packages/artifacts/{file_name}"
 
-                case OutputPackage.Type.rpm:
-                    subprocess.run(
-                        ["cargo-generate-rpm", "--target", target, "-o", dest]
-                    )
+        target = Cargo.determine_target(arch)
+        Cargo.build(target, is_release=True)
+        OutputPackage.build_all_types(package_type, version, target, arch, dest)
 
-                case OutputPackage.Type.bin:
-                    shutil.copy(f"target/{target}/release/spf", dest)
+    def assemble(version, package_types, archs):
+        print("> Building...\n")
 
+        all_packages = [
+            OutputPackage.Type.spf,
+            OutputPackage.Type.deb,
+            OutputPackage.Type.rpm,
+            OutputPackage.Type.bin,
+        ]
+        all_archs = [OutputPackage.Arch.x86_64, OutputPackage.Arch.aarch64]
+
+        if isinstance(package_types, list):
+            if OutputPackage.Type.all in package_types:
+                target_types = all_packages
+            else:
+                target_types = package_types
+        elif package_types == OutputPackage.Type.all:
+            target_types = all_packages
         else:
-            error("Not implemented", 1)
+            target_types = [package_types]
+
+        if isinstance(archs, list):
+            if OutputPackage.Arch.all in archs:
+                target_archs = all_archs
+            else:
+                target_archs = archs
+        elif archs == OutputPackage.Arch.all:
+            target_archs = all_archs
+        else:
+            target_archs = [archs]
+
+        for current_arch in target_archs:
+            for current_type in target_types:
+                OutputPackage.build_and_package(version, current_type, current_arch)
 
 
 class BuildInit:
@@ -200,13 +232,16 @@ class BuildInit:
         if "," in collected_type:
             collected_type = collected_type.removesuffix(",").split(",")
 
+            if len(collected_type) == len(OutputPackage.Type.valid_types) - 2:
+                return OutputPackage.Type.all
+
         if type(collected_type).__name__ == "list":
             filtered_list = list(set(collected_type) - OutputPackage.Type.valid_types)
 
             if not len(filtered_list) == 0:
                 error(f"Invalid package type(s): {filtered_list}", 1)
             else:
-                output = collected_type
+                return collected_type
         else:
             match collected_type:
                 case (
@@ -218,49 +253,48 @@ class BuildInit:
                     | ""
                 ):
                     if collected_type == OutputPackage.Type.all or collected_type == "":
-                        output = OutputPackage.Type.all
+                        return OutputPackage.Type.all
                     else:
-                        output = collected_type
+                        return collected_type
 
                 case _:
                     error(f'Invalid output type: "{collected_type}".', 1)
 
-        return output
-
     def determine_arch(retrieved_flag: str) -> str:
 
-        collected_type = retrieved_flag.split("=")[1]
+        collected_arch = retrieved_flag.split("=")[1]
 
-        if OutputPackage.Arch.all in collected_type:
+        if OutputPackage.Arch.all in collected_arch:
             return OutputPackage.Arch.all
 
-        if "," in collected_type:
-            collected_type = collected_type.removesuffix(",").split(",")
+        if "," in collected_arch:
+            collected_arch = collected_arch.removesuffix(",").split(",")
 
-        if type(collected_type).__name__ == "list":
-            filtered_list = list(set(collected_type) - OutputPackage.Arch.valid_types)
+            if len(collected_arch) == len(OutputPackage.Arch.valid_types) - 2:
+                return OutputPackage.Arch.all
+
+        if type(collected_arch).__name__ == "list":
+            filtered_list = list(set(collected_arch) - OutputPackage.Arch.valid_types)
 
             if not len(filtered_list) == 0:
                 error(f"Invalid arch(s): {filtered_list}", 1)
             else:
-                output = collected_type
+                return collected_arch
         else:
-            match collected_type:
+            match collected_arch:
                 case (
                     OutputPackage.Arch.x86_64
                     | OutputPackage.Arch.aarch64
                     | OutputPackage.Arch.all
                     | ""
                 ):
-                    if collected_type == OutputPackage.Arch.all or collected_type == "":
-                        output = OutputPackage.Arch.all
+                    if collected_arch == OutputPackage.Arch.all or collected_arch == "":
+                        return OutputPackage.Arch.all
                     else:
-                        output = collected_type
+                        return collected_arch
 
                 case _:
-                    error(f'Invalid output arch: "{collected_type}".', 1)
-
-        return output
+                    error(f'Invalid output arch: "{collected_arch}".', 1)
 
 
 def main():
@@ -272,11 +306,12 @@ def main():
 
         sys.exit(1)
 
-    version_pos = next(
-        (i for i, x in enumerate(ARGS) if x.startswith("--version=")), None
-    )
-    type_pos = next((i for i, x in enumerate(ARGS) if x.startswith("--type=")), None)
-    arch_pos = next((i for i, x in enumerate(ARGS) if x.startswith("--arch=")), None)
+    def find_flag(flag):
+        return next((i for i, x in enumerate(ARGS) if x.startswith(f"--{flag}=")), None)
+
+    version_pos = find_flag("version")
+    type_pos = find_flag("type")
+    arch_pos = find_flag("arch")
 
     try:
         version = BuildInit.determine_version(ARGS[version_pos])
@@ -284,14 +319,17 @@ def main():
         error("Please provide a version for the output package(s).", 1)
 
     try:
-        output_types = BuildInit.determine_output_type(ARGS[type_pos])
+        retrieved_types = ARGS[type_pos]
     except:
-        output_types = "all"
+        retrieved_types = "--type="
 
     try:
-        output_archs = BuildInit.determine_arch(ARGS[arch_pos])
+        retrieved_archs = ARGS[arch_pos]
     except:
-        output_archs = "all"
+        retrieved_archs = "--arch="
+
+    output_types = BuildInit.determine_output_type(retrieved_types)
+    output_archs = BuildInit.determine_arch(retrieved_archs)
 
     print(f"> Packaging to version: {version}")
     print(f"> Packaging to format(s): {output_types}")
@@ -304,7 +342,7 @@ def main():
 
     OutputPackage.assemble(version, output_types, output_archs)
 
-    print("Packaging complete!")
+    print("\n> Packaging complete!")
 
 
 if __name__ == "__main__":
