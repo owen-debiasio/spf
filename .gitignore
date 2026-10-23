@@ -4,6 +4,10 @@
 # Building
 packages/artifacts
 
+# Python
+__pycache__
+.ruff_cache
+
 # Spare spf related items
 spf-*
 *.spf
