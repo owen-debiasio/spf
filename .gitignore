@@ -1,6 +1,9 @@
 # Rust junk
 /target
 
+# Building
+packages/artifacts
+
 # Spare spf related items
 spf-*
 *.spf
