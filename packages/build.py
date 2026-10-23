@@ -4,6 +4,7 @@ import os
 import pathlib
 import subprocess
 import sys
+import shutil
 
 
 class Cargo:
@@ -109,8 +110,8 @@ class OutputPackage:
         if (
             type_is_str
             and arch_is_str
-            and not package_type is OutputPackage.Type.all
-            and not arch is OutputPackage.Arch.all
+            and not package_type == OutputPackage.Type.all
+            and not arch == OutputPackage.Arch.all
         ):
             match package_type:
                 case OutputPackage.Type.bin:
@@ -122,7 +123,8 @@ class OutputPackage:
                 case OutputPackage.Type.spf:
                     extension = f".{OutputPackage.Type.spf}"
 
-            file_name = f"./packages/artifacts/spf-{version}-{arch}-linux{extension}"
+            file_name = f"spf-{version}-{arch}-linux{extension}"
+            dest = f"./packages/artifacts/{file_name}"
 
             target = Cargo.determine_target(arch)
             Cargo.build(target, is_release=True)
@@ -140,20 +142,23 @@ class OutputPackage:
                             f"./target/debug/spf",
                             "create",
                             "spfbuildcfg",
-                            file_name,
+                            dest,
                         ]
                     )
                     os.remove("spfbuildcfg")
                 case OutputPackage.Type.deb:
-                    subprocess.run(["cargo-deb", "--target", target, "-o", file_name])
+                    subprocess.run(["cargo-deb", "--target", target, "-o", dest])
 
                 case OutputPackage.Type.rpm:
                     subprocess.run(
-                        ["cargo-generate-rpm", "--target", target, "-o", file_name]
+                        ["cargo-generate-rpm", "--target", target, "-o", dest]
                     )
 
+                case OutputPackage.Type.bin:
+                    shutil.copy(f"target/{target}/release/spf", dest)
+
         else:
-            error("Not implemented")
+            error("Not implemented", 1)
 
 
 class BuildInit:
