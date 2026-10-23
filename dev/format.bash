@@ -11,4 +11,5 @@ cargo fmt
 find . -name "*.bash" -exec shellcheck {} +
 shfmt -w -i 4 -ci -sr .
 
-black packages/build.py
+ruff check
+ruff format --check
