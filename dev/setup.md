@@ -22,7 +22,7 @@ Some stuff to help with development
 - `shfmt` for formatting shell files
 - `shellcheck` for linting shell files
 
-- `python-black` for formatting Python files
+- `ruff` for formatting and linting Python files
 
 ## Cargo packages
 
