@@ -2,9 +2,9 @@
 
 import os
 import pathlib
+import shutil
 import subprocess
 import sys
-import shutil
 
 
 class Cargo:
@@ -16,14 +16,16 @@ class Cargo:
     def build(target: Target, is_release: bool):
         if is_release:
             if target == Cargo.Target.host:
-                subprocess.run(["cargo", "build", "--release"])
+                subprocess.run(["cargo", "build", "--release"], check=False)
             else:
-                subprocess.run(["cargo", "build", "--target", target, "--release"])
+                subprocess.run(
+                    ["cargo", "build", "--target", target, "--release"], check=False
+                )
         else:
             if target == Cargo.Target.host:
-                subprocess.run(["cargo", "build"])
+                subprocess.run(["cargo", "build"], check=False)
             else:
-                subprocess.run(["cargo", "build", "--target", target])
+                subprocess.run(["cargo", "build", "--target", target], check=False)
 
     def determine_target(arch) -> Target:
         if arch == OutputPackage.Arch.aarch64:
@@ -94,14 +96,14 @@ class OutputPackage:
         bin = "bin"
         all = "all"
 
-        valid_types = {spf, deb, rpm, bin, all, ""}
+        valid_types = {spf, deb, rpm, bin, all, ""}  # noqa: RUF012
 
     class Arch:
         x86_64 = "x86_64"
         aarch64 = "aarch64"
         all = "all"
 
-        valid_types = {x86_64, aarch64, all, ""}
+        valid_types = {x86_64, aarch64, all, ""}  # noqa: RUF012
 
     def get_extension(type_to_convert) -> str:
         match type_to_convert:
@@ -121,19 +123,22 @@ class OutputPackage:
             meta.write(determine_spf_metadata(pack_version, pack_target, pack_arch))
         subprocess.run(
             [
-                f"./target/debug/spf",
+                "./target/debug/spf",
                 "create",
                 "spfbuildcfg",
                 dest,
-            ]
+            ],
+            check=False,
         )
         os.remove("spfbuildcfg")
 
     def build_deb(pack_t, pack_dest):
-        subprocess.run(["cargo-deb", "--target", pack_t, "-o", pack_dest])
+        subprocess.run(["cargo-deb", "--target", pack_t, "-o", pack_dest], check=False)
 
     def build_rpm(pack_t, pack_dest):
-        subprocess.run(["cargo-generate-rpm", "--target", pack_t, "-o", pack_dest])
+        subprocess.run(
+            ["cargo-generate-rpm", "--target", pack_t, "-o", pack_dest], check=False
+        )
 
     def build_all_types(package_type, version, target, arch, dest):
         match package_type:
@@ -200,7 +205,7 @@ class BuildInit:
 
         version_split = collected_version.split(".")
 
-        if not len(version_split) == 3:
+        if len(version_split) != 3:
             error(f"Version is formatted incorrectly: {version_split}", 1)
 
         major = version_split[0]
@@ -238,7 +243,7 @@ class BuildInit:
         if type(collected_type).__name__ == "list":
             filtered_list = list(set(collected_type) - OutputPackage.Type.valid_types)
 
-            if not len(filtered_list) == 0:
+            if len(filtered_list) != 0:
                 error(f"Invalid package type(s): {filtered_list}", 1)
             else:
                 return collected_type
@@ -276,7 +281,7 @@ class BuildInit:
         if type(collected_arch).__name__ == "list":
             filtered_list = list(set(collected_arch) - OutputPackage.Arch.valid_types)
 
-            if not len(filtered_list) == 0:
+            if len(filtered_list) != 0:
                 error(f"Invalid arch(s): {filtered_list}", 1)
             else:
                 return collected_arch
@@ -315,17 +320,17 @@ def main():
 
     try:
         version = BuildInit.determine_version(ARGS[version_pos])
-    except:
+    except:  # noqa: E722
         error("Please provide a version for the output package(s).", 1)
 
     try:
         retrieved_types = ARGS[type_pos]
-    except:
+    except:  # noqa: E722
         retrieved_types = "--type="
 
     try:
         retrieved_archs = ARGS[arch_pos]
-    except:
+    except:  # noqa: E722
         retrieved_archs = "--arch="
 
     output_types = BuildInit.determine_output_type(retrieved_types)
