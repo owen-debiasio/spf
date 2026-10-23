@@ -70,7 +70,7 @@ pub fn create_spf_package(package_config: &str, mut output_location: &str) -> Re
     copy_package_paths(&package_config_contents, output_location)?;
 
     // Zip the output folder into a .spf package
-    println!("Packaging...");
+    println!("\nPackaging...");
 
     // If the provided output name already ends with `.spf`, do nothing (return empty &str).
     // Otherwise, append extension.
@@ -206,7 +206,7 @@ fn write_project_meta_config(
         ))
     }
 
-    println!("Writing package metadata...");
+    println!("\nWriting package metadata...\n");
 
     // Convert the vectorized buffer to an easily writable string
     let processed_meta_buffer = project_meta_buffer.join("\n");
