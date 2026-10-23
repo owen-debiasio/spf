@@ -152,3 +152,4 @@ shape spf.
 - New and improved package builder: [./packages/build.py](./packages/build.py)
 - Retired `./dev/package.bash` as the build script for packages, replaced by
   [./packages/build.py](./packages/build.py)
+- Make creation output look nicer when building a `.spf` package
