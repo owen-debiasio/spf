@@ -1,0 +1,24 @@
+{
+    "recommendations": [
+        "rust-lang.rust-analyzer",
+        "timonwong.shellcheck",
+        "ms-python.python",
+        "ms-python.vscode-pylance",
+        "esbenp.prettier-vscode",
+        "davidanson.vscode-markdownlint",
+        "yzhang.markdown-all-in-one",
+        "tamasfe.even-better-toml",
+        "editorconfig.editorconfig",
+        "docker.docker",
+        "jasonnutter.vscode-codeowners",
+        "streetsidesoftware.code-spell-checker",
+        "dustypomerleau.rust-syntax",
+        "ms-vscode.remote-server",
+        "ms-vscode.remote-explorer",
+        "ms-vscode.remote-repositories",
+        "pkief.material-icon-theme",
+        "github.remotehub",
+        "usernamehw.errorlens",
+        "jeff-hykin.better-shellscript-syntax"
+    ]
+}
