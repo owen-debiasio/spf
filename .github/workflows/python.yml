@@ -1,0 +1,41 @@
+name: Python Lint
+
+on:
+  push:
+    paths:
+      - "**/*.py"
+      - "**/.github/workflows/python.yml"
+  pull_request:
+    paths:
+      - "**/*.py"
+      - "**/.github/workflows/python.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  markdownlint:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v7
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: 24
+
+      - name: Update repos
+        run: |
+          sudo apt update
+          sudo apt install pipx
+
+      - name: Install Ruff
+        run: pipx install ruff
+
+      - name: Lint Code
+        run: ruff check
+
+      - name: Format Check
+        run: ruff format --check
