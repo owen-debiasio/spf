@@ -61,9 +61,9 @@ jobs:
           echo -e "#!/bin/bash\necho '> Skipping format in CI'\nexit 0" > ./dev/format.bash
           chmod +x ./dev/format.bash
 
-          chmod +x ./packages/build.bash
+          chmod +x ./packages/build.py
 
-          ./packages/build.bash "${{ github.ref_name }}"
+          ./packages/build.py --version="${{ github.ref_name }}"
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v3
