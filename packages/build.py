@@ -1,7 +1,8 @@
-#!/usr/bin/python
+#!/usr/bin/env python3
 
 import os
 import pathlib
+import platform
 import shutil
 import subprocess
 import sys
@@ -55,7 +56,7 @@ def error(text, code: int):
 def intro():
     method_to_exec = ARGS[0]
     print(
-        f"spf Packager v0.1.1\n\n"
+        f"spf Packager v0.1.2\n\n"
         f"Usage: {method_to_exec} [OPTIONS]\n\n"
         f"Options:\n"
         f"    --version=[VERSION]     Version to package to [crate, vX.X.X]\n"
@@ -314,6 +315,9 @@ class BuildInit:
 
 
 def main():
+
+    if platform.system() == "Windows":
+        input("WARNING: I encourage using WSL when developing spf!\n")
 
     arg_len = len(ARGS)
 
