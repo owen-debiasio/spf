@@ -7,11 +7,13 @@ packages/artifacts
 # Python
 __pycache__
 .ruff_cache
+.venv
 
 # Spare spf related items
 spf-*
 *.spf
 spfbuildcfg
+.SPF_DEV_CFG
 
 # Spare debian package items
 *.deb

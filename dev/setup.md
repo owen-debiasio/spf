@@ -72,3 +72,21 @@ sudo docker build -t spf .
 ```bash
 sudo docker run -it spf
 ```
+
+## Python
+
+Python (at the moment) is only used for
+[the package build script](../packages/build.py). Here's how to set it up.
+
+### Setup using uv (preferred)
+
+```bash
+uv sync
+```
+
+### Other
+
+You just need to install the following:
+
+- Python (>= v3.10)
+- Ruff
