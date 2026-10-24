@@ -153,3 +153,6 @@ shape spf.
 - Retired `./dev/package.bash` as the build script for packages, replaced by
   [./packages/build.py](./packages/build.py)
 - Make creation output look nicer when building a `.spf` package
+- [./dev/install.bash](./dev/install.bash) now uses
+  [./packages/build.py](./packages/build.py) to build/install packages (if your
+  cpu is supported). Otherwise, use the old way.
