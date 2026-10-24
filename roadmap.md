@@ -1,7 +1,7 @@
 # spf Roadmap
 
 > [!IMPORTANT]  
-> Last updated: `October 17, 2026 @ 01:27 PM EST`
+> Last updated: `October 23, 2026 @ 08:44 PM EST`
 
 Here's an idea list that I've thrown together of things I want to add/change
 over time. These are only IDEAS and are not guaranteed to be implemented.
@@ -33,9 +33,9 @@ dropped out of the list at any point.
 
 | Feature                                                               | Priority | Due Date (version) |
 | --------------------------------------------------------------------- | -------- | ------------------ |
-| Pre/Post install/uninstall jobs                                       | High     | v0.8.0             |
 | Command `verify`: Verify `.spf`/installed package metadata and config | Medium   | v0.8.0             |
 | Conversion in between `.spf` and Arch Linux `PKGBUILD` packages       | Low      | v0.8.0             |
+| Pre/Post install/uninstall jobs                                       | High     | v0.9.0             |
 | Ability to install packages through a remote repository               | High     | v1.0.0             |
 | Move to a `.toml`-based package configuration/metadata                | High     | v1.0.0             |
 | Add a `.toml` configuration system for spf cli and backend            | Medium   | v1.0.0             |
