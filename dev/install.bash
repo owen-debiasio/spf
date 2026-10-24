@@ -2,13 +2,21 @@
 
 set -e
 
-# lint and format
-./dev/format.bash
+VERSION="v$(cargo pkgid | cut -d "#" -f2)"
+ARCH="$(uname -m)"
 
-# build
-cargo build
+DEBUG_PATH="./target/debug/spf"
 
-# copy spf
-sudo cp ./target/debug/spf /usr/bin/spf
+if [[ "$ARCH" != "x86_64" && "$ARCH" != "aarch64" ]]; then
+    ./dev/format.bash
 
-echo -e "\ninstalled"
+    cargo build
+
+    sudo cp "$DEBUG_PATH" /usr/bin/spf
+else
+    ./packages/build.py --version="$VERSION" --arch="$ARCH" --type=spf
+
+    sudo "$DEBUG_PATH" install ./packages/artifacts/spf-"$VERSION"-"$ARCH"-linux.spf
+fi
+
+echo -e "\n> Installed"
