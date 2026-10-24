@@ -29,7 +29,7 @@ mod template;
 /// let spf_version = VERSION;
 /// println!("{spf_version}")
 /// ```
-pub static VERSION: &str = "v0.7.0";
+pub static VERSION: &str = "v0.8.0";
 
 fn main() -> Result<(), Error> {
     // Intro
