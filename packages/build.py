@@ -55,10 +55,10 @@ def error(text, code: int):
 def intro():
     method_to_exec = ARGS[0]
     print(
-        f"spf Packager v0.1.0\n\n"
+        f"spf Packager v0.1.1\n\n"
         f"Usage: {method_to_exec} [OPTIONS]\n\n"
         f"Options:\n"
-        f"    --version=[VERSION]     Version to package to\n\n"
+        f"    --version=[VERSION]     Version to package to [crate, vX.X.X]\n"
         f"    --type=TYPE[,TYPE...]   Target packages [all, spf, rpm, deb, bin]\n"
         f"    --arch=ARCH[,ARCH...]   Target architectures [all, x86_64, aarch64]\n\n"
         f"Example:\n"
@@ -203,6 +203,17 @@ class BuildInit:
 
         collected_version = retrieved_flag.split("=")[1]
 
+        if collected_version == "crate" or len(collected_version) == 0:
+            crate_version = subprocess.run(
+                'cargo pkgid | cut -d "#" -f2',
+                check=False,
+                shell=True,
+                capture_output=True,
+                text=True,
+            )
+
+            return "v" + crate_version.stdout.removesuffix("\n")
+
         version_split = collected_version.split(".")
 
         if len(version_split) != 3:
@@ -215,7 +226,7 @@ class BuildInit:
         if (
             not minor.isnumeric()
             or not micro.isnumeric()
-            or not major.replace("v", "").isnumeric()
+            or not major.removeprefix("v").isnumeric()
         ):
             error(
                 f"Version {version_split} must not contain letters/symbols (excluding 'v')",
