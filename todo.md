@@ -1,7 +1,7 @@
 # spf TODO
 
 > [!IMPORTANT]  
-> Last updated: `October 23, 2026 @ 8:40 PM EST`
+> Last updated: `October 24, 2026 @ 5:43 PM EST`
 
 Related:
 
@@ -17,8 +17,10 @@ Related:
 
 <!-- markdownlint-disable MD013 -->
 
-| Task                            | Files/Location | Status        | Priority | Due Date |
-| ------------------------------- | -------------- | ------------- | -------- | -------- |
-| Refactor everything, everywhere | [src](./src/)  | WIP (Stalled) | Medium   | v1.0.0   |
+| Task                                                                                          | Status        | Priority  | Due Date |
+| --------------------------------------------------------------------------------------------- | ------------- | --------- | -------- |
+| Fix installing/reinstalling a package adding paths not needed, causing problems when removing | Not Started   | Very High | v0.8.0   |
+| Fix flags (args starting with `-`) not being recognized                                       | Not Started   | High      | v0.8.0   |
+| Refactor everything, everywhere                                                               | WIP (Stalled) | Medium    | v1.0.0   |
 
 <!-- markdownlint-enable MD013 -->
