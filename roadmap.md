@@ -33,8 +33,8 @@ dropped out of the list at any point.
 
 | Feature                                                               | Priority | Due Date (version) |
 | --------------------------------------------------------------------- | -------- | ------------------ |
-| Command `verify`: Verify `.spf`/installed package metadata and config | Medium   | v0.8.0             |
-| Conversion in between `.spf` and Arch Linux `PKGBUILD` packages       | Low      | v0.8.0             |
+| Command `verify`: Verify `.spf`/installed package metadata and config | High     | v0.8.0             |
+| Conversion in between `.spf` and Arch Linux `PKGBUILD` packages       | Medium   | v0.8.0             |
 | Pre/Post install/uninstall jobs                                       | High     | v0.9.0             |
 | Ability to install packages through a remote repository               | High     | v1.0.0             |
 | Move to a `.toml`-based package configuration/metadata                | High     | v1.0.0             |
