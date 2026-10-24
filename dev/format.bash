@@ -12,4 +12,4 @@ find . -name "*.bash" -exec shellcheck {} +
 shfmt -w -i 4 -ci -sr .
 
 ruff check
-ruff format --check
+ruff format
