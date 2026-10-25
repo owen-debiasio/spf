@@ -106,16 +106,12 @@ class OutputPackage:
 
         valid_types = {x86_64, aarch64, all, ""}  # noqa: RUF012
 
-    def get_extension(type_to_convert) -> str:
+    def get_extension(type_to_convert: Type) -> str:
         match type_to_convert:
             case OutputPackage.Type.bin:
                 return ""
-            case OutputPackage.Type.deb:
-                return f".{OutputPackage.Type.deb}"
-            case OutputPackage.Type.rpm:
-                return f".{OutputPackage.Type.rpm}"
-            case OutputPackage.Type.spf:
-                return f".{OutputPackage.Type.spf}"
+            case _:
+                return f".{type_to_convert}"
 
     def build_spf(pack_version, pack_target, pack_arch, dest):
         Cargo.build(Cargo.Target.host, is_release=False)
@@ -153,7 +149,6 @@ class OutputPackage:
                 shutil.copy2(f"target/{target}/release/spf", dest)
 
     def build_and_package(version, package_type, arch):
-        """Helper function to compile and package a specific variant."""
         file_name = (
             f"spf-{version}-{arch}-linux{OutputPackage.get_extension(package_type)}"
         )
