@@ -14,26 +14,29 @@ class Cargo:
         aarch64 = "aarch64-unknown-linux-gnu"
         host = None
 
-    def build(target: Target, is_release: bool):
+    @staticmethod
+    def build(target: str | None, is_release: bool):
         if is_release:
             if target == Cargo.Target.host:
-                subprocess.run(["cargo", "build", "--release"], check=False)
+                subprocess.run("cargo build --release", shell=True, check=False)
             else:
                 subprocess.run(
-                    ["cargo", "build", "--target", target, "--release"], check=False
+                    f"cargo build --target {target} --release", shell=True, check=False
                 )
         else:
             if target == Cargo.Target.host:
-                subprocess.run(["cargo", "build"], check=False)
+                subprocess.run("cargo build", shell=True, check=False)
             else:
-                subprocess.run(["cargo", "build", "--target", target], check=False)
+                subprocess.run(
+                    f"cargo build --target {target}", shell=True, check=False
+                )
 
-    def determine_target(arch) -> Target:
+    @staticmethod
+    def determine_target(arch):
         if arch == OutputPackage.Arch.aarch64:
-            target = Cargo.Target.aarch64
+            return Cargo.Target.aarch64
         elif arch == OutputPackage.Arch.x86_64:
-            target = Cargo.Target.x86_64
-        return target
+            return Cargo.Target.x86_64
 
 
 def create_artifact_dir():
@@ -56,7 +59,7 @@ def error(text, code: int):
 def intro():
     method_to_exec = ARGS[0]
     print(
-        f"spf Packager v0.1.2\n\n"
+        f"spf Packager v0.1.3\n\n"
         f"Usage: {method_to_exec} [OPTIONS]\n\n"
         f"Options:\n"
         f"    --version=[VERSION]     Version to package to [crate, vX.X.X]\n"
@@ -106,13 +109,15 @@ class OutputPackage:
 
         valid_types = {x86_64, aarch64, all, ""}  # noqa: RUF012
 
-    def get_extension(type_to_convert: Type) -> str:
+    @staticmethod
+    def get_extension(type_to_convert: Type):
         match type_to_convert:
             case OutputPackage.Type.bin:
                 return ""
             case _:
                 return f".{type_to_convert}"
 
+    @staticmethod
     def build_spf(pack_version, pack_target, pack_arch, dest):
         Cargo.build(Cargo.Target.host, is_release=False)
 
@@ -129,14 +134,17 @@ class OutputPackage:
         )
         os.remove("spfbuildcfg")
 
+    @staticmethod
     def build_deb(pack_t, pack_dest):
         subprocess.run(["cargo-deb", "--target", pack_t, "-o", pack_dest], check=False)
 
+    @staticmethod
     def build_rpm(pack_t, pack_dest):
         subprocess.run(
             ["cargo-generate-rpm", "--target", pack_t, "-o", pack_dest], check=False
         )
 
+    @staticmethod
     def build_all_types(package_type, version, target, arch, dest):
         match package_type:
             case OutputPackage.Type.spf:
@@ -148,6 +156,7 @@ class OutputPackage:
             case OutputPackage.Type.bin:
                 shutil.copy2(f"target/{target}/release/spf", dest)
 
+    @staticmethod
     def build_and_package(version, package_type, arch):
         file_name = (
             f"spf-{version}-{arch}-linux{OutputPackage.get_extension(package_type)}"
@@ -158,6 +167,7 @@ class OutputPackage:
         Cargo.build(target, is_release=True)
         OutputPackage.build_all_types(package_type, version, target, arch, dest)
 
+    @staticmethod
     def assemble(version, package_types, archs):
         print("> Building...\n")
 
@@ -195,7 +205,8 @@ class OutputPackage:
 
 
 class BuildInit:
-    def determine_version(retrieved_flag: str) -> str:
+    @staticmethod
+    def determine_version(retrieved_flag: str):
 
         collected_version = retrieved_flag.split("=")[1]
 
@@ -234,7 +245,8 @@ class BuildInit:
         else:
             return f"v{collected_version}"
 
-    def determine_output_type(retrieved_flag: str) -> str:
+    @staticmethod
+    def determine_output_type(retrieved_flag: str):
 
         collected_type = retrieved_flag.split("=")[1]
 
@@ -272,7 +284,8 @@ class BuildInit:
                 case _:
                     error(f'Invalid output type: "{collected_type}".', 1)
 
-    def determine_arch(retrieved_flag: str) -> str:
+    @staticmethod
+    def determine_arch(retrieved_flag: str):
 
         collected_arch = retrieved_flag.split("=")[1]
 
@@ -328,21 +341,15 @@ def main():
     type_pos = find_flag("type")
     arch_pos = find_flag("arch")
 
-    try:
-        version = BuildInit.determine_version(ARGS[version_pos])
-    except:  # noqa: E722
-        error("Please provide a version for the output package(s).", 1)
+    retrieved_version = (
+        ARGS[version_pos]
+        if version_pos is not None
+        else error("Please provide a version for the output package(s).", 1)
+    )
+    retrieved_types = ARGS[type_pos] if type_pos is not None else "--type="
+    retrieved_archs = ARGS[arch_pos] if arch_pos is not None else "--arch="
 
-    try:
-        retrieved_types = ARGS[type_pos]
-    except:  # noqa: E722
-        retrieved_types = "--type="
-
-    try:
-        retrieved_archs = ARGS[arch_pos]
-    except:  # noqa: E722
-        retrieved_archs = "--arch="
-
+    version = BuildInit.determine_version(retrieved_version)
     output_types = BuildInit.determine_output_type(retrieved_types)
     output_archs = BuildInit.determine_arch(retrieved_archs)
 
