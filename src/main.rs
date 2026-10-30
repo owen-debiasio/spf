@@ -3,7 +3,7 @@ use std::{io::Error, process::exit};
 use crate::{
     list::list_packages,
     package::Package,
-    sys::{Args, error, return_args},
+    sys::{Args, return_args},
     template::gen_meta_template,
 };
 
@@ -35,16 +35,29 @@ fn main() -> Result<(), Error> {
     // Intro
     println!("spf-{VERSION}\n");
 
-    // Collect user args
-    let mut parsed_args = return_args()?;
-    parsed_args.retain(|arg| !arg.as_str().starts_with("-"));
+    let all = return_args()?;
+
+    // Parse commands, strip flags
+    let mut commands = all.clone();
+    commands.retain(|arg| !arg.as_str().starts_with("-"));
+
+    // Parse commands, strip flags
+    let mut flags = all.clone();
+    flags.retain(|arg| arg.as_str().starts_with("-"));
 
     let collected_args = Args {
-        all: parsed_args.clone(),
-        root: parsed_args.first().unwrap_or(&String::new()).to_string(),
-        second: parsed_args.get(1).unwrap_or(&String::new()).to_string(),
-        third: parsed_args.get(2).unwrap_or(&String::new()).to_string(),
+        commands: commands.clone(),
+        flags,
+        root: commands.first().unwrap_or(&String::new()).to_string(),
+        second: commands.get(1).unwrap_or(&String::new()).to_string(),
+        third: commands.get(2).unwrap_or(&String::new()).to_string(),
     };
+
+    if collected_args.flags.contains(&"--debug".to_string()) {
+        println!("WARNING: Debug mode on!\n");
+
+        println!("DEBUG: Collected args: {collected_args:?}\n")
+    }
 
     parse_spf_cli(collected_args)?;
 
@@ -72,7 +85,7 @@ fn parse_spf_cli(collected_args: Args) -> Result<(), Error> {
 
         "install" => Package::from(collected_args.second)?.install()?,
 
-        "remove" => Package::remove(collected_args.all)?,
+        "remove" => Package::remove(collected_args.commands)?,
 
         "list" => list_packages(&collected_args.second)?,
 
@@ -82,17 +95,17 @@ fn parse_spf_cli(collected_args: Args) -> Result<(), Error> {
 
         "convert" => Package::from(collected_args.second)?.convert(&collected_args.third)?,
 
-        // Version is already mentioned at the top of this file
-        "--version" | "-v" => println!(
-            "Written by Owen DeBiasio <owen.debiasio@gmail.com>. Licensed under GPL-3.0-or-later.\n\
-            spf has NO WARRANTY and is not responsible for breaking your system."
-        ),
-
-        // If no args are provided, just show the usage menu
-        "" => available_commands(),
-
-        // If the arg provided isn't provided, throw error
-        _ => error(&format!("Invalid command: {}", collected_args.root)),
+        _ => {
+            let flags = collected_args.flags;
+            if flags.contains(&"--version".to_string()) || flags.contains(&"-v".to_string()) {
+                println!(
+                    "Written by Owen DeBiasio <owen.debiasio@gmail.com>. Licensed under GPL-3.0-or-later.\n\
+                    spf has NO WARRANTY and is not responsible for breaking your system."
+                )
+            } else {
+                available_commands()
+            }
+        }
     }
 
     Ok(())
@@ -113,6 +126,7 @@ fn available_commands() {
         \n\
         Available options:\n\n \
           --version       Display spf version\n \
-          --ignore-arch   Force the installation of a package with a different architecture"
+          --ignore-arch   Force the installation of a package with a different architecture\n \
+          --debug         Display debug information as spf runs"
     );
 }

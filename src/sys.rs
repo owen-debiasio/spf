@@ -214,9 +214,13 @@ pub fn return_args() -> Result<Vec<String>, Error> {
 /// assert_eq!(args.get(1), collected_args.second);
 /// assert_eq!(args.get(2), collected_args.third);
 /// ```
+#[derive(Debug)]
 pub struct Args {
-    /// Every argument passed
-    pub all: Vec<String>,
+    /// Commands, subcommands, etc
+    pub commands: Vec<String>,
+
+    /// Flags such as `--version`
+    pub flags: Vec<String>,
 
     /// The root action (Passed arg #1)
     pub root: String,
