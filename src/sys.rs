@@ -197,22 +197,25 @@ pub fn return_args() -> Result<Vec<String>, Error> {
 ///
 /// All are stored as [`String`].
 ///
-/// The only entries are the arg positions used.
-///
 /// ```
-/// let args = vec![String::from("arg1"), String::from("arg1"), String::from("arg1")];
+/// let args = vec![String::from("arg1"), String::from("--flag"), String::from("arg1"), String::from("arg1")];
 ///
 /// let collected_args = Args {
-///    all: args,
+///    commands: vec![args.first(), args.get(2), args.get(3)],
+///    flags: vec![args.get(1)]
 ///    root: args.first(),
-///    second: args.get(1),
-///    third: args.get(2),
+///    second: args.get(2),
+///    third: args.get(3),
 /// };
 ///
-/// assert_eq!(args, collected_args.all);
+/// // Verify groups (commands and flags)
+/// assert_eq!(vec![args.first(), args.get(2), args.get(3)], collected_args.commands);
+/// assert_eq!(vec![args.get(1)], collected_args.flags);
+///
+/// // Verify individual commands
 /// assert_eq!(args.first(), collected_args.root);
-/// assert_eq!(args.get(1), collected_args.second);
-/// assert_eq!(args.get(2), collected_args.third);
+/// assert_eq!(args.get(2), collected_args.second);
+/// assert_eq!(args.get(3), collected_args.third);
 /// ```
 #[derive(Debug)]
 pub struct Args {
