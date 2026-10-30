@@ -156,3 +156,7 @@ shape spf.
 - [./dev/install.bash](./dev/install.bash) now uses
   [./packages/build.py](./packages/build.py) to build/install packages (if your
   cpu is supported). Otherwise, use the old way.
+- Remove dependency `file_diff`
+- Fix arguments being parsed incorrectly
+- Fix paths being written in package installation files
+- Fix files not being copied/overwritten properly
