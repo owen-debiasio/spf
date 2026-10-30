@@ -3,11 +3,10 @@
 //! Copyright (C) 2026 Owen Debiasio <owen.debiasio@gmail.com>
 //! SPDX-License-Identifier: GPL-3.0-or-later
 
-use file_diff::diff_files;
 use glob::glob;
 use std::{
     env::consts::ARCH,
-    fs::{File, OpenOptions, copy, create_dir_all, read_to_string, remove_dir_all, remove_file},
+    fs::{OpenOptions, copy, create_dir_all, read_to_string, remove_dir_all, remove_file},
     io::{Error, Write, stdin},
     path::Path,
     process::exit,
@@ -18,7 +17,7 @@ use crate::{
     fs::FileProperty,
     metadata::{Categories, Meta, PACKAGE_INSTALL_PATH},
     package::Package,
-    sys::{args_contains, error, get_binary_path, is_root},
+    sys::{args_contains, error, is_root},
 };
 
 /// Installs a .spf package.
@@ -350,54 +349,46 @@ fn install_files(
         Err(err) => error(&format!("Failed to collect paths: {err}")),
     };
 
-    // Go through and install packaged paths
+    let extracted_path = Path::new(extracted_package_path);
+
     for found_path in collected_paths {
-        // File/folder to be copied
-        let file_from_archive = found_path?.display().to_string();
+        let found_path = found_path?;
 
-        // Path where `file_from_archive` will be copied to
-        // `extracted_package_path` is removed to prevent conflicts
-        let file_destination = file_from_archive.replacen(extracted_package_path, "", 1);
+        let relative_path = found_path
+            .strip_prefix(extracted_path)
+            .unwrap_or_else(|err| error(&format!("Failed to strip path prefix: {err}")));
 
-        // `file_destination` as `Path`
-        let path_to_create = Path::new(&file_destination);
-
-        // If a file is already installed, AND NOT found in the previous metadata,
-        // just skip.
-        if path_to_create.exists()
-            && !previous_meta_contents.contains(&format!("{file_destination}\n"))
-        {
+        // Skip the root directory
+        if relative_path.as_os_str().is_empty() {
             continue;
         }
 
-        // If the path to be copied is a directory, simply create it instead of copying it.
-        if Path::new(&file_from_archive).is_dir() {
-            create_dir_all(path_to_create)?;
-        } else {
-            println!("    Copying \"{file_from_archive}\" -> \"{file_destination}\"");
+        let file_destination = Path::new("/").join(relative_path);
+        let meta_entry = format!("{}\n", file_destination.display());
 
-            if path_to_create.exists()
-                && !diff_files(
-                    &mut File::open(&file_from_archive)?,
-                    &mut File::open(&file_destination)?,
-                )
-            {
-                continue;
-            }
-
-            // Check if the file being copied `file_destination` is spf itself. If so,
-            // replace the old binary (current binary path) with the new binary
-            // (`file_from_archive`/`file_destination`)
-            if file_destination == get_binary_path()? {
-                self_replace::self_replace(&file_from_archive)?;
-            }
-
-            copy(&file_from_archive, &file_destination)?;
+        // Skip system files
+        if file_destination.exists() && !previous_meta_contents.contains(&meta_entry) {
+            continue;
         }
 
-        // Write the path of the file to later be removed when uninstalled.
-        // Basically shows that the program is installed.
-        project_meta_file.write_all(format!("{file_destination}\n").as_bytes())?;
+        if found_path.is_dir() {
+            create_dir_all(&file_destination)?;
+            continue;
+        } else {
+            if let Some(parent) = file_destination.parent() {
+                create_dir_all(parent)?;
+            }
+
+            println!(
+                "    Copying \"{}\" -> \"{}\"",
+                found_path.display(),
+                file_destination.display()
+            );
+
+            copy(&found_path, &file_destination)?;
+        }
+
+        project_meta_file.write_all(meta_entry.as_bytes())?;
     }
 
     Ok(())
