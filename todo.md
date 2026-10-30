@@ -17,8 +17,9 @@ Related:
 
 <!-- markdownlint-disable MD013 -->
 
-| Task                            | Status        | Priority | Due Date |
-| ------------------------------- | ------------- | -------- | -------- |
-| Refactor everything, everywhere | WIP (Stalled) | Medium   | v1.0.0   |
+| Task                            | Status        | Priority | Due Date         |
+| ------------------------------- | ------------- | -------- | ---------------- |
+| Refactor everything, everywhere | WIP (Stalled) | Medium   | v1.0.0           |
+| Continue to work on debug mode  | WIP           | Medium   | v0.8.0 -> v1.0.0 |
 
 <!-- markdownlint-enable MD013 -->
