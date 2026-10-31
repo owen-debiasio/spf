@@ -8,7 +8,7 @@ use flate2::read::GzDecoder;
 use std::{
     ffi::OsStr,
     fs::{self, File},
-    io::{BufReader, Error, copy},
+    io::{BufReader, Error, Write, copy},
     path::{Path, PathBuf},
     str::from_utf8,
 };
@@ -91,6 +91,7 @@ impl FileProperty {
 }
 
 /// Determines what type of archive to create/extract
+#[derive(Debug, PartialEq)]
 pub enum ArchiveType {
     Tar,
     Xz,
@@ -104,6 +105,9 @@ pub enum ArchiveType {
 /// `path`.
 ///
 /// Finish and close the archive once done.
+///
+/// NOTE: Only supports standard `tar` or `tar.xz`. Other variations are
+/// disregarded.
 ///
 /// Inputs:
 ///     - `output` ([`str`]) is the name of the output archive
@@ -125,32 +129,25 @@ pub fn create_archive(
 ) -> Result<(), Error> {
     let archive_file = File::create(output_file)?;
 
-    match archive_type {
-        ArchiveType::Tar => {
-            let mut archive = Builder::new(archive_file);
+    let writer: Box<dyn Write> = if archive_type == ArchiveType::Tar {
+        Box::new(archive_file)
+    } else if archive_type == ArchiveType::Xz {
+        Box::new(XzEncoder::new(archive_file, 6))
+    } else {
+        panic!(
+            "Some bullshit happened: archive_type: {archive_type:?}. Probably unsupported archive type"
+        )
+    };
 
-            if Path::new(path_to_archive).is_dir() {
-                archive.append_dir_all(FileProperty::name(path_to_archive)?, path_to_archive)?;
-            } else {
-                archive.append_path(path_to_archive)?
-            }
+    let mut archive = Builder::new(writer);
 
-            archive.finish()?;
-        }
-        ArchiveType::Xz => {
-            let mut archive = Builder::new(XzEncoder::new(archive_file, 6));
-
-            if Path::new(path_to_archive).is_dir() {
-                archive.append_dir_all(FileProperty::name(path_to_archive)?, path_to_archive)?;
-            } else {
-                archive.append_path(path_to_archive)?
-            }
-
-            archive.finish()?;
-        }
-        ArchiveType::Gz => todo!(),
-        ArchiveType::Ar => todo!(),
+    if Path::new(path_to_archive).is_dir() {
+        archive.append_dir_all(FileProperty::name(path_to_archive)?, path_to_archive)?;
+    } else {
+        archive.append_path(path_to_archive)?
     }
+
+    archive.finish()?;
 
     Ok(())
 }
