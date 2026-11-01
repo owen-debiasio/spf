@@ -445,11 +445,18 @@ impl Converter {
 
                         let build_host = &format!("SPF package converter @ {hostname}");
 
+                        let converted_arch = convert_arch(&metadata.arch, output_package_type)
+                            .unwrap_or_else(|err| {
+                                remove_dir_all(&self.source_package_path).ok();
+
+                                error(&format!("Failed to convert: {err}"))
+                            });
+
                         let mut package_details = PackageBuilder::new(
                             &metadata.name,
                             &metadata.version,
                             &metadata.license,
-                            convert_arch(&metadata.arch, output_package_type)?,
+                            converted_arch,
                             &metadata.description,
                         );
 
@@ -464,7 +471,10 @@ impl Converter {
                         // Collect paths and add them to the package
                         let collected_paths = match glob(&format!("{extracted_spf}/**/*")) {
                             Ok(paths) => paths,
-                            Err(err) => error(&format!("Failed to load paths: {err}")),
+                            Err(err) => {
+                                remove_dir_all(&self.source_package_path).ok();
+                                error(&format!("Failed to load paths: {err}"))
+                            }
                         };
 
                         for path in collected_paths {

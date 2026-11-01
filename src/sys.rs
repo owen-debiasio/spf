@@ -5,7 +5,7 @@
 
 use std::{
     env::{args, current_exe, var},
-    io::Error,
+    io::{Error, ErrorKind},
     process::exit,
 };
 
@@ -150,7 +150,9 @@ pub fn get_binary_path() -> Result<String, Error> {
 /// println!("{does_arg_contain}");
 /// ```
 pub fn args_contains(arg: &str) -> Result<bool, Error> {
-    Ok(return_args()?.contains(&arg.to_string()))
+    let args = return_args()?.contains(&arg.to_string());
+
+    Ok(args)
 }
 
 /// Returns collected args that have been supplied.
@@ -259,42 +261,38 @@ pub static SUPPORTED_ARCHS: [&str; 5] = ["universal", "x86", "x86_64", "arm", "a
 /// assert_eq!("amd64", converted_arch);
 /// ```
 pub fn convert_arch(input_arch: &str, output_package_type: PackageType) -> Result<&str, Error> {
-    // Reusable error for failed conversion
-    let arch_error = || {
-        error(&format!(
-            "Failed to convert arch \"{input_arch}\" to \"{output_package_type:?}\" equivalent"
-        ))
-    };
+    let arch_convert_error = Err(Error::new(
+        ErrorKind::InvalidData,
+        format!("Invalid architecture (can't convert): {input_arch}"),
+    ));
 
-    let arch = match output_package_type {
+    match output_package_type {
         // .deb/.rpm -> .spf
         PackageType::Spf => match input_arch {
-            "all" | "noarch" | "src" | "nosrc" => "universal",
-            "amd64" | "x86_64" => "x86_64",
-            "i386" | "i686" => "x86",
-            "arm64" | "aarch64" => "aarch64",
-            "armhf" | "armv7hl" | "armvhl" => "arm",
-            _ => arch_error(),
+            "all" | "noarch" | "src" | "nosrc" => Ok("universal"),
+            "amd64" | "x86_64" => Ok("x86_64"),
+            "i386" | "i686" => Ok("x86"),
+            "arm64" | "aarch64" => Ok("aarch64"),
+            "armhf" | "armv7hl" | "armvhl" => Ok("arm"),
+            _ => arch_convert_error,
         },
         // .spf/.rpm -> .deb
         PackageType::Deb => match input_arch {
-            "universal" | "noarch" | "src" | "nosrc" => "all",
-            "x86_64" => "amd64",
-            "x86" | "i386" | "i686" => "i386",
-            "aarch64" => "arm64",
-            "arm" | "armv7hl" | "armvhl" => "armhf",
-            _ => arch_error(),
+            "universal" | "noarch" | "src" | "nosrc" => Ok("all"),
+            "x86_64" => Ok("amd64"),
+            "x86" | "i386" | "i686" => Ok("i386"),
+            "aarch64" => Ok("arm64"),
+            "arm" | "armv7hl" | "armvhl" => Ok("armhf"),
+            _ => arch_convert_error,
         },
         // .spf/.deb -> .rpm
         PackageType::Rpm => match input_arch {
-            "universal" | "all" => "noarch",
-            "x86_64" => "amd64",
-            "x86" | "i386" => "i686",
-            "aarch64" | "arm64" => "aarch64",
-            "arm" | "armhf" => "armv7hl",
-            _ => arch_error(),
+            "universal" | "all" => Ok("noarch"),
+            "x86_64" => Ok("amd64"),
+            "x86" | "i386" => Ok("i686"),
+            "aarch64" | "arm64" => Ok("aarch64"),
+            "arm" | "armhf" => Ok("armv7hl"),
+            _ => arch_convert_error,
         },
-    };
-
-    Ok(arch)
+    }
 }

@@ -169,7 +169,7 @@ impl Meta {
             convert_arch(&metadata.arch, PackageType::Spf)?
         };
 
-        let constructed_meta = vec![
+        Ok(vec![
             format!("### PACKAGED WITH SPF {VERSION} ###\n"),
             format!("PROJECT_NAME = {}", metadata.name),
             format!("VERSION = {}", metadata.version),
@@ -178,8 +178,6 @@ impl Meta {
             format!("LICENSE = {}", metadata.license),
             format!("AUTHORS = {}", metadata.authors),
             format!("ARCH = {arch}"),
-        ];
-
-        Ok(constructed_meta)
+        ])
     }
 }
