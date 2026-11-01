@@ -4,8 +4,8 @@
 //! SPDX-License-Identifier: GPL-3.0-or-later
 
 use crate::{
-    metadata::{Meta, PACKAGE_INSTALL_PATH},
-    sys::{error, get_binary_path, is_root},
+    libs::core::sys::{error, get_binary_path, is_root},
+    libs::metadata::{Meta, PACKAGE_INSTALL_PATH},
 };
 use std::{
     collections::HashSet,

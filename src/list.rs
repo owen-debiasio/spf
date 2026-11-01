@@ -9,8 +9,8 @@ use std::io::Error;
 use glob::glob;
 
 use crate::{
-    metadata::{Meta, PACKAGE_INSTALL_PATH},
-    sys::error,
+    libs::core::sys::error,
+    libs::metadata::{Meta, PACKAGE_INSTALL_PATH},
 };
 
 /// Lists packages that are be installed. You can optionally provide

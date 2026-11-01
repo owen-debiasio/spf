@@ -3,9 +3,9 @@ use std::io::Error;
 use crate::{
     convert::convert,
     create::create_spf_package,
-    fs::{ArchiveType, extract_archive},
     inspect::inspect,
     install::spf_install,
+    libs::core::fs::{ArchiveType, extract_archive},
     remove::remove_packages,
 };
 

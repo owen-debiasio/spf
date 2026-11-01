@@ -1,16 +1,14 @@
 use std::{io::Error, process::exit};
 
 use crate::{
+    libs::core::sys::{Args, return_args},
     list::list_packages,
     package::Package,
-    sys::{Args, return_args},
     template::gen_meta_template,
 };
 
 // Shared
-mod fs;
-mod metadata;
-mod sys;
+mod libs;
 
 mod package;
 

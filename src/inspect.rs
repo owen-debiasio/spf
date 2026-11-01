@@ -12,9 +12,9 @@ use std::{
 
 use crate::{
     convert::PackageType,
-    fs::{ArchiveType, FileProperty, extract_archive},
-    metadata::PACKAGE_INSTALL_PATH,
-    sys::error,
+    libs::core::fs::{ArchiveType, FileProperty, extract_archive},
+    libs::core::sys::error,
+    libs::metadata::PACKAGE_INSTALL_PATH,
 };
 
 /// You can inspect a .spf package you downloaded, or a package

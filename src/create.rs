@@ -6,8 +6,8 @@
 use crate::{
     VERSION,
     convert::PackageType,
-    fs::{ArchiveType, FileProperty, create_archive},
-    sys::{SUPPORTED_ARCHS, error},
+    libs::core::fs::{ArchiveType, FileProperty, create_archive},
+    libs::core::sys::{SUPPORTED_ARCHS, error},
 };
 use std::{
     fs::{File, copy, create_dir_all, read_to_string, remove_dir_all},

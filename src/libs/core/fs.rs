@@ -15,7 +15,7 @@ use std::{
 use tar::{Archive, Builder};
 use xz2::{read::XzDecoder, write::XzEncoder};
 
-use crate::sys::error;
+use crate::libs::core::sys::error;
 
 /// Some utilities to retrieve one of the following properties from a path:
 ///     - File extension (using [`FileProperty::extension`])

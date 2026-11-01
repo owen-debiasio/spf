@@ -4,7 +4,7 @@
 //! Copyright (C) 2026 Owen Debiasio <owen.debiasio@gmail.com>
 //! SPDX-License-Identifier: GPL-3.0-or-later
 
-use crate::sys::error;
+use crate::libs::core::sys::error;
 use std::{env::current_dir, fs::write, io::Error, path::Path};
 
 /// Sample metadata contents to be printed. Every possible feature
