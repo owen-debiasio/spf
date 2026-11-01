@@ -380,10 +380,8 @@ impl Converter {
                     PackageType::Deb => {
                         let mut package = DebPackage::new(&metadata.name);
 
-                        let package_arch = metadata.arch;
-
                         // Convert the architectures to the `.deb` counterparts
-                        let arch_to_use = match package_arch.as_ref() {
+                        let arch_to_use = match metadata.arch.clone().as_ref() {
                             "universal" => DebArchitecture::All,
                             "x86_64" => DebArchitecture::Amd64,
                             "x86" => DebArchitecture::I386,
@@ -438,12 +436,6 @@ impl Converter {
                     // spf -> rpm
                     PackageType::Rpm => {
                         println!("    Setting metadata...");
-                        let hostname = hostname::get()
-                            .unwrap_or(OsStr::from_bytes(b"Unknown").to_owned())
-                            .display()
-                            .to_string();
-
-                        let build_host = &format!("SPF package converter @ {hostname}");
 
                         let converted_arch = convert_arch(&metadata.arch, output_package_type)
                             .unwrap_or_else(|err| {
@@ -463,7 +455,12 @@ impl Converter {
                         package_details.url(metadata.source);
                         package_details.packager(metadata.authors);
 
-                        let package = package_details.build_host(build_host);
+                        let hostname = hostname::get()
+                            .unwrap_or(OsStr::from_bytes(b"Unknown").to_owned())
+                            .display()
+                            .to_string();
+
+                        let package = package_details.build_host(format!("SPF package converter @ {hostname}"));
 
                         let direct_source_path = FileProperty::name(&self.source_package_path)?;
                         let extracted_spf = direct_source_path.trim_end_matches(".spf");
