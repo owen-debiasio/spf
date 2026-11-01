@@ -37,7 +37,7 @@ pub fn list_packages(optional_string: &str) -> Result<(), Error> {
     //
     // First though, it is temporarily used to verify that
     // packages are installed
-    let mut packages_to_list = vec![];
+    let mut packages_to_list = Vec::new();
 
     let collected_packages = match glob(path_to_search) {
         Ok(packages) => packages,

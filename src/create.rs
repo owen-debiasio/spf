@@ -373,7 +373,7 @@ fn get_dirs_to_create(
     destination_of_file: &str,
     original_file_name: &str,
 ) -> Vec<String> {
-    let mut dirs_to_create = vec![];
+    let mut dirs_to_create = Vec::new();
 
     // Help avoid creating duplicate directories. Things break otherwise.
     let extra_dirs: Vec<&str> = output_location.split('/').collect();
