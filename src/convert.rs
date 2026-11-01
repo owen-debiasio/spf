@@ -460,7 +460,8 @@ impl Converter {
                             .display()
                             .to_string();
 
-                        let package = package_details.build_host(format!("SPF package converter @ {hostname}"));
+                        let package = package_details
+                            .build_host(format!("SPF package converter @ {hostname}"));
 
                         let direct_source_path = FileProperty::name(&self.source_package_path)?;
                         let extracted_spf = direct_source_path.trim_end_matches(".spf");
