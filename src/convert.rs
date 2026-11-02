@@ -324,12 +324,16 @@ impl Converter {
                     .unwrap_or_else(|err| error(&format!("Failed to open rpm package: {err}")));
                 const UNKNOWN: &str = "Unknown (likely lost in conversion)";
 
+                let make_str = |thing: Result<&str, rpm::Error>| -> String {
+                    thing.unwrap_or(UNKNOWN).to_string()
+                };
+
                 Categories {
-                    name: package.get_name().unwrap_or(UNKNOWN).to_string(),
-                    version: package.get_version().unwrap_or(UNKNOWN).to_string(),
-                    description: package.get_description().unwrap_or(UNKNOWN).to_string(),
-                    source: package.get_url().unwrap_or(UNKNOWN).to_string(),
-                    license: package.get_license().unwrap_or(UNKNOWN).to_string(),
+                    name: make_str(package.get_name()),
+                    version: make_str(package.get_version()),
+                    description: make_str(package.get_description()),
+                    source: make_str(package.get_url()),
+                    license: make_str(package.get_license()),
                     authors: package
                         .get_packager()
                         .unwrap_or(package.get_vendor().unwrap_or(UNKNOWN))

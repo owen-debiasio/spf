@@ -47,6 +47,12 @@ use crate::libs::core::sys::error;
 pub struct FileProperty;
 
 impl FileProperty {
+    fn make_string(shit: Option<&OsStr>) -> String {
+        shit.unwrap_or(OsStr::new(&String::new()))
+            .display()
+            .to_string()
+    }
+
     /// Get file extension
     ///
     /// Retrieves it from `path` (as [`str`]), then returns it as [`String`]
@@ -59,13 +65,10 @@ impl FileProperty {
     /// println!("{file_ext}");
     /// ```
     pub fn extension(path: &str) -> Result<String, Error> {
-        let file_extension = PathBuf::from(path)
-            .extension()
-            .unwrap_or(OsStr::new(&String::new()))
-            .display()
-            .to_string();
+        let binding = PathBuf::from(path);
+        let file_extension = binding.extension();
 
-        Ok(file_extension)
+        Ok(Self::make_string(file_extension))
     }
 
     /// Get file name.
@@ -80,13 +83,10 @@ impl FileProperty {
     /// println!("{file_name}");
     /// ```
     pub fn name(path: &str) -> Result<String, Error> {
-        let file_name = PathBuf::from(path)
-            .file_name()
-            .unwrap_or(OsStr::new(&String::new()))
-            .display()
-            .to_string();
+        let binding = PathBuf::from(path);
+        let file_name = binding.file_name();
 
-        Ok(file_name)
+        Ok(Self::make_string(file_name))
     }
 }
 
