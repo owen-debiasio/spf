@@ -6,7 +6,6 @@
 use std::{
     env::{args, current_exe, var},
     io::{Error, ErrorKind},
-    process::exit,
 };
 
 use crate::convert::PackageType;
@@ -83,25 +82,6 @@ pub fn is_root() -> Result<bool, Error> {
     let identifies_as_root = Env::name()? == "root" || Env::home()?.contains("/root");
 
     Ok(identifies_as_root)
-}
-
-/// Basic non-fatal error.
-///
-/// The error message is the provided argument `message` (provided as [`str`]),
-/// returns as `!`.
-///
-/// Exits with code `1`.
-///
-/// ```
-/// let error_message = "error_message";
-/// error(error_message);
-///
-/// // No further code is run.
-/// ```
-pub fn error(message: &str) -> ! {
-    eprintln!("{message}");
-
-    exit(1)
 }
 
 /// Does what you think it does. Retrieves the current path of the running

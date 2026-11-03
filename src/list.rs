@@ -4,14 +4,11 @@
 //! Copyright (C) 2026 Owen Debiasio <owen.debiasio@gmail.com>
 //! SPDX-License-Identifier: GPL-3.0-or-later
 
-use std::io::Error;
+use std::io::{Error, ErrorKind};
 
 use glob::glob;
 
-use crate::{
-    libs::core::sys::error,
-    libs::metadata::{Meta, PACKAGE_INSTALL_PATH},
-};
+use crate::libs::metadata::{Meta, PACKAGE_INSTALL_PATH};
 
 /// Lists packages that are be installed. You can optionally provide
 /// a string of text to match (`optional_string` ([`String`])).
@@ -41,7 +38,12 @@ pub fn list_packages(optional_string: &str) -> Result<(), Error> {
 
     let collected_packages = match glob(path_to_search) {
         Ok(packages) => packages,
-        Err(err) => error(&format!("Failed to collect packages: {err}")),
+        Err(err) => {
+            return Err(Error::new(
+                ErrorKind::InvalidFilename,
+                format!("Failed to search for packages in {path_to_search}: {err}"),
+            ));
+        }
     };
 
     // Collect paths and add them to the vec
@@ -52,7 +54,10 @@ pub fn list_packages(optional_string: &str) -> Result<(), Error> {
     // If there are no paths found, that means no packages are installed.
     // Throw an error.
     if packages_to_list.is_empty() {
-        error("No packages are installed.")
+        return Err(Error::new(
+            ErrorKind::NotFound,
+            "No packages are installed.",
+        ));
     }
 
     // Clear the vec to be used for its main purpose
@@ -60,7 +65,12 @@ pub fn list_packages(optional_string: &str) -> Result<(), Error> {
 
     let collected_raw_paths = match glob(path_to_search) {
         Ok(raw_paths) => raw_paths,
-        Err(err) => error(&format!("Failed to collect package paths: {err}")),
+        Err(err) => {
+            return Err(Error::new(
+                ErrorKind::InvalidFilename,
+                format!("Failed to search for packages in {path_to_search}: {err}"),
+            ));
+        }
     };
 
     // Go through the package metadata install directory
@@ -96,7 +106,10 @@ pub fn list_packages(optional_string: &str) -> Result<(), Error> {
         if optional_string.is_empty() {
             "Installed"
         } else if packages_to_list.is_empty() {
-            error(&format!("No packages match or contain: {optional_string}"))
+            return Err(Error::new(
+                ErrorKind::NotFound,
+                format!("No packages match or contain: {optional_string}"),
+            ));
         } else {
             "Matching installed"
         }

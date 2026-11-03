@@ -4,13 +4,13 @@
 //! SPDX-License-Identifier: GPL-3.0-or-later
 
 use crate::{
-    libs::core::sys::{error, get_binary_path, is_root},
+    libs::core::sys::{get_binary_path, is_root},
     libs::metadata::{Meta, PACKAGE_INSTALL_PATH},
 };
 use std::{
     collections::HashSet,
     fs::{read_to_string, remove_dir_all, remove_file},
-    io::{Error, stdin},
+    io::{Error, ErrorKind, stdin},
     path::Path,
     process::exit,
 };
@@ -33,11 +33,14 @@ use std::{
 /// ```
 pub fn remove_packages(mut packages_to_remove: Vec<String>) -> Result<(), Error> {
     if !is_root()? {
-        error("To execute this action, please run spf as root.")
+        return Err(Error::new(ErrorKind::PermissionDenied, "Root required"));
     }
 
     if packages_to_remove.is_empty() {
-        error("Provide the package(s) you want to remove.")
+        return Err(Error::new(
+            ErrorKind::InvalidInput,
+            "Provide the package(s) you want to remove",
+        ));
     }
 
     // Remove duplicate package entries
@@ -49,7 +52,10 @@ pub fn remove_packages(mut packages_to_remove: Vec<String>) -> Result<(), Error>
         let package_meta_path = format!("{PACKAGE_INSTALL_PATH}{package}");
 
         if !Path::new(&package_meta_path).exists() {
-            error(&format!("Package not installed: {package}"))
+            return Err(Error::new(
+                ErrorKind::NotFound,
+                format!("Package not installed: {package}"),
+            ));
         }
     }
 
@@ -134,30 +140,12 @@ fn remove_package(package_formatted: &str, package_meta_path: &str) -> Result<()
         } else {
             remove_dir_all(entry)?;
         }
-
-        // Recreate the status of the path to properly detect if the file
-        // is deleted.
-        let path_to_remove_check = Path::new(entry);
-
-        // Check if the path has been removed
-        if path_to_remove_check.exists() {
-            error(&format!(
-                "Failed to remove \"{}\": Path still remains",
-                path_to_remove_check.display()
-            ))
-        }
     }
 
     println!("    Removing package entry...");
 
     // Removes the metadata file
     remove_file(package_meta_path)?;
-
-    if Path::new(&package_meta_path).exists() {
-        error(&format!(
-            "Failed to remove \"{package_meta_path}\": File still remains"
-        ))
-    }
 
     println!("Successfully removed {package_formatted}!");
 

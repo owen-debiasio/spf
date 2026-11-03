@@ -4,8 +4,12 @@
 //! Copyright (C) 2026 Owen Debiasio <owen.debiasio@gmail.com>
 //! SPDX-License-Identifier: GPL-3.0-or-later
 
-use crate::libs::core::sys::error;
-use std::{env::current_dir, fs::write, io::Error, path::Path};
+use std::{
+    env::current_dir,
+    fs::write,
+    io::{Error, ErrorKind},
+    path::Path,
+};
 
 /// Sample metadata contents to be printed. Every possible feature
 /// of the metadata is included.
@@ -54,7 +58,10 @@ pub fn gen_meta_template(mut output_location: String) -> Result<(), Error> {
     // Output location has to be a directory because rust doesn't want to
     // listen to me
     } else if !Path::new(&output_location).is_dir() {
-        error("Please enter a directory to generate to.");
+        return Err(Error::new(
+            ErrorKind::InvalidInput,
+            "Please enter a directory to generate to",
+        ));
     }
 
     output_location =

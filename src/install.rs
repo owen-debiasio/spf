@@ -7,15 +7,14 @@ use glob::glob;
 use std::{
     env::consts::ARCH,
     fs::{OpenOptions, copy, create_dir_all, read_to_string, remove_dir_all, remove_file},
-    io::{Error, Write, stdin},
+    io::{Error, ErrorKind, Write, stdin},
     path::Path,
     process::exit,
 };
 
 use crate::{
     convert::PackageType,
-    libs::core::fs::FileProperty,
-    libs::core::sys::{args_contains, error, is_root},
+    libs::core::sys::{args_contains, is_root},
     libs::metadata::{Categories, Meta, PACKAGE_INSTALL_PATH},
     package::Package,
 };
@@ -41,7 +40,7 @@ use crate::{
 pub fn spf_install(mut spf_package_path: String) -> Result<(), Error> {
     // Root is required for this command
     if !is_root()? {
-        error("To execute this action, please run spf as root.")
+        return Err(Error::new(ErrorKind::PermissionDenied, "Root required"));
     }
 
     let package_path_check = Path::new(&spf_package_path);
@@ -54,14 +53,21 @@ pub fn spf_install(mut spf_package_path: String) -> Result<(), Error> {
             .is_some_and(|ext| ext.eq_ignore_ascii_case(PackageType::SPF))
         || !package_path_check.exists()
     {
-        error("Please provide a .spf package")
+        return Err(Error::new(
+            ErrorKind::InvalidInput,
+            "Please provide a .spf package",
+        ));
     }
 
     println!("Loading package: {spf_package_path}\n");
 
     Package::from(spf_package_path.clone())?.extract(".")?;
 
-    spf_package_path = FileProperty::name(&spf_package_path)?;
+    spf_package_path = Path::new(&spf_package_path)
+        .file_name()
+        .unwrap_or_default()
+        .display()
+        .to_string();
 
     // Get location of the package path (`spf_package_path`)
     let packaged_metadata_file = spf_package_path.replace(".spf", "/META");
@@ -87,11 +93,13 @@ pub fn spf_install(mut spf_package_path: String) -> Result<(), Error> {
     {
         remove_dir_all(extracted_package_path)?;
 
-        error(&format!(
-            "Package architecture: {} doesn't match current system architecture ({ARCH}).\n\
-            Bypass by passing: `--ignore-arch`",
-            collected_metadata.arch
-        ))
+        return Err(Error::new(
+            ErrorKind::InvalidData,
+            format!(
+                "Package architecture: {} doesn't match current system architecture ({ARCH}).\nBypass by passing: `--ignore-arch`",
+                collected_metadata.arch
+            ),
+        ));
     }
 
     // The formatted package name looks something like:
@@ -146,7 +154,10 @@ pub fn spf_install(mut spf_package_path: String) -> Result<(), Error> {
             Ok(_) => (),
             Err(err) => {
                 remove_dir_all(extracted_package_path)?;
-                error(&format!("Failed to check for version: {err}"));
+                return Err(Error::new(
+                    ErrorKind::InvalidData,
+                    format!("Failed to check for version: {err}"),
+                ));
             }
         }
     }
@@ -218,9 +229,10 @@ fn check_version(
 
         // Make sure that the versions were parsed correctly.
         if project_version_num == 0 || installed_version_num == 0 {
-            error(&format!(
-                "Failed to parse version in the installed package \"{package_meta_path}\""
-            ))
+            return Err(Error::new(
+                ErrorKind::InvalidInput,
+                format!("Failed to parse version in the installed package: {package_meta_path}"),
+            ));
         }
 
         // Prompt the user if they actually want to update
@@ -346,7 +358,12 @@ fn install_files(
 
     let collected_paths = match glob(&format!("./{extracted_package_path}/**/*")) {
         Ok(paths) => paths,
-        Err(err) => error(&format!("Failed to collect paths: {err}")),
+        Err(err) => {
+            return Err(Error::new(
+                ErrorKind::NotFound,
+                format!("Failed to search {extracted_package_path}: {err}"),
+            ));
+        }
     };
 
     let extracted_path = Path::new(extracted_package_path);
@@ -354,9 +371,14 @@ fn install_files(
     for found_path in collected_paths {
         let found_path = found_path?;
 
-        let relative_path = found_path
-            .strip_prefix(extracted_path)
-            .unwrap_or_else(|err| error(&format!("Failed to strip path prefix: {err}")));
+        let relative_path = found_path.strip_prefix(extracted_path).map_err(|err| {
+            Error::new(
+                ErrorKind::InvalidInput,
+                format!(
+                    "Invalid prefix from {found_path:?}.strip_prefix({extracted_path:?}): {err}"
+                ),
+            )
+        })?;
 
         // Skip the root directory
         if relative_path.as_os_str().is_empty() {

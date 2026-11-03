@@ -10,7 +10,7 @@
 use std::{
     ffi::OsStr,
     fs::{File, remove_dir_all, remove_file, rename},
-    io::{Error, Write, stdin, stdout},
+    io::{Error, ErrorKind, Write, stdin, stdout},
     os::unix::ffi::OsStrExt,
     path::Path,
     process::Command,
@@ -24,8 +24,8 @@ use deb_rust::{DebArchitecture, DebFile, binary::DebPackage};
 use rpm::{FileOptions, PackageBuilder, PackageMetadata};
 
 use crate::{
-    libs::core::fs::{ArchiveType, FileProperty, create_archive, extract_archive},
-    libs::core::sys::{convert_arch, error},
+    libs::core::fs::{ArchiveType, create_archive, extract_archive},
+    libs::core::sys::convert_arch,
     libs::metadata::{Categories, Meta},
     package::Package,
 };
@@ -52,51 +52,73 @@ fn disclaimer() -> Result<(), Error> {
 /// - Source / Input packages are the same type (`.spf` -> `.spf`)
 /// - User tries conversion between `.rpm` and `.deb`
 fn verify_input_paths(source_package_path: &str, output_package_path: &str) -> Result<(), Error> {
-    // Verify if the source package exists
+    // Verify if the source package is provided
     if source_package_path.is_empty() {
-        error("Please provide a source package path!")
+        return Err(Error::new(
+            ErrorKind::InvalidInput,
+            format!("Source package not found: {source_package_path}"),
+        ));
     }
 
     // Verify if provided package paths exist
     if !Path::new(source_package_path).exists() {
-        error(&format!(
-            "Source package \"{source_package_path}\" does not exist!"
-        ))
+        return Err(Error::new(
+            ErrorKind::NotFound,
+            format!("Source package not found: {source_package_path}"),
+        ));
     }
 
+    let get_ext = |file: &str| -> String {
+        Path::new(file)
+            .extension()
+            .unwrap_or_default()
+            .display()
+            .to_string()
+    };
+
     // Get package file extensions
-    let source_file_ext = FileProperty::extension(source_package_path)
-        .unwrap_or_else(|err| error(&format!("Failed to get source file extension: {err}")));
-    let output_file_ext = FileProperty::extension(output_package_path)
-        .unwrap_or_else(|err| error(&format!("Failed to get output file extension: {err}")));
+    let source_file_ext = get_ext(source_package_path);
+    let output_file_ext = get_ext(output_package_path);
 
     // Verify supported package formats using the extensions
     if !matches!(
         source_file_ext.as_str(),
         PackageType::SPF | PackageType::DEB | PackageType::RPM
     ) {
-        error(&format!(
-            "Unsupported input package format: .{source_file_ext}"
-        ))
+        return Err(Error::new(
+            ErrorKind::InvalidFilename,
+            format!("Invalid input package type: {source_file_ext}"),
+        ));
     } else if !matches!(
         output_file_ext.as_str(),
         PackageType::SPF | PackageType::DEB | PackageType::RPM
     ) {
-        error(&format!(
-            "Unsupported output package format: {output_file_ext}"
-        ))
+        return Err(Error::new(
+            ErrorKind::InvalidFilename,
+            format!("Invalid output package type: {output_file_ext}"),
+        ));
     }
 
     // Makes sure the use doesn't try to convert 2 of the same package types
     if source_file_ext == output_file_ext {
-        error("Source and output packages must not be the same!")
+        return Err(Error::new(
+            ErrorKind::InvalidInput,
+            format!(
+                "Source and output packages must not be the same: source_file_ext={source_file_ext}, output_file_ext={output_file_ext}"
+            ),
+        ));
     }
 
     // Make sure user doesn't attempt to convert `.deb` -> `.rpm` (and vice versa)
     if (source_file_ext == PackageType::RPM && output_file_ext == PackageType::DEB)
         || (source_file_ext == PackageType::DEB && output_file_ext == PackageType::RPM)
     {
-        error("\".deb\" and \".rpm\" files can not be converted back and forth!")
+        return Err(Error::new(
+            ErrorKind::InvalidInput,
+            format!(
+                ".deb and .rpm files can not be converted back and forth: source_file_ext={source_file_ext}, output_file_ext={output_file_ext}"
+            ),
+        ));
     }
 
     Ok(())
@@ -112,10 +134,6 @@ fn verify_input_paths(source_package_path: &str, output_package_path: &str) -> R
 /// convert(package_to_convert, output_package)?;
 /// ```
 pub fn convert(source_package_path: &str, output_package_path: &str) -> Result<(), Error> {
-    if source_package_path.is_empty() {
-        error("Please provide an input package path!")
-    }
-
     verify_input_paths(source_package_path, output_package_path)?;
 
     disclaimer()?;
@@ -177,16 +195,45 @@ impl PackageType {
     /// assert_eq!(package_type_from_package, PackageType::Spf);
     /// ```
     pub fn get_from_extension(path_of_package: &str) -> Result<Self, Error> {
-        let source_package_ext = FileProperty::extension(path_of_package)?;
+        let source_package_ext = Path::new(path_of_package)
+            .extension()
+            .unwrap_or_default()
+            .display()
+            .to_string();
 
         let package_type = match source_package_ext.as_ref() {
             Self::SPF => Self::Spf,
             Self::DEB => Self::Deb,
             Self::RPM => Self::Rpm,
-            _ => error(&format!("Invalid package type: {source_package_ext}")),
+            _ => {
+                return Err(Error::new(
+                    ErrorKind::InvalidInput,
+                    format!("Invalid file type: {source_package_ext}"),
+                ));
+            }
         };
 
         Ok(package_type)
+    }
+
+    /// Retrieves the package type from the package extension.
+    ///
+    /// Returns as [`PackageType`]
+    ///
+    /// ```
+    /// let package_type = PackageType::Deb;
+    /// let extension = PackageType::to_extension(package_type)?;
+    ///
+    /// assert_eq!(extension, ".deb");
+    /// ```
+    pub fn to_extension(package_type: PackageType) -> Result<String, Error> {
+        let extension = match package_type {
+            Self::Spf => Self::SPF,
+            Self::Deb => Self::DEB,
+            Self::Rpm => Self::RPM,
+        };
+
+        Ok(format!(".{extension}"))
     }
 }
 
@@ -284,14 +331,22 @@ impl Converter {
             // Get spf package metadata
             PackageType::Spf => {
                 if !package_path.ends_with(".spf") {
-                    error("must be .spf file")
+                    return Err(Error::new(
+                        ErrorKind::InvalidFilename,
+                        format!("Must be .spf file: {package_path}"),
+                    ));
                 }
 
                 Package::from(package_path.clone())?.extract(".")?;
 
                 let metadata_path = &format!(
                     "{}/META",
-                    FileProperty::name(package_path.clone().as_str())?.trim_end_matches(".spf")
+                    Path::new(&package_path)
+                        .extension()
+                        .unwrap_or_default()
+                        .display()
+                        .to_string()
+                        .trim_end_matches(".spf")
                 );
 
                 Meta::from(metadata_path)?.categories()?
@@ -320,8 +375,16 @@ impl Converter {
             }
 
             PackageType::Rpm => {
-                let package = PackageMetadata::open(package_path)
-                    .unwrap_or_else(|err| error(&format!("Failed to open rpm package: {err}")));
+                let package = match PackageMetadata::open(&package_path) {
+                    Ok(pkg) => pkg,
+                    Err(err) => {
+                        return Err(Error::new(
+                            ErrorKind::InvalidData,
+                            format!("Failed to open rpm package '{package_path}': {err}"),
+                        ));
+                    }
+                };
+
                 const UNKNOWN: &str = "Unknown (likely lost in conversion)";
 
                 let make_str = |thing: Result<&str, rpm::Error>| -> String {
@@ -365,33 +428,60 @@ impl Converter {
 
         let output_package_type = PackageType::get_from_extension(output_location)?;
 
+        let source_name = Path::new(&self.source_package_path)
+            .file_name()
+            .unwrap_or_default()
+            .display()
+            .to_string();
+
+        let extracted_source = source_name.trim_end_matches(&PackageType::to_extension(
+            self.source_package_type.clone(),
+        )?);
+
+        let collected_paths = match glob(&format!("{extracted_source}/**/*")) {
+            Ok(paths) => paths,
+            Err(err) => {
+                return Err(Error::new(
+                    ErrorKind::InvalidData,
+                    format!("Failed to read directory '{extracted_source}: {err}'"),
+                ));
+            }
+        };
+
         match self.source_package_type {
             PackageType::Spf => {
                 println!("        Extracting...");
+
                 extract_archive(&self.source_package_path, ".", ArchiveType::Tar)?;
-
-                let source_name = FileProperty::name(&self.source_package_path)?;
-
-                let extracted_source = source_name.trim_end_matches(".spf");
 
                 remove_file(format!("{extracted_source}/META"))?;
 
                 match output_package_type {
                     PackageType::Spf => {
-                        error("You cannot convert a .spf package to a .spf package!")
+                        return Err(Error::new(
+                            ErrorKind::InvalidInput,
+                            "Cannot convert a .spf package to a .spf package",
+                        ));
                     }
                     // spf -> deb
                     PackageType::Deb => {
                         let mut package = DebPackage::new(&metadata.name);
 
+                        let arch = metadata.arch;
+
                         // Convert the architectures to the `.deb` counterparts
-                        let arch_to_use = match metadata.arch.clone().as_ref() {
+                        let arch_to_use = match arch.as_str() {
                             "universal" => DebArchitecture::All,
                             "x86_64" => DebArchitecture::Amd64,
                             "x86" => DebArchitecture::I386,
                             "aarch64" => DebArchitecture::Arm64,
                             "arm" => DebArchitecture::Armhf,
-                            _ => error("Failed converting arch to .deb equivalent"),
+                            _ => {
+                                return Err(Error::new(
+                                    ErrorKind::InvalidData,
+                                    format!("Failed converting arch '{arch}' to .deb equivalent"),
+                                ));
+                            }
                         };
 
                         println!("        Applying...");
@@ -407,14 +497,16 @@ impl Converter {
 
                         println!("    Collecting paths...");
 
-                        // Collect paths and add them to the package
-                        let collected_paths = match glob(&format!("{extracted_source}/**/*")) {
-                            Ok(paths) => paths,
-                            Err(err) => error(&format!("Failed to load paths: {err}")),
-                        };
-
                         for path in collected_paths {
-                            let current_path = path?.display().to_string();
+                            let current_path = path
+                                .map_err(|err| {
+                                    Error::new(
+                                        ErrorKind::InvalidFilename,
+                                        format!("Failed to get current path: {err}"),
+                                    )
+                                })?
+                                .display()
+                                .to_string();
 
                             print!("\r\x1B[K        Writing path: \"{current_path}\"");
                             stdout().flush()?;
@@ -441,12 +533,7 @@ impl Converter {
                     PackageType::Rpm => {
                         println!("    Setting metadata...");
 
-                        let converted_arch = convert_arch(&metadata.arch, output_package_type)
-                            .unwrap_or_else(|err| {
-                                remove_dir_all(&self.source_package_path).ok();
-
-                                error(&format!("Failed to convert: {err}"))
-                            });
+                        let converted_arch = convert_arch(&metadata.arch, output_package_type)?;
 
                         let mut package_details = PackageBuilder::new(
                             &metadata.name,
@@ -467,21 +554,19 @@ impl Converter {
                         let package = package_details
                             .build_host(format!("SPF package converter @ {hostname}"));
 
-                        let direct_source_path = FileProperty::name(&self.source_package_path)?;
-                        let extracted_spf = direct_source_path.trim_end_matches(".spf");
-
-                        // Collect paths and add them to the package
-                        let collected_paths = match glob(&format!("{extracted_spf}/**/*")) {
+                        let collected_paths = match glob(&format!("{extracted_source}/**/*")) {
                             Ok(paths) => paths,
                             Err(err) => {
-                                remove_dir_all(&self.source_package_path).ok();
-                                error(&format!("Failed to load paths: {err}"))
+                                return Err(Error::new(
+                                    ErrorKind::InvalidData,
+                                    format!("Failed to read directory '{extracted_source}: {err}'"),
+                                ));
                             }
                         };
 
                         for path in collected_paths {
                             let path = path?.display().to_string();
-                            let destination = path.trim_start_matches(extracted_spf);
+                            let destination = path.trim_start_matches(extracted_source);
 
                             print!("\r\x1B[K    Writing path: \"{path}\"");
                             stdout().flush()?;
@@ -490,35 +575,45 @@ impl Converter {
                                 package
                                     .with_file(
                                         &path,
-                                        FileOptions::new(path.trim_start_matches(extracted_spf))
+                                        FileOptions::new(path.trim_start_matches(extracted_source))
                                             .config()
                                             .noreplace(),
                                     )
-                                    .unwrap_or_else(|err| {
-                                        error(&format!("Failed to copy path: {err}"))
-                                    });
+                                    .map_err(|err| {
+                                        Error::new(
+                                            ErrorKind::InvalidData,
+                                            format!("Failed to copy path: {err}"),
+                                        )
+                                    })?;
                             } else {
-                                package
+                                match package
                                     .with_dir(path.clone(), destination, |path| path.config())
-                                    .unwrap_or_else(|err| {
-                                        error(&format!("Failed to copy directory: {err}"))
-                                    });
+                                {
+                                    Ok(package) => package,
+                                    Err(err) => {
+                                        return Err(Error::new(
+                                            ErrorKind::InvalidData,
+                                            format!("Failed to create directory: {err}"),
+                                        ));
+                                    }
+                                };
                             }
                         }
 
                         println!("\n    Building...");
 
-                        package
-                            .build()
-                            .unwrap_or_else(|err| {
-                                error(&format!("Failed to convert from rpm: {err}"))
-                            })
-                            .write_to(output_location)
-                            .unwrap_or_else(|err| {
-                                error(&format!("Failed to write output spf file from rpm: {err}"))
-                            });
+                        let output = package.build().map_err(|err| {
+                            Error::new(ErrorKind::InvalidData, format!("Failed to build: {err}"))
+                        })?;
 
-                        remove_dir_all(extracted_spf)?;
+                        output.write_to(output_location).map_err(|err| {
+                            Error::new(
+                                ErrorKind::InvalidData,
+                                format!("Failed write to output: {err}"),
+                            )
+                        })?;
+
+                        remove_dir_all(extracted_source)?;
                     }
                 }
             }
@@ -542,41 +637,66 @@ impl Converter {
                         remove_file(file)?;
                     }
 
-                    let output_location_name = FileProperty::name(output_location)?;
-                    let new_package_dir = output_location_name
-                        .split('.')
-                        .next()
-                        .unwrap_or_else(|| error("Failed to get new package directory"));
+                    let output_location_name = Path::new(output_location)
+                        .file_name()
+                        .unwrap_or_default()
+                        .display()
+                        .to_string();
 
-                    rename("data", new_package_dir)?;
+                    if let Some(new_package_dir) = output_location_name.split('.').next() {
+                        rename("data", new_package_dir)?;
 
-                    println!("    Converting metadata...");
+                        println!("    Converting metadata...");
 
-                    println!("        Generating...");
+                        println!("        Generating...");
 
-                    let spf_metadata_constructed = Meta::construct_contents(metadata)?;
+                        let spf_metadata_constructed = Meta::construct_contents(metadata)?;
 
-                    println!("        Writing...");
+                        println!("        Writing...");
 
-                    let mut new_meta_file = File::create(format!("{new_package_dir}/META"))?;
-                    new_meta_file.write_all(spf_metadata_constructed.join("\n").as_bytes())?;
+                        let mut new_meta_file = File::create(format!("{new_package_dir}/META"))?;
+                        new_meta_file.write_all(spf_metadata_constructed.join("\n").as_bytes())?;
 
-                    println!("    Packaging...");
+                        println!("    Packaging...");
 
-                    create_archive(output_location, new_package_dir, ArchiveType::Tar)?;
+                        create_archive(output_location, new_package_dir, ArchiveType::Tar)?;
 
-                    remove_dir_all(new_package_dir)?;
+                        remove_dir_all(new_package_dir)?;
+                    } else {
+                        return Err(Error::new(
+                            ErrorKind::InvalidFilename,
+                            "Failed to get new package directory",
+                        ));
+                    }
                 }
+
                 // deb -> deb
-                PackageType::Deb => error("You cannot convert a .deb package to a .deb package!"),
+                PackageType::Deb => {
+                    return Err(Error::new(
+                        ErrorKind::InvalidInput,
+                        "Cannot convert a .deb package to a .deb package",
+                    ));
+                }
                 // deb -> rpm
-                PackageType::Rpm => error("You cannot convert a .deb package to a .rpm package!"),
+                PackageType::Rpm => {
+                    return Err(Error::new(
+                        ErrorKind::InvalidInput,
+                        "Cannot convert a .deb package to a .rpm package",
+                    ));
+                }
             },
             PackageType::Rpm => match output_package_type {
                 // rpm -> spf
                 PackageType::Spf => {
-                    cmd_exists("rpm2archive")
-                        .unwrap_or_else(|err| error(&format!("Cannot run \"rpm2archive\": {err}")));
+                    match cmd_exists("rpm2archive") {
+                        Ok(status) => status,
+                        Err(err) => {
+                            return Err(Error::new(
+                                ErrorKind::NotFound,
+                                format!("Failed to run rpm2archive: {err}"),
+                            ));
+                        }
+                    };
 
                     println!("        Extracting...");
 
@@ -586,9 +706,13 @@ impl Converter {
 
                     let tgz_file = &format!("{}.tgz", self.source_package_path);
 
-                    let extract_dest = &FileProperty::name(tgz_file)?
-                        .trim_end_matches(".rpm.tgz")
+                    let tgz_path_or_some_bullshit = &Path::new(tgz_file)
+                        .file_name()
+                        .unwrap_or_default()
+                        .display()
                         .to_string();
+
+                    let extract_dest = tgz_path_or_some_bullshit.trim_end_matches(".rpm.tgz");
 
                     extract_archive(tgz_file, extract_dest, ArchiveType::Gz)?;
 
@@ -614,9 +738,19 @@ impl Converter {
                     remove_dir_all(new_extracted_folder_name)?;
                 }
                 // rpm -> deb
-                PackageType::Deb => error("You cannot convert a .rpm package to a .deb package!"),
+                PackageType::Deb => {
+                    return Err(Error::new(
+                        ErrorKind::InvalidInput,
+                        "Cannot convert a .rpm package to a .deb package",
+                    ));
+                }
                 // rpm -> rpm
-                PackageType::Rpm => error("You cannot convert a .rpm package to a .rpm package!"),
+                PackageType::Rpm => {
+                    return Err(Error::new(
+                        ErrorKind::InvalidInput,
+                        "Cannot convert a .rpm package to a .rpm package",
+                    ));
+                }
             },
         }
 

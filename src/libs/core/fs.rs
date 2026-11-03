@@ -6,89 +6,12 @@
 
 use flate2::read::GzDecoder;
 use std::{
-    ffi::OsStr,
     fs::{self, File},
-    io::{BufReader, Error, Write, copy},
-    path::{Path, PathBuf},
-    str::from_utf8,
+    io::{BufReader, Error, ErrorKind, Write, copy},
+    path::Path,
 };
 use tar::{Archive, Builder};
 use xz2::{read::XzDecoder, write::XzEncoder};
-
-use crate::libs::core::sys::error;
-
-/// Some utilities to retrieve one of the following properties from a path:
-///     - File extension (using [`FileProperty::extension`])
-///     - File name (using [`FileProperty::name`])
-///
-/// All return to [`String`].
-///
-/// Examples:
-///
-/// File extension (using [`FileProperty::extension`]):
-///
-/// ```
-/// let file_path = "file.extension"
-/// let file_ext = FileProperty::extension(file_path)?;
-///
-/// // Output should be `extension`
-/// println!("{file_ext}");
-/// ```
-///
-/// File name (using [`FileProperty::name`]):
-///
-/// ```
-/// let file_path = "file.extension"
-/// let file_name = FileProperty::name(file_path)?;
-///
-/// // Output should be `file`
-/// println!("{file_name}");
-/// ```
-pub struct FileProperty;
-
-impl FileProperty {
-    fn make_string(shit: Option<&OsStr>) -> String {
-        shit.unwrap_or(OsStr::new(&String::new()))
-            .display()
-            .to_string()
-    }
-
-    /// Get file extension
-    ///
-    /// Retrieves it from `path` (as [`str`]), then returns it as [`String`]
-    ///
-    /// ```
-    /// let file_path = "file.extension"
-    /// let file_ext = FileProperty::extension(file_path)?;
-    ///
-    /// // Output should be `extension`
-    /// println!("{file_ext}");
-    /// ```
-    pub fn extension(path: &str) -> Result<String, Error> {
-        let binding = PathBuf::from(path);
-        let file_extension = binding.extension();
-
-        Ok(Self::make_string(file_extension))
-    }
-
-    /// Get file name.
-    ///
-    /// Retrieves it from `path` (as [`str`]), then returns it as [`String`]
-    ///
-    /// ```
-    /// let file_path = "file.extension"
-    /// let file_name = FileProperty::name(file_path)?;
-    ///
-    /// // Output should be `file`
-    /// println!("{file_name}");
-    /// ```
-    pub fn name(path: &str) -> Result<String, Error> {
-        let binding = PathBuf::from(path);
-        let file_name = binding.file_name();
-
-        Ok(Self::make_string(file_name))
-    }
-}
 
 /// Determines what type of archive to create/extract
 #[derive(Debug, PartialEq)]
@@ -134,15 +57,23 @@ pub fn create_archive(
     } else if archive_type == ArchiveType::Xz {
         Box::new(XzEncoder::new(archive_file, 6))
     } else {
-        panic!(
-            "Some bullshit happened: archive_type: {archive_type:?}. Probably unsupported archive type"
-        )
+        return Err(Error::new(
+            ErrorKind::InvalidData,
+            format!("Invalid archive type: {archive_type:?}"),
+        ));
     };
 
     let mut archive = Builder::new(writer);
 
     if Path::new(path_to_archive).is_dir() {
-        archive.append_dir_all(FileProperty::name(path_to_archive)?, path_to_archive)?;
+        if let Some(path) = Path::new(path_to_archive).file_name() {
+            archive.append_dir_all(path, path_to_archive)?;
+        } else {
+            return Err(Error::new(
+                ErrorKind::NotFound,
+                format!("Failed to add to archive: {path_to_archive}"),
+            ));
+        }
     } else {
         archive.append_path(path_to_archive)?
     }
@@ -184,10 +115,8 @@ pub fn extract_archive(path: &str, dest: &str, archive_type: ArchiveType) -> Res
             while let Some(entry_result) = archive.next_entry() {
                 let mut entry = entry_result?;
 
-                let mut file = File::create(
-                    from_utf8(entry.header().identifier())
-                        .unwrap_or_else(|err| error(&format!("Failed to get utf8 header: {err}"))),
-                )?;
+                let mut file =
+                    File::create(String::from_utf8_lossy(entry.header().identifier()).as_ref())?;
 
                 copy(&mut entry, &mut file)?;
             }

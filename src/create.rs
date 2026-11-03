@@ -6,12 +6,12 @@
 use crate::{
     VERSION,
     convert::PackageType,
-    libs::core::fs::{ArchiveType, FileProperty, create_archive},
-    libs::core::sys::{SUPPORTED_ARCHS, error},
+    libs::core::fs::{ArchiveType, create_archive},
+    libs::core::sys::SUPPORTED_ARCHS,
 };
 use std::{
     fs::{File, copy, create_dir_all, read_to_string, remove_dir_all},
-    io::{Error, Write},
+    io::{Error, ErrorKind, Write},
     path::Path,
 };
 
@@ -37,19 +37,34 @@ pub fn create_spf_package(package_config: &str, mut output_location: &str) -> Re
     // has extension or if it's empty.
     // If the file has an extension or is not provided / is empty,
     // exit.
-    if !FileProperty::extension(package_config)?.is_empty() || package_config.is_empty() {
-        error("Please provide a text file with no file extension!")
+    if !Path::new(package_config)
+        .extension()
+        .unwrap_or_default()
+        .is_empty()
+        || package_config.is_empty()
+    {
+        return Err(Error::new(
+            ErrorKind::InvalidInput,
+            "Config file must have not extension",
+        ));
 
     // Check if package config exists
     } else if !Path::new(package_config).exists() {
-        error("Package config not found!")
+        return Err(Error::new(ErrorKind::NotFound, "Package config not found"));
     }
 
     // Make sure the output file is a .spf file
-    if !FileProperty::extension(output_location)?.ends_with(PackageType::SPF) {
-        error(&format!(
-            "Your provided output location (\"{output_location}\") must be a .spf file."
-        ))
+    if !Path::new(output_location)
+        .extension()
+        .unwrap_or_default()
+        .display()
+        .to_string()
+        .ends_with(PackageType::SPF)
+    {
+        return Err(Error::new(
+            ErrorKind::InvalidInput,
+            format!("Provided output location '{output_location}' must be a .spf file"),
+        ));
     }
 
     // The output archive is initially created as a directory so strip the
@@ -179,10 +194,12 @@ fn write_project_meta_config(
                     .trim_start();
 
                 if !SUPPORTED_ARCHS.contains(&detected_arch) {
-                    error(&format!(
-                        "\nInvalid architecture. Please pick from one of the options:\n{}",
-                        SUPPORTED_ARCHS.join(", ")
-                    ))
+                    return Err(Error::new(
+                        ErrorKind::InvalidInput,
+                        format!(
+                            "Invalid package architecture. Available options: {SUPPORTED_ARCHS:?}"
+                        ),
+                    ));
                 }
             }
 
@@ -196,14 +213,17 @@ fn write_project_meta_config(
         // - Invalid entry formatting, where the meta category and value are not
         // separated correctly
         // - The metadata category found is not a valid category.
-        error(&format!(
-            "Failed to parse entry \"{entry}\": {}",
-            if entry.contains(" = ") {
-                "Invalid metadata category"
-            } else {
-                "Invalid entry formatting"
-            }
-        ))
+        return Err(Error::new(
+            ErrorKind::InvalidData,
+            format!(
+                "Failed to parse entry \"{entry}\": {}",
+                if entry.contains(" = ") {
+                    "Invalid metadata category"
+                } else {
+                    "Invalid entry formatting"
+                }
+            ),
+        ));
     }
 
     println!("\nWriting package metadata...\n");
@@ -274,16 +294,20 @@ fn copy_package_paths(package_config_contents: &str, output_location: &str) -> R
         // `file_destination` needs to start with '/' so the file destination has
         // a clearly defined root path.
         if !file_destination.starts_with('/') {
-            error(&format!(
-                "Path destination \"{file_destination}\" must start from the root"
-            ))
+            return Err(Error::new(
+                ErrorKind::InvalidInput,
+                format!("Path destination '{file_destination}' must start from the root"),
+            ));
         }
 
         // Double check that the entry is formatted correctly
         check_path_entry(entry, &original_file_path, &file_destination)?;
 
-        // Get the file name of the path
-        let original_file_name = FileProperty::name(&original_file_path)?;
+        let original_file_name = Path::new(&original_file_path)
+            .file_name()
+            .unwrap_or_default()
+            .display()
+            .to_string();
 
         // Here to avoid copying files that don't exist to directories
         // that are supposed to be empty
@@ -342,12 +366,12 @@ fn check_path_entry(entry: &str, original: &str, destination: &str) -> Result<()
 
     if !(paths_are_included && entry_formatting_is_preserved && paths_are_split) {
         // Due to the multiple reasons this could go wrong, display the status of all 3 checks
-        error(&format!(
-            "Failed to parse entry: {entry}: \
-            paths_are_included={paths_are_included}, \
-            entry_formatting_is_preserved={entry_formatting_is_preserved}, \
-            paths_are_split={paths_are_split}"
-        ))
+        return Err(Error::new(
+            ErrorKind::InvalidInput,
+            format!(
+                "Failed to parse entry: {entry}: paths_are_included={paths_are_included}, entry_formatting_is_preserved={entry_formatting_is_preserved}, paths_are_split={paths_are_split}"
+            ),
+        ));
     }
 
     Ok(())

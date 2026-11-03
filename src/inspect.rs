@@ -6,14 +6,13 @@
 
 use std::{
     fs::{read_to_string, remove_dir_all},
-    io::Error,
+    io::{Error, ErrorKind},
     path::Path,
 };
 
 use crate::{
     convert::PackageType,
-    libs::core::fs::{ArchiveType, FileProperty, extract_archive},
-    libs::core::sys::error,
+    libs::core::fs::{ArchiveType, extract_archive},
     libs::metadata::PACKAGE_INSTALL_PATH,
 };
 
@@ -24,7 +23,10 @@ use crate::{
 /// send it to [`inspect_spf_package`]. Otherwise, send it to [`inspect_installed_package`].
 pub fn inspect(package: &str) -> Result<(), Error> {
     if package.is_empty() {
-        error("Please provide a .spf package or a package that is already installed.")
+        return Err(Error::new(
+            ErrorKind::NotFound,
+            "Provide a .spf package or a package that is already installed",
+        ));
     }
 
     if Path::new(&package)
@@ -51,17 +53,26 @@ pub fn inspect(package: &str) -> Result<(), Error> {
 /// ```
 fn inspect_spf_package(package_path: &str) -> Result<(), Error> {
     if !Path::new(&package_path).exists() {
-        error(&format!(".spf package not found: {package_path}"))
+        return Err(Error::new(
+            ErrorKind::NotFound,
+            format!(".spf package not found: {package_path}"),
+        ));
     }
 
     extract_archive(package_path, ".", ArchiveType::Tar)?;
 
-    let metadata_path = FileProperty::name(package_path)?.replace(".spf", "/META");
+    let metadata_path = Path::new(package_path)
+        .file_name()
+        .unwrap_or_default()
+        .display()
+        .to_string()
+        .replace(".spf", "/META");
 
     if !Path::new(&metadata_path).exists() {
-        error(&format!(
-            "Extracted metadata file \"{metadata_path}\" not found"
-        ))
+        return Err(Error::new(
+            ErrorKind::NotFound,
+            format!("Extracted metadata file '{metadata_path}' not found"),
+        ));
     }
 
     // Retrieve the contents of the metadata file (`metadata_path`)
@@ -99,7 +110,10 @@ fn inspect_installed_package(package: &str) -> Result<(), Error> {
 
     // Check if the file exists
     if !Path::new(package_meta_path).exists() {
-        error(&format!("Metadata file not found: {package_meta_path}"))
+        return Err(Error::new(
+            ErrorKind::NotFound,
+            format!("Metadata file not found: {package_meta_path}"),
+        ));
     }
 
     // Retrieve the contents of the metadata file (`package_meta_path`)
