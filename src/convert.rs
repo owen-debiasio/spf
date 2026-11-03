@@ -342,7 +342,7 @@ impl Converter {
                 let metadata_path = &format!(
                     "{}/META",
                     Path::new(&package_path)
-                        .extension()
+                        .file_name()
                         .unwrap_or_default()
                         .display()
                         .to_string()
