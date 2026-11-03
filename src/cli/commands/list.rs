@@ -8,7 +8,7 @@ use std::io::{Error, ErrorKind};
 
 use glob::glob;
 
-use crate::libs::metadata::{Meta, PACKAGE_INSTALL_PATH};
+use crate::libs::spf::metadata::{Meta, PACKAGE_INSTALL_PATH};
 
 /// Lists packages that are be installed. You can optionally provide
 /// a string of text to match (`optional_string` ([`String`])).

@@ -23,11 +23,15 @@ use glob::glob;
 use deb_rust::{DebArchitecture, DebFile, binary::DebPackage};
 use rpm::{FileOptions, PackageBuilder, PackageMetadata};
 
-use crate::{
-    libs::core::fs::{ArchiveType, create_archive, extract_archive},
-    libs::core::sys::convert_arch,
-    libs::metadata::{Categories, Meta},
-    package::Package,
+use crate::libs::{
+    core::{
+        fs::{ArchiveType, create_archive, extract_archive},
+        sys::convert_arch,
+    },
+    spf::{
+        metadata::{Categories, Meta},
+        package::Package,
+    },
 };
 
 /// Lets user know that this program has no warranty, and is not responsible

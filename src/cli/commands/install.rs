@@ -13,10 +13,14 @@ use std::{
 };
 
 use crate::{
-    convert::PackageType,
-    libs::core::sys::{args_contains, is_root},
-    libs::metadata::{Categories, Meta, PACKAGE_INSTALL_PATH},
-    package::Package,
+    cli::{args::args_contains, commands::convert::PackageType},
+    libs::{
+        core::sys::is_root,
+        spf::{
+            metadata::{Categories, Meta, PACKAGE_INSTALL_PATH},
+            package::Package,
+        },
+    },
 };
 
 /// Installs a .spf package.

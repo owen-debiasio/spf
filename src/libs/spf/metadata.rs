@@ -6,7 +6,7 @@
 
 use crate::{
     VERSION,
-    convert::PackageType,
+    cli::commands::convert::PackageType,
     libs::core::sys::{SUPPORTED_ARCHS, convert_arch},
 };
 use std::{fs::read_to_string, io::Error};

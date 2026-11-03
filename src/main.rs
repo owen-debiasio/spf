@@ -1,25 +1,15 @@
 use std::{io::Error, process::exit};
 
 use crate::{
-    libs::core::sys::{Args, return_args},
-    list::list_packages,
-    package::Package,
-    template::gen_meta_template,
+    cli::{
+        args::{Args, return_args},
+        commands::{list::list_packages, template::gen_meta_template},
+    },
+    libs::spf::package::Package,
 };
 
-// Shared
+mod cli;
 mod libs;
-
-mod package;
-
-// Commands
-mod convert;
-mod create;
-mod inspect;
-mod install;
-mod list;
-mod remove;
-mod template;
 
 /// Retrieve spf version as a minimal string
 ///

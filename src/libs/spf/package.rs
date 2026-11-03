@@ -1,12 +1,11 @@
 use std::io::Error;
 
 use crate::{
-    convert::convert,
-    create::create_spf_package,
-    inspect::inspect,
-    install::spf_install,
+    cli::commands::{
+        convert::convert, create::create_spf_package, inspect::inspect, install::spf_install,
+        remove::remove_packages,
+    },
     libs::core::fs::{ArchiveType, extract_archive},
-    remove::remove_packages,
 };
 
 /// Implementation of an spf package

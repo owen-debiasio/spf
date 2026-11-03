@@ -5,9 +5,11 @@
 
 use crate::{
     VERSION,
-    convert::PackageType,
-    libs::core::fs::{ArchiveType, create_archive},
-    libs::core::sys::SUPPORTED_ARCHS,
+    cli::commands::convert::PackageType,
+    libs::core::{
+        fs::{ArchiveType, create_archive},
+        sys::SUPPORTED_ARCHS,
+    },
 };
 use std::{
     fs::{File, copy, create_dir_all, read_to_string, remove_dir_all},

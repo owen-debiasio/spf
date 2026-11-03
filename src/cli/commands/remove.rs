@@ -5,7 +5,7 @@
 
 use crate::{
     libs::core::sys::{get_binary_path, is_root},
-    libs::metadata::{Meta, PACKAGE_INSTALL_PATH},
+    libs::spf::metadata::{Meta, PACKAGE_INSTALL_PATH},
 };
 use std::{
     collections::HashSet,
