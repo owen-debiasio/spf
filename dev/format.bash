@@ -17,7 +17,7 @@ find . -name "*.bash" -exec shellcheck {} +
 shfmt -w -i 4 -ci -sr .
 
 if command -v ruff > /dev/null 2>&1; then
-    RUFF_EXEC=ruff
+    RUFF_EXEC="$(which ruff)"
 elif [ -e "./.venv/bin/ruff" ]; then
     RUFF_EXEC=./.venv/bin/ruff
 elif [ -v "$SPF_DEV_CFG" ]; then
