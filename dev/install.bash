@@ -14,7 +14,7 @@ if [[ "$ARCH" != "x86_64" && "$ARCH" != "aarch64" ]]; then
 
     sudo cp "$DEBUG_PATH" /usr/bin/spf
 else
-    ./packages/build.py --version="$VERSION" --arch="$ARCH" --type=spf
+    ./packages/build.py --version="$VERSION" --arch=auto --type=spf
 
     sudo "$DEBUG_PATH" install ./packages/artifacts/spf-"$VERSION"-"$ARCH"-linux.spf
 fi

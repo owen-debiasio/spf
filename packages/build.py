@@ -59,12 +59,12 @@ def error(text, code: int):
 def intro():
     method_to_exec = ARGS[0]
     print(
-        f"spf Packager v0.1.3\n\n"
+        f"spf Packager v0.2.0\n\n"
         f"Usage: {method_to_exec} [OPTIONS]\n\n"
         f"Options:\n"
-        f"    --version=[VERSION]     Version to package to [crate, vX.X.X]\n"
+        f"    --version=[VERSION]     Version to package to [auto, vX.X.X]\n"
         f"    --type=TYPE[,TYPE...]   Target packages [all, spf, rpm, deb, bin]\n"
-        f"    --arch=ARCH[,ARCH...]   Target architectures [all, x86_64, aarch64]\n\n"
+        f"    --arch=ARCH[,ARCH...]   Target architectures [auto, all, x86_64, aarch64]\n\n"
         f"Example:\n"
         f"    {method_to_exec} --type=deb,spf --arch=all --version=v0.8.0"
     )
@@ -210,7 +210,7 @@ class BuildInit:
 
         collected_version = retrieved_flag.split("=")[1]
 
-        if collected_version == "crate" or len(collected_version) == 0:
+        if collected_version == "auto" or len(collected_version) == 0:
             crate_version = subprocess.run(
                 'cargo pkgid | cut -d "#" -f2',
                 check=False,
@@ -291,6 +291,9 @@ class BuildInit:
 
         if OutputPackage.Arch.all in collected_arch:
             return OutputPackage.Arch.all
+
+        if collected_arch == "auto":
+            collected_arch = platform.machine()
 
         if "," in collected_arch:
             collected_arch = collected_arch.removesuffix(",").split(",")
