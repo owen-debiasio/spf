@@ -60,7 +60,14 @@ fn verify_input_paths(source_package_path: &str, output_package_path: &str) -> R
     if source_package_path.is_empty() {
         return Err(Error::new(
             ErrorKind::InvalidInput,
-            format!("Source package not found: {source_package_path}"),
+            "Source package required",
+        ));
+    }
+
+    if output_package_path.is_empty() {
+        return Err(Error::new(
+            ErrorKind::InvalidInput,
+            "Output location required",
         ));
     }
 
