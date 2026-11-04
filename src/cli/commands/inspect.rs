@@ -61,6 +61,8 @@ fn inspect_spf_package(package_path: &str) -> Result<(), Error> {
         ));
     }
 
+    println!("Loading package \"{package_path}\"...");
+
     extract_archive(package_path, ".", ArchiveType::Tar)?;
 
     let metadata_path = Path::new(package_path)
