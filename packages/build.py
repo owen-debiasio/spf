@@ -327,6 +327,9 @@ class BuildInit:
 
 def main():
 
+    if sys.version_info < (3, 10):  # noqa: UP036
+        error(f"Version 3.10 is required! You are running {sys.version}", 1)
+
     if platform.system() == "Windows":
         input("WARNING: I encourage using WSL when developing spf!\n")
 
