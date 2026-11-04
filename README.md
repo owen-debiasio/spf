@@ -103,8 +103,10 @@ sudo cp target/release/spf /usr/bin/spf # Install to location (like /usr/local/b
 
 - spf is not intended to be a common tool to use for everyone, it's only a
   project I've whipped up out of boredom. Please don't take this too seriously.
-- This project is 100% human-written code. Either by me or from some forum or 10
-  year old Stack Overflow post.
+- The code in this project is either human written, or human verified. If any
+  LLM is used, it's reviewed and verified by me. If I don't understand the code,
+  I don't implement it. Even then, very little AI is used in this project. I
+  take full responsibility of all code in spf.
 
 ## Credits
 
