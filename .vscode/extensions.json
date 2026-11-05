@@ -11,7 +11,6 @@
     "editorconfig.editorconfig",
     "docker.docker",
     "jasonnutter.vscode-codeowners",
-    "streetsidesoftware.code-spell-checker",
     "dustypomerleau.rust-syntax",
     "ms-vscode.remote-server",
     "ms-vscode.remote-explorer",
