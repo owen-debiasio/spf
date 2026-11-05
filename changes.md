@@ -163,3 +163,5 @@ shape spf.
 - Introduce debug mode. Use `--debug` to use
 - Errors are now more descriptive
 - Retire `sys::error` and `fs::FileProperty`. Use native capabilities instead.
+- Introduce new and improved spf package and metadata libraries
+- Rewrite command(s): `create` with new libraries.
