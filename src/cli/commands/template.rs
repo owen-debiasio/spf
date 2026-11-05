@@ -22,6 +22,7 @@ static TEMPLATE_CONTENTS: &str = "\
 PROJECT_NAME = name
 VERSION = v0.1.0
 DESCRIPTION = Sample config
+REPOSITORY = https://github.com/owen-debiasio/spf.git
 LICENSE = gplv3
 AUTHORS = spf
 ARCH = x86_64
