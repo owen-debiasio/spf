@@ -1,9 +1,14 @@
+//! Copyright (C) 2026 Owen Debiasio <owen.debiasio@gmail.com>
+//! SPDX-License-Identifier: GPL-3.0-or-later
+
 use std::{io::Error, process::exit};
 
 use crate::{
     cli::{
         args::{Args, return_args},
-        commands::{list::list_packages, template::gen_meta_template},
+        commands::{
+            create::create, inspect::inspect, list::list_packages, template::gen_meta_template,
+        },
     },
     libs::spf::package::Package,
 };
@@ -69,7 +74,7 @@ fn main() -> Result<(), Error> {
 /// ```
 fn parse_spf_cli(collected_args: Args) -> Result<(), Error> {
     match collected_args.root.as_str() {
-        "create" => Package::create(&collected_args.second, &collected_args.third)?,
+        "create" => create(collected_args.second, collected_args.third)?,
 
         "install" => Package::from(collected_args.second)?.install()?,
 
@@ -79,13 +84,13 @@ fn parse_spf_cli(collected_args: Args) -> Result<(), Error> {
 
         "template" => gen_meta_template(collected_args.second)?,
 
-        "inspect" => Package::inspect(&collected_args.second)?,
+        "inspect" => inspect(&collected_args.second)?,
 
         "convert" => Package::from(collected_args.second)?.convert(&collected_args.third)?,
 
         _ => {
             let flags = collected_args.flags;
-            if flags.contains(&"--version".to_string()) || flags.contains(&"-v".to_string()) {
+            if flags.contains(&"--version".to_string()) {
                 println!(
                     "Written by Owen DeBiasio <owen.debiasio@gmail.com>. Licensed under GPL-3.0-or-later.\n\
                     spf has NO WARRANTY and is not responsible for breaking your system."
@@ -113,8 +118,8 @@ fn available_commands() {
           convert    <source package> <converted format>   Convert package formats
         \n\
         Available options:\n\n \
-          --version       Display spf version\n \
-          --ignore-arch   Force the installation of a package with a different architecture\n \
-          --debug         Display debug information as spf runs"
+          --version            Display spf version\n \
+          --ignore-arch        Force the installation of a package with a different architecture\n \
+          --debug              Display debug information as spf runs"
     );
 }

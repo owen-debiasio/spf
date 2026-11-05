@@ -41,6 +41,21 @@ pub struct Categories {
     pub arch: String,
 }
 
+impl Categories {
+    /// Create new instance of categories.
+    pub const fn new() -> Categories {
+        Categories {
+            name: String::new(),
+            version: String::new(),
+            description: String::new(),
+            source: String::new(),
+            license: String::new(),
+            authors: String::new(),
+            arch: String::new(),
+        }
+    }
+}
+
 /// [`Meta`] refers to the metadata found within either a .spf package or an already installed
 /// package that has its metadata stored at `/usr/share/spf/packages/` ([`PACKAGE_INSTALL_PATH`]).
 ///
@@ -179,5 +194,58 @@ impl Meta {
             format!("AUTHORS = {}", metadata.authors),
             format!("ARCH = {arch}"),
         ])
+    }
+}
+
+/// Construct paths used in metadata
+#[derive(Clone, Debug)]
+pub struct PackagePaths;
+
+impl PackagePaths {
+    /// Loads the packages from a package build config.
+    ///
+    /// Only collects entries between `:::PATH DEFINE START:::` and `:::PATH DEFINE END:::`.
+    ///
+    /// ```
+    /// let package_config_path: "spf_config";
+    /// let paths = PackagePaths::load_from_config(package_config_path)?;
+    /// ```
+    pub fn load_from_config(package_config_path: String) -> Result<Vec<String>, Error> {
+        let mut paths: Vec<String> = Vec::new();
+
+        const START_HEADER: &str = ":::PATH DEFINE START:::";
+
+        let mut header_is_read = false;
+
+        for entry in read_to_string(package_config_path)?.lines() {
+            if entry == START_HEADER {
+                header_is_read = true;
+                continue;
+            } else if !header_is_read {
+                continue;
+            } else if entry == ":::PATH DEFINE END:::" {
+                break;
+            }
+
+            paths.push(entry.to_string());
+        }
+
+        Ok(paths)
+    }
+
+    #[allow(unused)]
+    /// Takes the source and dest paths, and formats them into what is inside a
+    /// package's config.
+    ///
+    /// ```
+    /// let source = "./source/path";
+    /// let dest = "/dest/path"
+    ///
+    /// let spf_formatted = PackagePaths::into_spf_path(source, dest);
+    ///
+    /// assert_eq!(spf_formatted, &format!("{source}:{dest}"));
+    /// ```
+    pub fn into_spf_path(source: &str, dest: &str) -> String {
+        format!("{source}:{dest}")
     }
 }
