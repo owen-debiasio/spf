@@ -14,6 +14,7 @@ spf-*
 *.spf
 spfbuildcfg
 .SPF_DEV_CFG
+spf_template
 
 # Spare debian package items
 *.deb
