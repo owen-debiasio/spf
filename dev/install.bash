@@ -8,13 +8,19 @@ ARCH="$(uname -m)"
 DEBUG_PATH="./target/debug/spf"
 
 if [[ "$ARCH" != "x86_64" && "$ARCH" != "aarch64" ]]; then
-    ./dev/format.bash
+    if [[ "$1" != "--no-format" ]]; then
+        ./dev/format.bash
+    fi
 
     cargo build
 
     sudo cp "$DEBUG_PATH" /usr/bin/spf
 else
-    ./packages/build.py --version="$VERSION" --arch=auto --type=spf
+    if [[ "$1" != "--skip-format" ]]; then
+        ./packages/build.py --version="$VERSION" --arch=auto --type=spf
+    else
+        ./packages/build.py --version="$VERSION" --arch=auto --type=spf --skip-format
+    fi
 
     sudo "$DEBUG_PATH" install ./packages/artifacts/spf-"$VERSION"-"$ARCH"-linux.spf
 fi

@@ -59,12 +59,13 @@ def error(text, code: int):
 def intro():
     method_to_exec = ARGS[0]
     print(
-        f"spf Packager v0.2.0\n\n"
+        f"spf Packager v0.2.1\n\n"
         f"Usage: {method_to_exec} [OPTIONS]\n\n"
         f"Options:\n"
         f"    --version=[VERSION]     Version to package to [auto, vX.X.X]\n"
         f"    --type=TYPE[,TYPE...]   Target packages [all, spf, rpm, deb, bin]\n"
         f"    --arch=ARCH[,ARCH...]   Target architectures [auto, all, x86_64, aarch64]\n\n"
+        f"    --skip-format           Allows you to skip the formatting process"
         f"Example:\n"
         f"    {method_to_exec} --type=deb,spf --arch=all --version=v0.8.0"
     )
@@ -363,7 +364,12 @@ def main():
     print(f"> Packaging to format(s): {output_types}")
     print(f"> Packaging with architecture(s): {output_archs}")
 
-    subprocess.call("./dev/format.bash")
+    has_skip_format = not "--skip-format" in ARGS
+
+    if has_skip_format:
+        print("skipping format")
+        subprocess.call("./dev/format.bash")
+
     subprocess.call("./packages/clean.bash")
 
     create_artifact_dir()
