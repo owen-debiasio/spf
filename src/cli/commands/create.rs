@@ -29,11 +29,14 @@ pub fn create(package_config: String, output_location: String) -> Result<(), Err
         ));
     }
 
-    if output_location.is_empty() {
-        println!("Building package '{package_config}'...")
-    } else {
-        println!("Building package '{package_config}' to '{output_location}'...")
-    }
+    println!(
+        "Building package '{package_config}'{}",
+        if output_location.is_empty() {
+            "...".to_string()
+        } else {
+            format!(" to '{output_location}'...")
+        }
+    );
 
     println!("    Collecting metadata...");
 
@@ -52,6 +55,8 @@ pub fn create(package_config: String, output_location: String) -> Result<(), Err
     println!("    Collecting paths...");
 
     for path in PackagePaths::load_from_config(package_config)? {
+        println!("        Added path: '{path}'");
+
         package = package.add_path(path)
     }
 
