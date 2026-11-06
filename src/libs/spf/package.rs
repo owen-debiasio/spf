@@ -161,7 +161,6 @@ impl Package {
         }
     }
 
-    #[allow(unused)]
     /// Builds and assembles the package.
     ///
     /// ```
@@ -183,14 +182,14 @@ impl Package {
 
         let raw_folder_name = raw_folder_name.trim_end_matches(".spf");
 
-        create_dir(raw_folder_name);
+        create_dir(raw_folder_name)?;
 
         let meta = self.metadata.clone();
 
         write(
             format!("{raw_folder_name}/META"),
             Meta::construct_contents(meta)?.join("\n"),
-        );
+        )?;
 
         for path in self.paths.clone() {
             let source = path.split(':').next().unwrap_or_default();
