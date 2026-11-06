@@ -169,31 +169,6 @@ impl Package {
     }
 
     #[allow(unused)]
-    /// Adds multiple files to be copied.
-    ///
-    /// Directories and files are both supported.
-    ///
-    /// ```
-    /// let name_of_package = "test";
-    /// let package = Package::new(name_of_package)
-    ///     .add_paths(["./path/to/thing", "./other/path/to/thing/"])
-    /// ```
-    pub fn add_paths(&self, paths: Vec<String>) -> Self {
-        Self {
-            name: self.name.clone(),
-            package_path: self.package_path.clone(),
-            metadata: self.metadata.clone(),
-            paths: {
-                let mut coll_paths = self.paths.clone();
-                for path in paths {
-                    coll_paths.push(path);
-                }
-                coll_paths
-            },
-        }
-    }
-
-    #[allow(unused)]
     /// Builds and assembles the package.
     ///
     /// ```
