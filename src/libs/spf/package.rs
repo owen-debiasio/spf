@@ -10,11 +10,7 @@ use std::{
 };
 
 use crate::{
-    cli::commands::{
-        convert::{PackageType, convert},
-        install::spf_install,
-        remove::remove_packages,
-    },
+    cli::commands::convert::PackageType,
     libs::{
         core::fs::{ArchiveType, create_archive, extract_archive},
         spf::metadata::{Categories, Meta},
@@ -68,7 +64,6 @@ impl Package {
         Ok(details)
     }
 
-    #[allow(unused)]
     /// Initializes an spf package.
     ///
     /// Only the name of the package must be provided here.
@@ -95,7 +90,6 @@ impl Package {
         }
     }
 
-    #[allow(unused)]
     /// Adds the package metadata.
     ///
     /// Using the [`Categories`] struct, this defines what metadata the
@@ -115,7 +109,6 @@ impl Package {
         }
     }
 
-    #[allow(unused)]
     /// Defines the output location of the package.
     ///
     /// ```
@@ -201,7 +194,27 @@ impl Package {
 
         for path in self.paths.clone() {
             let source = path.split(':').next().unwrap_or_default();
+
+            if source.is_empty() {
+                return Err(Error::new(
+                    ErrorKind::InvalidFilename,
+                    "No source path provided",
+                ));
+            }
+
             let dest = path.split(':').next_back().unwrap_or_default();
+
+            if dest.is_empty() {
+                return Err(Error::new(
+                    ErrorKind::InvalidFilename,
+                    "No destination path provided",
+                ));
+            } else if !dest.starts_with("/") {
+                return Err(Error::new(
+                    ErrorKind::InvalidFilename,
+                    format!("Destination path must start from the root: {dest}"),
+                ));
+            }
 
             let file_dest_str = format!("{raw_folder_name}{dest}");
             let file_dest = Path::new(&file_dest_str);
@@ -216,52 +229,6 @@ impl Package {
         create_archive(&self.package_path, raw_folder_name, ArchiveType::Tar)?;
 
         remove_dir_all(raw_folder_name)?;
-
-        Ok(())
-    }
-}
-
-impl Package {
-    pub fn install(&self) -> Result<(), Error> {
-        spf_install(self.package_path.clone())?;
-
-        Ok(())
-    }
-
-    pub fn remove(collected_args: Vec<String>) -> Result<(), Error> {
-        // Manually supply args because I hate this. Allows you to
-        // remove multiple packages at once.
-        let mut packages: Vec<String> = Vec::new();
-
-        // The first two args that are skipped are `spf remove`. Everything
-        // else after that is a package to check.
-        for package_arg in collected_args.into_iter().skip(1) {
-            packages.push(package_arg);
-        }
-
-        remove_packages(packages)?;
-
-        Ok(())
-    }
-
-    /// Converts package formats.
-    ///
-    /// Supports conversion in the following orientations:
-    ///
-    /// - `.spf` -> `.deb`
-    /// - `.deb` -> `.spf`
-    /// - `.rpm` -> `.spf`
-    /// - `.spf` -> `.rpm`
-    ///
-    /// ```
-    /// let package_path = String::from("test/spf.spf");
-    /// let package = Package::from(package_path)?;
-    ///
-    /// let output_file = "test.deb";
-    /// package.convert(output_file)?;
-    /// ```
-    pub fn convert(&self, output_file: &str) -> Result<(), Error> {
-        convert(&self.package_path, output_file)?;
 
         Ok(())
     }
