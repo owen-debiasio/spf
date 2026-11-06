@@ -3,14 +3,12 @@
 
 use std::{io::Error, process::exit};
 
-use crate::{
-    cli::{
-        args::{Args, return_args},
-        commands::{
-            create::create, inspect::inspect, list::list_packages, template::gen_meta_template,
-        },
+use crate::cli::{
+    args::{Args, return_args},
+    commands::{
+        convert::convert, create::create, inspect::inspect, install::spf_install,
+        list::list_packages, remove::remove_packages, template::gen_meta_template,
     },
-    libs::spf::package::Package,
 };
 
 mod cli;
@@ -76,9 +74,21 @@ fn parse_spf_cli(collected_args: Args) -> Result<(), Error> {
     match collected_args.root.as_str() {
         "create" => create(collected_args.second, collected_args.third)?,
 
-        "install" => Package::from(collected_args.second)?.install()?,
+        "install" => spf_install(collected_args.second)?,
 
-        "remove" => Package::remove(collected_args.commands)?,
+        "remove" => {
+            // Manually supply args because I hate this. Allows you to
+            // remove multiple packages at once.
+            let mut packages: Vec<String> = Vec::new();
+
+            // The first two args that are skipped are `spf remove`. Everything
+            // else after that is a package to check.
+            for package_arg in collected_args.commands.into_iter().skip(1) {
+                packages.push(package_arg);
+            }
+
+            remove_packages(packages)?
+        }
 
         "list" => list_packages(&collected_args.second)?,
 
@@ -86,7 +96,7 @@ fn parse_spf_cli(collected_args: Args) -> Result<(), Error> {
 
         "inspect" => inspect(&collected_args.second)?,
 
-        "convert" => Package::from(collected_args.second)?.convert(&collected_args.third)?,
+        "convert" => convert(&collected_args.second, &collected_args.third)?,
 
         _ => {
             let flags = collected_args.flags;
