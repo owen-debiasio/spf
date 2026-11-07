@@ -110,4 +110,9 @@ sudo cp target/release/spf /usr/bin/spf # Install to location (like /usr/local/b
 
 ## Credits
 
-[spf Credits](CREDITS.md)
+- [Glob](https://github.com/rust-lang/glob) by
+  [@rust-lang](https://github.com/rust-lang)
+- [self-replace](https://github.com/mitsuhiko/self-replace) by
+  [@mitsuhiko](https://github.com/djc)
+- [tar-rs](https://github.com/composefs/tar-rs) by
+  [@composefs](https://github.com/composefs)
