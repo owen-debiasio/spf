@@ -1,7 +1,7 @@
 # spf Roadmap
 
 > [!IMPORTANT]  
-> Last updated: `October 23, 2026 @ 08:44 PM EST`
+> Last updated: `November 07, 2026 @ 02:51 PM EST`
 
 Here's an idea list that I've thrown together of things I want to add/change
 over time. These are only IDEAS and are not guaranteed to be implemented.
@@ -31,18 +31,17 @@ dropped out of the list at any point.
 
 <!-- markdownlint-disable MD013 -->
 
-| Feature                                                               | Priority | Due Date (version) |
-| --------------------------------------------------------------------- | -------- | ------------------ |
-| Command `verify`: Verify `.spf`/installed package metadata and config | High     | v0.8.0             |
-| Conversion in between `.spf` and Arch Linux `PKGBUILD` packages       | Medium   | v0.8.0             |
-| Pre/Post install/uninstall jobs                                       | High     | v0.9.0             |
-| Ability to install packages through a remote repository               | High     | v1.0.0             |
-| Move to a `.toml`-based package configuration/metadata                | High     | v1.0.0             |
-| Add a `.toml` configuration system for spf cli and backend            | Medium   | v1.0.0             |
-| Unit Tests (via `cargo test`)                                         | Low      | v1.0.0             |
-| Remote package repository support (Ubuntu PPA, AUR, Cargo)            | Low      | NaN                |
-| Intel x86_64 and M-series Apple Silicon (aarch64) MacOS support       | Low      | NaN                |
-| GUI Package install tool (GTK4)                                       | Low      | NaN                |
+| Feature                                                               | Priority  | Due Date (version) |
+| --------------------------------------------------------------------- | --------- | ------------------ |
+| Command `verify`: Verify `.spf`/installed package metadata and config | Low       | v0.8.0             |
+| Pre/Post install/uninstall jobs                                       | Low       | v0.8.0             |
+| Unit Tests (via `cargo test`)                                         | Undecided | v0.9.0             |
+| Add a `.toml` configuration system for spf cli and backend            | Undecided | v0.9.0             |
+| Ability to install packages through a remote repository               | Undecided | v1.0.0             |
+| Move to a `.toml`-based package configuration/metadata                | Undecided | v1.0.0             |
+| Remote package repository support (Ubuntu PPA, AUR, Cargo)            | NaN       | NaN                |
+| Intel x86_64 and M-series Apple Silicon (aarch64) MacOS support       | NaN       | NaN                |
+| GUI Package install tool (GTK4)                                       | NaN       | NaN                |
 
 <!-- markdownlint-enable MD013 -->
 
