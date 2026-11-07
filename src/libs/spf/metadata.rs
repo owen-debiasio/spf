@@ -4,11 +4,7 @@
 //! Copyright (C) 2026 Owen Debiasio <owen.debiasio@gmail.com>
 //! SPDX-License-Identifier: GPL-3.0-or-later
 
-use crate::{
-    VERSION,
-    cli::commands::convert::PackageType,
-    libs::core::sys::{SUPPORTED_ARCHS, convert_arch},
-};
+use crate::VERSION;
 use std::{
     fs::read_to_string,
     io::{Error, ErrorKind},
@@ -180,14 +176,6 @@ impl Meta {
     /// let metadata_contents = construct_contents(metadata)?;
     /// ```
     pub fn construct_contents(metadata: Categories) -> Result<Vec<String>, Error> {
-        // A safeguard to help prevent mismatched arch types. Useful during tyhe
-        // conversion process.
-        let arch = if SUPPORTED_ARCHS.contains(&metadata.arch.as_str()) {
-            &metadata.arch
-        } else {
-            convert_arch(&metadata.arch, PackageType::Spf)?
-        };
-
         Ok(vec![
             format!("### PACKAGED WITH SPF {VERSION} ###\n"),
             format!("PROJECT_NAME = {}", metadata.name),
@@ -196,7 +184,7 @@ impl Meta {
             format!("REPOSITORY = {}", metadata.source),
             format!("LICENSE = {}", metadata.license),
             format!("AUTHORS = {}", metadata.authors),
-            format!("ARCH = {arch}"),
+            format!("ARCH = {}", metadata.arch),
         ])
     }
 }

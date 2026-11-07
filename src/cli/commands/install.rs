@@ -13,13 +13,13 @@ use std::{
 };
 
 use crate::{
-    cli::{args::args_contains, commands::convert::PackageType},
+    cli::args::args_contains,
     libs::{
-        core::sys::is_root,
         spf::{
             metadata::{Categories, Meta, PACKAGE_INSTALL_PATH},
             package::Package,
         },
+        sys::{SUPPORTED_ARCHS, is_root},
     },
 };
 
@@ -54,7 +54,7 @@ pub fn spf_install(mut spf_package_path: String) -> Result<(), Error> {
     if spf_package_path.is_empty()
         || !package_path_check
             .extension()
-            .is_some_and(|ext| ext.eq_ignore_ascii_case(PackageType::SPF))
+            .is_some_and(|ext| ext.eq_ignore_ascii_case("spf"))
         || !package_path_check.exists()
     {
         return Err(Error::new(
@@ -93,6 +93,7 @@ pub fn spf_install(mut spf_package_path: String) -> Result<(), Error> {
 
     // Check to make sure the system architecture matches or is compatible the package architecture
     if !matches!(collected_metadata.arch.as_str(), ARCH | "universal")
+        && !SUPPORTED_ARCHS.contains(&ARCH)
         && !args_contains("--ignore-arch")?
     {
         remove_dir_all(extracted_package_path)?;

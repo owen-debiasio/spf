@@ -3,9 +3,9 @@
 //! Copyright (C) 2026 Owen Debiasio <owen.debiasio@gmail.com>
 //! SPDX-License-Identifier: GPL-3.0-or-later
 
-use crate::{
-    libs::core::sys::{get_binary_path, is_root},
-    libs::spf::metadata::{Meta, PACKAGE_INSTALL_PATH},
+use crate::libs::{
+    spf::metadata::{Meta, PACKAGE_INSTALL_PATH},
+    sys::{get_binary_path, is_root},
 };
 use std::{
     collections::HashSet,

@@ -6,8 +6,8 @@ use std::{io::Error, process::exit};
 use crate::cli::{
     args::{Args, return_args},
     commands::{
-        convert::convert, create::create, inspect::inspect, install::spf_install,
-        list::list_packages, remove::remove_packages, template::gen_meta_template,
+        create::create, inspect::inspect, install::spf_install, list::list_packages,
+        remove::remove_packages, template::gen_meta_template,
     },
 };
 
@@ -96,8 +96,6 @@ fn parse_spf_cli(collected_args: Args) -> Result<(), Error> {
 
         "inspect" => inspect(&collected_args.second)?,
 
-        "convert" => convert(&collected_args.second, &collected_args.third)?,
-
         _ => {
             let flags = collected_args.flags;
             if flags.contains(&"--version".to_string()) {
@@ -124,8 +122,7 @@ fn available_commands() {
           remove     <package to uninstall>                Uninstall package\n  \
           list       <(optional) string to match>          List installed packages\n  \
           template   <(optional) output location>          Generate package metadata template\n  \
-          inspect    <package to inspect>                  Inspect metadata of a package\n  \
-          convert    <source package> <converted format>   Convert package formats
+          inspect    <package to inspect>                  Inspect metadata of a package
         \n\
         Available options:\n\n \
           --version            Display spf version\n \

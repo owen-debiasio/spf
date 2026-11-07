@@ -4,18 +4,14 @@
 //! SPDX-License-Identifier: GPL-3.0-or-later
 
 use std::{
-    fs::{copy, create_dir, create_dir_all, remove_dir_all, write},
+    fs::{File, copy, create_dir, create_dir_all, remove_dir_all, write},
     io::{Error, ErrorKind},
     path::Path,
 };
 
-use crate::{
-    cli::commands::convert::PackageType,
-    libs::{
-        core::fs::{ArchiveType, create_archive, extract_archive},
-        spf::metadata::{Categories, Meta, PackagePaths},
-    },
-};
+use tar::Builder;
+
+use crate::libs::spf::metadata::{Categories, Meta, PackagePaths};
 
 /// Implementation of an spf package
 #[derive(Clone, Debug)]
@@ -40,7 +36,9 @@ impl Package {
     /// package.extract(destination)?;
     /// ```
     pub fn extract(&self, destination: &str) -> Result<(), Error> {
-        extract_archive(&self.package_path, destination, ArchiveType::Tar)?;
+        let archive_path = File::open(&self.package_path)?;
+
+        tar::Archive::new(archive_path).unpack(destination)?;
 
         Ok(())
     }
@@ -122,7 +120,7 @@ impl Package {
             .unwrap_or_default()
             .display()
             .to_string()
-            != PackageType::SPF
+            != "spf"
         {
             return Err(Error::new(
                 ErrorKind::InvalidFilename,
@@ -210,7 +208,24 @@ impl Package {
             copy(source, file_dest)?;
         }
 
-        create_archive(&self.package_path, raw_folder_name, ArchiveType::Tar)?;
+        let archive_file = File::create(&self.package_path)?;
+
+        let mut archive = Builder::new(&archive_file);
+
+        if Path::new(raw_folder_name).is_dir() {
+            if let Some(path) = Path::new(raw_folder_name).file_name() {
+                archive.append_dir_all(path, raw_folder_name)?;
+            } else {
+                return Err(Error::new(
+                    ErrorKind::NotFound,
+                    format!("Failed to add to archive '{archive_file:?}': {raw_folder_name}"),
+                ));
+            }
+        } else {
+            archive.append_path(raw_folder_name)?
+        }
+
+        archive.finish()?;
 
         remove_dir_all(raw_folder_name)?;
 

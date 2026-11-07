@@ -10,13 +10,7 @@ use std::{
     path::Path,
 };
 
-use crate::{
-    cli::commands::convert::PackageType,
-    libs::{
-        core::fs::{ArchiveType, extract_archive},
-        spf::metadata::PACKAGE_INSTALL_PATH,
-    },
-};
+use crate::libs::spf::{metadata::PACKAGE_INSTALL_PATH, package::Package};
 
 /// You can inspect a .spf package you downloaded, or a package
 /// you have already installed.
@@ -33,7 +27,7 @@ pub fn inspect(package: &str) -> Result<(), Error> {
 
     if Path::new(&package)
         .extension()
-        .is_some_and(|ext| ext.eq_ignore_ascii_case(PackageType::SPF))
+        .is_some_and(|ext| ext.eq_ignore_ascii_case("spf"))
     {
         inspect_spf_package(package)?;
     } else {
@@ -54,7 +48,9 @@ pub fn inspect(package: &str) -> Result<(), Error> {
 /// // The output is the contents of the `META` file
 /// ```
 fn inspect_spf_package(package_path: &str) -> Result<(), Error> {
-    if !Path::new(&package_path).exists() {
+    let package_path_as_path = Path::new(package_path);
+
+    if !package_path_as_path.exists() {
         return Err(Error::new(
             ErrorKind::NotFound,
             format!(".spf package not found: {package_path}"),
@@ -63,9 +59,9 @@ fn inspect_spf_package(package_path: &str) -> Result<(), Error> {
 
     println!("Loading package \"{package_path}\"...");
 
-    extract_archive(package_path, ".", ArchiveType::Tar)?;
+    Package::from(package_path.to_string())?.extract(".")?;
 
-    let metadata_path = Path::new(package_path)
+    let metadata_path = package_path_as_path
         .file_name()
         .unwrap_or_default()
         .display()
