@@ -9,7 +9,7 @@ use crate::{
     cli::commands::convert::PackageType,
     libs::core::sys::{SUPPORTED_ARCHS, convert_arch},
 };
-use std::{fs::read_to_string, io::Error};
+use std::{fs::read_to_string, io::{Error, ErrorKind}, path::Path};
 
 /// Where spf package metadata is installed to.
 pub static PACKAGE_INSTALL_PATH: &str = "/usr/share/spf/packages/";
@@ -247,5 +247,64 @@ impl PackagePaths {
     /// ```
     pub fn into_spf_path(source: &str, dest: &str) -> String {
         format!("{source}:{dest}")
+    }
+
+    /// Reads the formatted path you would find in the package config, and
+    /// returns both the source and destination paths.
+    ///
+    /// ```
+    /// let formatted_paths = "./source/file:/destination/location/path"
+    ///
+    /// let (source, dest) = get_src_dest(formatted_paths);
+    ///
+    /// assert_eq!(source, "./source/file");
+    /// assert_eq!(dest, "/destination/location/path");
+    /// ```
+    pub fn get_src_dest(formatted_path: &str) -> (&str, &str) {
+        let source = formatted_path.split(':').next().unwrap_or_default();
+        let dest = formatted_path.split(':').next_back().unwrap_or_default();
+
+        (source, dest)
+    }
+
+    /// Make sure that the paths entered follow the standards correctly.
+    ///
+    /// Checks if:
+    ///
+    /// - Source package is entered and exists
+    /// - Destination package is entered and starts from the root directory
+    ///
+    /// ```
+    /// let src = "./source/package";
+    /// let dest = "/dest/to/location";
+    ///
+    /// PackagePaths::verify_src_dest(src, dest)?; // Succeeds because all checks are passed
+    /// ```
+    pub fn verify_src_dest(src: &str, dest: &str) -> Result<(), Error>{
+        if src.is_empty() {
+            return Err(Error::new(
+                ErrorKind::InvalidFilename,
+                "No source path provided",
+            ));
+        } else if !Path::new(src).exists() {
+            return Err(Error::new(
+                ErrorKind::NotFound,
+                format!("Source path not found: {src}"),
+            ));
+        }
+
+        if dest.is_empty() {
+            return Err(Error::new(
+                ErrorKind::InvalidFilename,
+                "No destination path provided",
+            ));
+        } else if !dest.starts_with("/") {
+            return Err(Error::new(
+                ErrorKind::InvalidFilename,
+                format!("Destination path must start from the root: {dest}"),
+            ));
+        }
+
+        Ok(())
     }
 }

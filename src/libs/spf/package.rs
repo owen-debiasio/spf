@@ -13,7 +13,7 @@ use crate::{
     cli::commands::convert::PackageType,
     libs::{
         core::fs::{ArchiveType, create_archive, extract_archive},
-        spf::metadata::{Categories, Meta},
+        spf::metadata::{Categories, Meta, PackagePaths},
     },
 };
 
@@ -139,23 +139,27 @@ impl Package {
     }
 
     #[allow(unused)]
-    /// Adds one path to be copied.
+    /// Adds the definition of source and destination paths.
     ///
     /// Directories and files are both supported.
     ///
     /// ```
     /// let name_of_package = "test";
+    ///
+    /// let source = "./source/file";
+    /// let dest = "/dest/file/location";
+    ///
     /// let package = Package::new(name_of_package)
-    ///     .add_path("./target/debug/spf")
+    ///     .add_path(source, dest)
     /// ```
-    pub fn add_path(&self, path: String) -> Self {
+    pub fn add_path(&self, source: &str, dest: &str) -> Self {
         Self {
             name: self.name.clone(),
             package_path: self.package_path.clone(),
             metadata: self.metadata.clone(),
             paths: {
                 let mut coll_paths = self.paths.clone();
-                coll_paths.push(path);
+                coll_paths.push(PackagePaths::into_spf_path(source, dest));
                 coll_paths
             },
         }
@@ -192,28 +196,9 @@ impl Package {
         )?;
 
         for path in self.paths.clone() {
-            let source = path.split(':').next().unwrap_or_default();
+            let (source, dest) = PackagePaths::get_src_dest(&path);
 
-            if source.is_empty() {
-                return Err(Error::new(
-                    ErrorKind::InvalidFilename,
-                    "No source path provided",
-                ));
-            }
-
-            let dest = path.split(':').next_back().unwrap_or_default();
-
-            if dest.is_empty() {
-                return Err(Error::new(
-                    ErrorKind::InvalidFilename,
-                    "No destination path provided",
-                ));
-            } else if !dest.starts_with("/") {
-                return Err(Error::new(
-                    ErrorKind::InvalidFilename,
-                    format!("Destination path must start from the root: {dest}"),
-                ));
-            }
+            PackagePaths::verify_src_dest(source, dest)?;
 
             let file_dest_str = format!("{raw_folder_name}{dest}");
             let file_dest = Path::new(&file_dest_str);

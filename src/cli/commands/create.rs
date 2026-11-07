@@ -55,9 +55,11 @@ pub fn create(package_config: String, output_location: String) -> Result<(), Err
     println!("    Collecting paths...");
 
     for path in PackagePaths::load_from_config(package_config)? {
-        println!("        Added path: '{path}'");
+        println!("        Adding path: '{path}'");
 
-        package = package.add_path(path)
+        let (source, dest) = PackagePaths::get_src_dest(&path);
+
+        package = package.add_path(source, dest)
     }
 
     if args_contains("--debug")? {
