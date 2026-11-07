@@ -497,10 +497,16 @@ impl Converter {
 
                         println!("        Applying...");
 
+                        let version_stripped_of_letters: String = metadata
+                            .version
+                            .chars()
+                            .filter(|char| !char.is_alphabetic())
+                            .collect();
+
                         // Set the metadata
                         package = package
                             .set_name(&metadata.name)
-                            .set_version(&metadata.version)
+                            .set_version(&version_stripped_of_letters)
                             .set_description(&metadata.description)
                             .set_maintainer(&metadata.authors)
                             .set_homepage(&metadata.source)
