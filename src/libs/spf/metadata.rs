@@ -9,7 +9,11 @@ use crate::{
     cli::commands::convert::PackageType,
     libs::core::sys::{SUPPORTED_ARCHS, convert_arch},
 };
-use std::{fs::read_to_string, io::{Error, ErrorKind}, path::Path};
+use std::{
+    fs::read_to_string,
+    io::{Error, ErrorKind},
+    path::Path,
+};
 
 /// Where spf package metadata is installed to.
 pub static PACKAGE_INSTALL_PATH: &str = "/usr/share/spf/packages/";
@@ -280,7 +284,7 @@ impl PackagePaths {
     ///
     /// PackagePaths::verify_src_dest(src, dest)?; // Succeeds because all checks are passed
     /// ```
-    pub fn verify_src_dest(src: &str, dest: &str) -> Result<(), Error>{
+    pub fn verify_src_dest(src: &str, dest: &str) -> Result<(), Error> {
         if src.is_empty() {
             return Err(Error::new(
                 ErrorKind::InvalidFilename,
