@@ -149,19 +149,55 @@ shape spf.
 **Full Changelog**:
 <https://github.com/owen-debiasio/spf/compare/v0.7.0...v0.8.0>
 
-- New and improved package builder: [./packages/build.py](./packages/build.py)
-- Retired `./dev/package.bash` as the build script for packages, replaced by
-  [./packages/build.py](./packages/build.py)
+This is another HUGE release (Bigger than v0.7.0)! Instead of this release
+focusing on features, this update mainly focuses on the inside of spf. This
+means the libraries and what's going on inside.
+
+### Added
+
+- Introduce debug mode, activated when passing `--debug`
+
+### Changed
+
+- Errors are now more descriptive
 - Make creation output look nicer when building a `.spf` package
-- [./dev/install.bash](./dev/install.bash) now uses
-  [./packages/build.py](./packages/build.py) to build/install packages (if your
-  cpu is supported). Otherwise, use the old way.
-- Remove dependency `file_diff`
+
+### Removed
+
+- Removed command `convert`: I've lost interest in maintaining it, it's grown
+  too complicated, and it's not needed here.
+
+### Fixed
+
 - Fix arguments being parsed incorrectly
 - Fix paths being written in package installation files
 - Fix files not being copied/overwritten properly
-- Introduce debug mode. Use `--debug` to use
-- Errors are now more descriptive
-- Retire `sys::error` and `fs::FileProperty`. Use native capabilities instead.
+
+### Developers
+
+These are changes that mainly affect people developing or building spf.
+
+#### Added
+
+- New and improved package builder: [./packages/build.py](./packages/build.py)
 - Introduce new and improved spf package and metadata libraries
-- Rewrite command(s): `create` with new libraries.
+- Added the ability to skip code linting/formatting
+  [./dev/install.bash](./dev/install.bash). Pass `--skip-format` to use.
+
+#### Changed
+
+- Overhauled the file structure in [./src](./src/)
+- [./dev/install.bash](./dev/install.bash) now uses
+  [./packages/build.py](./packages/build.py) to build/install packages (if your
+  cpu is supported). Otherwise, use the old way.
+- Rewrite command(s): `create`
+  [./src/cli/commands/create.rs](./src/cli/commands/create.rs) with new
+  libraries.
+
+#### Removed and Retired
+
+- Retired `./dev/package.bash` as the build script for packages, replaced by
+  [./packages/build.py](./packages/build.py)
+- Remove dependencies: `deb-rs2`, `xz2`, `flate2`, `rpm`, `deb-rust`, `rust-ar`,
+  `file_diff`, `hostname`, `cmd-exists`
+- Retire `sys::error` and `spf::fs`. They are no longer needed.
