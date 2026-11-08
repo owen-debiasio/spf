@@ -62,6 +62,26 @@ impl Package {
         Ok(details)
     }
 
+    /// Verifies if the package loaded is an spf package.
+    ///
+    /// It checks if the file extension is `spf`. Returns true if it is,
+    /// otherwise it returns false.
+    ///
+    /// ```
+    /// let package_path = String::from("test.spf");
+    ///
+    /// let package = Package::from(package_path)?;
+    ///
+    /// assert_eq!(package.is_spf_package(), true)
+    /// ```
+    pub fn is_spf_package(&self) -> Result<bool, Error> {
+        let is_spf_package = Path::new(&self.package_path)
+            .extension()
+            .is_some_and(|ext| ext.eq_ignore_ascii_case("spf"));
+
+        Ok(is_spf_package)
+    }
+
     /// Initializes an spf package.
     ///
     /// Only the name of the package must be provided here.
@@ -114,29 +134,22 @@ impl Package {
     /// let package = Package::new(name_of_package)
     ///     .output_location("./test_output.spf")
     /// ```
-    pub fn output_location(&self, path: &str) -> Result<Self, Error> {
-        if Path::new(path)
-            .extension()
-            .unwrap_or_default()
-            .display()
-            .to_string()
-            != "spf"
-        {
+    pub fn output_location(&self, package_path: String) -> Result<Self, Error> {
+        if !Self::from(package_path.clone())?.is_spf_package()? {
             return Err(Error::new(
                 ErrorKind::InvalidFilename,
-                format!("Output path '{path}' must be a .spf file"),
+                format!("Output path '{package_path}' must be a .spf file"),
             ));
         }
 
         Ok(Self {
             name: self.name.clone(),
-            package_path: path.to_string(),
+            package_path,
             metadata: self.metadata.clone(),
             paths: self.paths.clone(),
         })
     }
 
-    #[allow(unused)]
     /// Adds the definition of source and destination paths.
     ///
     /// Directories and files are both supported.
@@ -212,17 +225,13 @@ impl Package {
 
         let mut archive = Builder::new(&archive_file);
 
-        if Path::new(raw_folder_name).is_dir() {
-            if let Some(path) = Path::new(raw_folder_name).file_name() {
-                archive.append_dir_all(path, raw_folder_name)?;
-            } else {
-                return Err(Error::new(
-                    ErrorKind::NotFound,
-                    format!("Failed to add to archive '{archive_file:?}': {raw_folder_name}"),
-                ));
-            }
+        if let Some(path) = Path::new(raw_folder_name).file_name() {
+            archive.append_dir_all(path, raw_folder_name)?;
         } else {
-            archive.append_path(raw_folder_name)?
+            return Err(Error::new(
+                ErrorKind::NotFound,
+                format!("Failed to add to archive '{archive_file:?}': {raw_folder_name}"),
+            ));
         }
 
         archive.finish()?;

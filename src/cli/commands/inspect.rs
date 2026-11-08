@@ -50,16 +50,11 @@ pub fn inspect(package: &str) -> Result<(), Error> {
 fn inspect_spf_package(package_path: &str) -> Result<(), Error> {
     let package_path_as_path = Path::new(package_path);
 
-    if !package_path_as_path.exists() {
-        return Err(Error::new(
-            ErrorKind::NotFound,
-            format!(".spf package not found: {package_path}"),
-        ));
-    }
-
     println!("Loading package \"{package_path}\"...");
 
-    Package::from(package_path.to_string())?.extract(".")?;
+    let package = Package::from(package_path.to_string())?;
+
+    package.extract(".")?;
 
     let metadata_path = package_path_as_path
         .file_name()

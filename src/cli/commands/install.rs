@@ -52,9 +52,7 @@ pub fn spf_install(mut spf_package_path: String) -> Result<(), Error> {
     // If a package isn't provided, or provided package isn't a `.spf`
     // package, prompt user to do so.
     if spf_package_path.is_empty()
-        || !package_path_check
-            .extension()
-            .is_some_and(|ext| ext.eq_ignore_ascii_case("spf"))
+        || !Package::from(spf_package_path.clone())?.is_spf_package()?
         || !package_path_check.exists()
     {
         return Err(Error::new(

@@ -49,7 +49,7 @@ pub fn create(package_config: String, output_location: String) -> Result<(), Err
     let mut package = Package::new(meta.name.clone()).add_metadata(meta);
 
     if !output_location.is_empty() {
-        package = package.output_location(&output_location)?
+        package = package.output_location(output_location)?
     }
 
     println!("    Collecting paths...");
