@@ -16,7 +16,7 @@ use crate::{
     cli::args::args_contains,
     libs::{
         spf::{
-            metadata::{Categories, Meta, PACKAGE_INSTALL_PATH},
+            metadata::{Meta, PACKAGE_INSTALL_PATH},
             package::Package,
         },
         sys::{SUPPORTED_ARCHS, is_root},
@@ -74,17 +74,7 @@ pub fn spf_install(mut spf_package_path: String) -> Result<(), Error> {
     // Get location of the package path (`spf_package_path`)
     let packaged_metadata_file = spf_package_path.replace(".spf", "/META");
 
-    let package_metadata = Meta::from(&packaged_metadata_file)?;
-
-    let collected_metadata = Categories {
-        name: package_metadata.load_value("PROJECT_NAME")?,
-        version: package_metadata.load_value("VERSION")?,
-        description: package_metadata.load_value("DESCRIPTION")?,
-        source: package_metadata.load_value("REPOSITORY")?,
-        license: package_metadata.load_value("LICENSE")?,
-        authors: package_metadata.load_value("AUTHORS")?,
-        arch: package_metadata.load_value("ARCH")?,
-    };
+    let collected_metadata = Meta::from(&packaged_metadata_file)?.get_metadata()?;
 
     // The extracted path has no extension, so remove it
     let extracted_package_path = spf_package_path.replace(".spf", "");
@@ -214,7 +204,7 @@ fn check_version(
     spf_package_path: &str,
 ) -> Result<(), Error> {
     // Loads package version
-    let installed_version = Meta::from(package_meta_path)?.load_value("VERSION")?;
+    let installed_version = Meta::from(package_meta_path)?.get_metadata()?.version;
     let package_name_formatted = &format!("{packaged_project_name}-{packaged_project_version}");
 
     // Check for version differences

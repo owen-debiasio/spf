@@ -103,7 +103,7 @@ impl Meta {
         Ok(Self { meta_file_contents })
     }
 
-    pub fn categories(&self) -> Result<Categories, Error> {
+    pub fn get_metadata(&self) -> Result<Categories, Error> {
         let retrieved_categories = Categories {
             name: self.load_value("PROJECT_NAME")?,
             version: self.load_value("VERSION")?,
@@ -135,7 +135,7 @@ impl Meta {
     /// // Retrieved the stored architecture
     /// let extracted_value = metadata_contents.load_value(category_to_extract_value)?
     /// ```
-    pub fn load_value(&self, category_to_find: &'static str) -> Result<String, Error> {
+    pub fn load_value(&self, category_to_find: &str) -> Result<String, Error> {
         let string_prior_to_value = &format!("{category_to_find} =");
 
         let meta_contents = self

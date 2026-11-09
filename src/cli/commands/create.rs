@@ -40,7 +40,7 @@ pub fn create(package_config: String, output_location: String) -> Result<(), Err
 
     println!("    Collecting metadata...");
 
-    let meta = Meta::from(&package_config)?.categories()?;
+    let meta = Meta::from(&package_config)?.get_metadata()?;
 
     if args_contains("--debug")? {
         println!("DEBUG: Collected metadata: {meta:?}");

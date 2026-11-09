@@ -80,24 +80,22 @@ pub fn list_packages(optional_string: &str) -> Result<(), Error> {
         let package_metadata_path = package_path_raw?.display().to_string();
 
         // Name of the package to be listed
-        let package_meta = Meta::from(&package_metadata_path)?;
+        let package_meta = Meta::from(&package_metadata_path)?.get_metadata()?;
 
-        let package_name = package_meta.load_value("PROJECT_NAME")?;
+        let (name, version, desc) = (
+            package_meta.name,
+            package_meta.version,
+            package_meta.description,
+        );
 
         // Checks if the entered optional string is in the package name.
         // If not, move to next package.
-        if !package_name.contains(optional_string) {
+        if !name.contains(optional_string) {
             continue;
         }
 
-        // Retrieve the package version and description
-        let package_version = package_meta.load_value("VERSION")?;
-        let package_desc = package_meta.load_value("DESCRIPTION")?;
-
         // Add the package name, version, and description
-        packages_to_list.push(format!(
-            "> {package_name}-{package_version}\n    {package_desc}"
-        ));
+        packages_to_list.push(format!("> {name}-{version}\n    {desc}"));
     }
 
     // Dynamically choose the message to show
