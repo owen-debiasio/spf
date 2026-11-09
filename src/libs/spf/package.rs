@@ -16,10 +16,10 @@ use crate::libs::spf::metadata::{Categories, Meta, PackagePaths};
 /// Implementation of an spf package
 #[derive(Clone, Debug)]
 pub struct Package {
-    name: String,
-    package_path: String,
-    metadata: Categories,
-    paths: Vec<String>,
+    pub name: String,
+    pub package_path: String,
+    pub metadata: Categories,
+    pub paths: Vec<String>,
 }
 
 impl Package {

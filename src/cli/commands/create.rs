@@ -40,13 +40,15 @@ pub fn create(package_config: String, output_location: String) -> Result<(), Err
 
     println!("    Collecting metadata...");
 
-    let meta = Meta::from(&package_config)?.get_metadata()?;
+    let package_metadata = Meta::from(&package_config)?;
+
+    let categories = package_metadata.get_metadata()?;
 
     if args_contains("--debug")? {
-        println!("DEBUG: Collected metadata: {meta:?}");
+        println!("DEBUG: Collected metadata: {categories:?}");
     }
 
-    let mut package = Package::new(meta.name.clone()).add_metadata(meta);
+    let mut package = Package::new(categories.name.clone()).add_metadata(categories);
 
     if !output_location.is_empty() {
         package = package.output_location(output_location)?
@@ -54,7 +56,7 @@ pub fn create(package_config: String, output_location: String) -> Result<(), Err
 
     println!("    Collecting paths...");
 
-    for path in PackagePaths::load_from_config(package_config)? {
+    for path in package_metadata.get_paths()? {
         println!("        Adding path: '{path}'");
 
         let (source, dest) = PackagePaths::get_src_dest(&path);

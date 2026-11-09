@@ -187,29 +187,25 @@ impl Meta {
             format!("ARCH = {}", metadata.arch),
         ])
     }
-}
 
-/// Construct paths used in metadata
-#[derive(Clone, Debug)]
-pub struct PackagePaths;
-
-impl PackagePaths {
     /// Loads the packages from a package build config.
     ///
     /// Only collects entries between `:::PATH DEFINE START:::` and `:::PATH DEFINE END:::`.
     ///
     /// ```
     /// let package_config_path: "spf_config";
-    /// let paths = PackagePaths::load_from_config(package_config_path)?;
+    /// let package = Meta::from("sample.spf")?;
+    ///
+    /// let paths = package.get_paths()?;
     /// ```
-    pub fn load_from_config(package_config_path: String) -> Result<Vec<String>, Error> {
+    pub fn get_paths(&self) -> Result<Vec<String>, Error> {
         let mut paths: Vec<String> = Vec::new();
 
         const START_HEADER: &str = ":::PATH DEFINE START:::";
 
         let mut header_is_read = false;
 
-        for entry in read_to_string(package_config_path)?.lines() {
+        for entry in self.meta_file_contents.lines() {
             if entry == START_HEADER {
                 header_is_read = true;
                 continue;
@@ -224,7 +220,13 @@ impl PackagePaths {
 
         Ok(paths)
     }
+}
 
+/// Construct paths used in metadata
+#[derive(Clone, Debug)]
+pub struct PackagePaths;
+
+impl PackagePaths {
     #[allow(unused)]
     /// Takes the source and dest paths, and formats them into what is inside a
     /// package's config.
