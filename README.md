@@ -116,3 +116,5 @@ sudo cp target/release/spf /usr/bin/spf # Install to location (like /usr/local/b
   [@mitsuhiko](https://github.com/djc)
 - [tar-rs](https://github.com/composefs/tar-rs) by
   [@composefs](https://github.com/composefs)
+- [semver](https://github.com/dtolnay/semver) by
+  [@dtolnay](https://github.com/dtolnay)
