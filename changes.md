@@ -180,7 +180,8 @@ These are changes that mainly affect people developing or building spf.
 #### Added
 
 - New and improved package builder: [./packages/build.py](./packages/build.py)
-- Introduce new and improved spf package and metadata libraries
+- Introduce new and improved spf package and metadata libraries. Some are
+  independent to the command, some are global.
 - Added the ability to skip code linting/formatting
   [./dev/install.bash](./dev/install.bash). Pass `--skip-format` to use.
 
@@ -190,9 +191,7 @@ These are changes that mainly affect people developing or building spf.
 - [./dev/install.bash](./dev/install.bash) now uses
   [./packages/build.py](./packages/build.py) to build/install packages (if your
   cpu is supported). Otherwise, use the old way.
-- Rewrite command(s): `create`
-  [./src/cli/commands/create.rs](./src/cli/commands/create.rs) with new
-  libraries.
+- Rewrite command(s): `create` and `install` with new libraries.
 
 #### Removed and Retired
 
