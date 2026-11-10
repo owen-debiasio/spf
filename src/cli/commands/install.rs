@@ -1,410 +1,246 @@
-//! Functions related to and installing a .spf package.
-//!
-//! Copyright (C) 2026 Owen Debiasio <owen.debiasio@gmail.com>
-//! SPDX-License-Identifier: GPL-3.0-or-later
-
-use glob::glob;
 use std::{
     env::consts::ARCH,
-    fs::{OpenOptions, copy, create_dir_all, read_to_string, remove_dir_all, remove_file},
-    io::{Error, ErrorKind, Write, stdin},
+    fs::{OpenOptions, copy, remove_dir_all, remove_file},
+    io::{Error, Write, stdin},
     path::Path,
-    process::exit,
 };
+
+use semver::Version;
 
 use crate::{
     cli::args::args_contains,
     libs::{
         spf::{
-            metadata::{Meta, PACKAGE_INSTALL_PATH},
+            metadata::{Categories, Meta, PACKAGE_INSTALL_PATH},
             package::Package,
         },
-        sys::{SUPPORTED_ARCHS, is_root},
+        sys::SUPPORTED_ARCHS,
     },
 };
 
-/// Installs a .spf package.
-///
-/// The path of the .spf package (`spf_package_path` (as [`String`]))
-/// must be provided
-///
-/// To install, the .spf package is extracted to the cwd using [`extract_archive`].
-/// The metadata file stored inside is read for the various details.
-///
-/// If architecture in the metadata file doesn't match the current system arch, exit.
-///
-/// The versions are compared using [`check_version`] and
-/// [`parse_installed_and_packaged_versions`] before installation.
-///
-/// When it actually gets to installing the files using [`install_files`],
-/// the tree inside the extracted package contains the directories and files
-/// that are written to their new metadata file. That metadata is located in
-/// [`PACKAGE_INSTALL_PATH`]. Then, those paths are copied to their respective
-/// locations.
-pub fn spf_install(mut spf_package_path: String) -> Result<(), Error> {
-    // Root is required for this command
-    if !is_root()? {
-        return Err(Error::new(ErrorKind::PermissionDenied, "Root required"));
+struct Installer {
+    package: Package,
+    extracted_path: String,
+    extracted_meta: String,
+    is_confirmed: bool,
+}
+
+impl Installer {
+    fn cleanup(&self) -> Result<(), Error> {
+        remove_dir_all(&self.extracted_path)?;
+        Ok(())
     }
 
-    let package_path_check = Path::new(&spf_package_path);
+    fn load(package_path: &str) -> Result<Self, Error> {
+        let mut package = Package::from(package_path.to_string())?;
 
-    // If a package isn't provided, or provided package isn't a `.spf`
-    // package, prompt user to do so.
-    if spf_package_path.is_empty()
-        || !Package::from(spf_package_path.clone())?.is_spf_package()?
-        || !package_path_check.exists()
-    {
-        return Err(Error::new(
-            ErrorKind::InvalidInput,
-            "Please provide a .spf package",
-        ));
+        package.extract(".")?;
+
+        let spf_package = Path::new(&package_path)
+            .file_stem()
+            .unwrap_or_default()
+            .display()
+            .to_string();
+
+        let extracted_path = spf_package.trim_end_matches(".spf").to_string();
+
+        let extracted_meta = format!("{extracted_path}/META");
+        let metadata = Meta::from(&extracted_meta)?.get_metadata()?;
+
+        package.name = metadata.name.clone();
+        package.metadata = metadata;
+
+        for path in Package::from(extracted_path.clone())?.get_packaged_fs()? {
+            let found_path = path.trim_start_matches(&extracted_path).to_string();
+
+            if found_path == "/META" {
+                continue;
+            }
+
+            package.paths.push(found_path);
+        }
+
+        Ok(Self {
+            package,
+            extracted_path,
+            extracted_meta,
+            is_confirmed: false,
+        })
     }
 
-    println!("Loading package: {spf_package_path}\n");
+    fn initialize(&self) -> Result<Self, Error> {
+        let install_type = self.package.check_version()?;
+        let message = install_type.as_message();
 
-    Package::from(spf_package_path.clone())?.extract(".")?;
-
-    spf_package_path = Path::new(&spf_package_path)
-        .file_name()
-        .unwrap_or_default()
-        .display()
-        .to_string();
-
-    // Get location of the package path (`spf_package_path`)
-    let packaged_metadata_file = spf_package_path.replace(".spf", "/META");
-
-    let collected_metadata = Meta::from(&packaged_metadata_file)?.get_metadata()?;
-
-    // The extracted path has no extension, so remove it
-    let extracted_package_path = spf_package_path.replace(".spf", "");
-
-    // Check to make sure the system architecture matches or is compatible the package architecture
-    if !matches!(collected_metadata.arch.as_str(), ARCH | "universal")
-        && !SUPPORTED_ARCHS.contains(&ARCH)
-        && !args_contains("--ignore-arch")?
-    {
-        remove_dir_all(extracted_package_path)?;
-
-        return Err(Error::new(
-            ErrorKind::InvalidData,
-            format!(
-                "Package architecture: {} doesn't match current system architecture ({ARCH}).\nBypass by passing: `--ignore-arch`",
-                collected_metadata.arch
-            ),
-        ));
-    }
-
-    // The formatted package name looks something like:
-    //
-    // spf-v0.1.0, or my_project-v0.0.1
-    //
-    // Formatted by <project name>-<project_ version>
-    let package_name_formatted =
-        &format!("{}-{}", collected_metadata.name, collected_metadata.version);
-
-    // Display project info/metadata
-    println!(
-        "Do you want to proceed to install {package_name_formatted}?\n\n\
+        println!(
+            "Do you want to proceed to {message} {}-{}?\n\n\
         Description: {}\n\
         Repository: {}\n\
         License(s): {}\n\
         Author(s): {}\n\
         Arch: {}\n\n\
         (Y/N)",
-        collected_metadata.description,
-        collected_metadata.source,
-        collected_metadata.license,
-        collected_metadata.authors,
-        collected_metadata.arch
+            self.package.metadata.name,
+            self.package.metadata.version,
+            self.package.metadata.description,
+            self.package.metadata.source,
+            self.package.metadata.license,
+            self.package.metadata.authors,
+            self.package.metadata.arch
+        );
+
+        let mut proceed_to_install = String::new();
+        stdin().read_line(&mut proceed_to_install)?;
+
+        proceed_to_install = proceed_to_install.trim().to_lowercase();
+
+        let is_confirmed = proceed_to_install == "y" || proceed_to_install.is_empty();
+
+        Ok(Self {
+            package: self.package.clone(),
+            extracted_path: self.extracted_path.clone(),
+            extracted_meta: self.extracted_meta.clone(),
+            is_confirmed,
+        })
+    }
+
+    fn install(&self) -> Result<(), Error> {
+        let installed_package_meta = format!("{PACKAGE_INSTALL_PATH}{}", self.package.name);
+
+        copy(self.extracted_meta.clone(), &installed_package_meta)?;
+        remove_file(self.extracted_meta.clone())?;
+
+        let mut project_meta_file = OpenOptions::new()
+            .append(true)
+            .open(installed_package_meta)?;
+
+        project_meta_file.write_all(b"\n:::PATH DEFINE START:::\n")?;
+
+        for path in self.package.paths.clone() {
+            let source_path = format!("{}{path}", self.extracted_path.clone());
+
+            if Path::new(&source_path).is_dir() {
+                continue;
+            } else {
+                println!("    Copying \"{source_path}\" -> \"{path}\"");
+
+                copy(source_path, &path)?;
+
+                project_meta_file.write_all(format!("{path}\n").as_bytes())?;
+            }
+        }
+
+        Ok(())
+    }
+}
+
+pub fn spf_install(package_path: String) -> Result<(), Error> {
+    println!("Loading package '{package_path}'...\n");
+
+    let mut installer_information = Installer::load(&package_path)?;
+
+    if !arch_is_compat(installer_information.package.metadata.clone())? {
+        eprintln!(
+            "Package architecture: {} doesn't match current system architecture ({ARCH}).\n\
+            NOTE: Bypass by passing: `--ignore-arch`",
+            installer_information.package.metadata.arch
+        );
+
+        installer_information.cleanup()?;
+
+        return Ok(());
+    }
+
+    installer_information = installer_information.initialize()?;
+
+    if installer_information.is_confirmed {
+        println!("\nInstalling...\n");
+
+        installer_information.install()?;
+    } else {
+        println!("\nAborted.");
+
+        installer_information.cleanup()?;
+    }
+
+    installer_information.cleanup()?;
+
+    println!(
+        "\nDone! Installed '{}'!",
+        installer_information.package.name
     );
 
-    let mut proceed_to_install = String::new();
-    stdin().read_line(&mut proceed_to_install)?;
-
-    println!();
-
-    if proceed_to_install.trim().to_lowercase() != "y" {
-        remove_dir_all(extracted_package_path)?;
-
-        println!("Aborted.");
-        exit(0)
-    }
-
-    // To be safe, move the metadata file. But check if it's already installed first.
-    let package_meta_path_install_location =
-        format!("{PACKAGE_INSTALL_PATH}{}", collected_metadata.name);
-
-    // Check if the package is already installed. If so, proceed to check version conflicts.
-    // Otherwise, skip and proceed to copying files.
-    if Path::new(&package_meta_path_install_location).exists() {
-        match check_version(
-            &package_meta_path_install_location,
-            &collected_metadata.name,
-            &collected_metadata.version,
-            &spf_package_path,
-        ) {
-            Ok(_) => (),
-            Err(err) => {
-                remove_dir_all(extracted_package_path)?;
-                return Err(Error::new(
-                    ErrorKind::InvalidData,
-                    format!("Failed to check for version: {err}"),
-                ));
-            }
-        }
-    }
-
-    // Start creating directories and copying files
-    println!("Installing: {package_name_formatted} from ./{spf_package_path}");
-
-    // Install all the necessary paths, including the metadata file.
-    install_files(
-        &packaged_metadata_file,
-        package_meta_path_install_location,
-        &extracted_package_path,
-    )?;
-
-    println!("Cleaning up...");
-
-    // Clean up by removing the extracted package
-    remove_dir_all(&extracted_package_path)?;
-
-    println!("\nSuccessfully installed {package_name_formatted}!");
-
     Ok(())
 }
 
-/// Compares versions if the package is already installed. User can
-/// abort/proceed as they wish.
-///
-/// Unfortunately, you need to provide:
-///     - A metadata path (`package_meta_path`),
-///     - The packaged project name (`packaged_project_name`)
-///     - The packaged project version (`packaged_project_version`)
-///     - The path of the `.spf` package (`spf_package_path`)
-///
-/// All are provided as [`str`].
-///
-/// [`check_version`] checks the version by comparing the version of
-/// the installed package (if installed), and the version of the package.
-/// The versions themselves are actually parsed in [`parse_installed_and_packaged_versions`].
-///
-/// The two versions retrieved look like normal numbers, and their sizes are compared to see
-/// what version is the newest.
-/// Examples: `v0.2.0` is retrieved as `020` (`20`), and `v1.4.2` is retrieved as `142`. `142`
-/// is larger than `20` which shows that `v1.4.2` is the newest version
-///
-/// It then asks you if you want to update or downgrade the package, where
-/// you have to enter `y` in user input.
-fn check_version(
-    package_meta_path: &str,
-    packaged_project_name: &str,
-    packaged_project_version: &str,
-    spf_package_path: &str,
-) -> Result<(), Error> {
-    // Loads package version
-    let installed_version = Meta::from(package_meta_path)?.get_metadata()?.version;
-    let package_name_formatted = &format!("{packaged_project_name}-{packaged_project_version}");
+fn arch_is_compat(meta: Categories) -> Result<bool, Error> {
+    if args_contains("--ignore-arch")? {
+        return Ok(true);
+    }
 
-    // Check for version differences
-    if packaged_project_version == installed_version {
-        // If no version differences, let the user know that the package is already installed.
-        println!("{package_name_formatted} is already installed. Continue?");
-    } else {
-        // Compare versions by leaving only numbers, combine them together,
-        // then parsing them as `usize`.
-        //
-        // `project_version_num` is the version in the package, `installed_version_num`
-        // is what's already installed.
-        let (project_version_num, installed_version_num) =
-            parse_installed_and_packaged_versions(packaged_project_version, &installed_version)?;
+    let status = SUPPORTED_ARCHS.contains(&meta.arch.as_str());
 
-        // Make sure that the versions were parsed correctly.
-        if project_version_num == 0 || installed_version_num == 0 {
-            return Err(Error::new(
-                ErrorKind::InvalidInput,
-                format!("Failed to parse version in the installed package: {package_meta_path}"),
-            ));
+    Ok(status)
+}
+
+enum InstallStatus {
+    Install,
+    Update,
+    Downgrade,
+    Reinstall,
+}
+
+impl InstallStatus {
+    fn as_message(&self) -> &str {
+        match &self {
+            InstallStatus::Install => "install",
+            InstallStatus::Update => "update",
+            InstallStatus::Downgrade => "downgrade",
+            InstallStatus::Reinstall => "reinstall",
+        }
+    }
+}
+
+impl Package {
+    fn check_version(&self) -> Result<InstallStatus, Error> {
+        if !self.is_already_installed() {
+            return Ok(InstallStatus::Install);
         }
 
-        // Prompt the user if they actually want to update
-        println!(
-            "Do you want to {} {packaged_project_name}-{installed_version} -> {package_name_formatted}?",
-            // Determine action the user is taking.
-            //
-            // if `project_version_num` > `installed_version_num`, it means that the
-            // user is updating.
-            //
-            // Otherwise, it likely means the user is downgrading.
-            if project_version_num > installed_version_num {
-                "update"
+        let get_installed_version = || -> Result<String, Error> {
+            let version = self.get_installed_meta()?.get_metadata()?.version;
+            Ok(version)
+        };
+
+        let (package_version, installed_version) =
+            (self.metadata.version.clone(), get_installed_version()?);
+
+        if package_version == installed_version {
+            return Ok(InstallStatus::Reinstall);
+        }
+
+        let parse_version = |old: &str, new: &str| -> Result<InstallStatus, semver::Error> {
+            if Version::parse(old)? <= Version::parse(new)? {
+                Ok(InstallStatus::Update)
             } else {
-                "downgrade"
+                Ok(InstallStatus::Downgrade)
             }
-        );
+        };
+
+        let update_status = parse_version(
+            installed_version.trim_start_matches("v"),
+            package_version.trim_start_matches("v"),
+        )
+        .unwrap_or(InstallStatus::Update);
+
+        Ok(update_status)
     }
 
-    println!("(Y/N)");
-
-    // Take in the user input
-    let mut proceed_to_install = String::new();
-    stdin().read_line(&mut proceed_to_install)?;
-
-    println!();
-
-    let extracted_package_path = spf_package_path.replace(".spf", "");
-
-    // If user declines, clean up and exit. Otherwise, proceed and end function
-    if proceed_to_install.trim().to_lowercase() != "y" {
-        remove_dir_all(&extracted_package_path)?;
-
-        println!("Aborted");
-        exit(0)
+    fn get_installed_meta(&self) -> Result<Meta, Error> {
+        Meta::from(&format!("{PACKAGE_INSTALL_PATH}{}", self.name))
     }
 
-    Ok(())
-}
-
-/// Takes the installed and packaged versions, then formats them to
-/// remove special characters and `v`. It also converts them to
-/// [`usize`].
-///
-/// Returns modified versions of `packaged_project_version` and `installed_version`
-///
-/// ```
-/// let (project_version_num, installed_version_num) = parse_installed_and_packaged_versions(packaged_project_version, &installed_version);
-/// ```
-fn parse_installed_and_packaged_versions(
-    packaged_project_version: &str,
-    installed_version: &str,
-) -> Result<(usize, usize), Error> {
-    // Removes `v`, any special characters, and converts to usize.
-    // Returns `0` is something fails.
-    let remove_chars_and_to_usize = |version: &str| -> usize {
-        let special_chars = &['(', ')', ',', '\"', '.', ';', ':', '\''];
-
-        version
-            // Remove special chars
-            .replace(special_chars, "")
-            // Remove the `v` if found
-            .trim_matches('v')
-            // Convert to `usize`
-            .parse::<usize>()
-            // Make it `0` if something fails for whatever reason
-            .unwrap_or(0)
-    };
-
-    // Convert the 2 versions
-    let project_version_num = remove_chars_and_to_usize(packaged_project_version);
-    let installed_version_num = remove_chars_and_to_usize(installed_version);
-
-    Ok((project_version_num, installed_version_num))
-}
-
-/// Copy files or create directories needed to install a program.
-///
-/// Start with the metadata file, then move on to the packaged paths
-/// to also be installed.
-///
-/// The files are copied from files from `path_to_search`
-/// (part of `extracted_package_path` (as [`String`])).
-///
-/// The paths that are modified are then marked/inscribed into
-/// the project metadata file (`project_meta_file` (as [`String`]))
-fn install_files(
-    packaged_metadata_file: &str,
-    package_meta_path_install_location: String,
-    extracted_package_path: &str,
-) -> Result<(), Error> {
-    if !Path::new(PACKAGE_INSTALL_PATH).exists() {
-        create_dir_all(PACKAGE_INSTALL_PATH)?
+    fn is_already_installed(&self) -> bool {
+        self.get_installed_meta().is_ok()
     }
-
-    let package_meta_path_install_location_as_path = Path::new(&package_meta_path_install_location);
-
-    // Helps determine if a path as previously installed
-    let previous_meta_contents = if package_meta_path_install_location_as_path.exists() {
-        let contents = read_to_string(package_meta_path_install_location_as_path)?;
-        remove_file(&package_meta_path_install_location)?;
-
-        contents
-    } else {
-        String::new()
-    };
-
-    // Copy the packaged metadata file to its install location
-    copy(packaged_metadata_file, &package_meta_path_install_location)?;
-
-    // Remove the metadata file that was packaged
-    remove_file(packaged_metadata_file)?;
-
-    // Init the new metadata file.
-    //
-    // Allows appending, it creates it, and opens it
-    let mut project_meta_file = OpenOptions::new()
-        .append(true)
-        .open(&package_meta_path_install_location)?;
-
-    // Write the header for defining installed paths
-    project_meta_file.write_all(b"\n:::PATH DEFINE START:::\n")?;
-
-    let collected_paths = match glob(&format!("./{extracted_package_path}/**/*")) {
-        Ok(paths) => paths,
-        Err(err) => {
-            return Err(Error::new(
-                ErrorKind::NotFound,
-                format!("Failed to search {extracted_package_path}: {err}"),
-            ));
-        }
-    };
-
-    let extracted_path = Path::new(extracted_package_path);
-
-    for found_path in collected_paths {
-        let found_path = found_path?;
-
-        let relative_path = found_path.strip_prefix(extracted_path).map_err(|err| {
-            Error::new(
-                ErrorKind::InvalidInput,
-                format!(
-                    "Invalid prefix from {found_path:?}.strip_prefix({extracted_path:?}): {err}"
-                ),
-            )
-        })?;
-
-        // Skip the root directory
-        if relative_path.as_os_str().is_empty() {
-            continue;
-        }
-
-        let file_destination = Path::new("/").join(relative_path);
-        let meta_entry = format!("{}\n", file_destination.display());
-
-        // Skip system files
-        if file_destination.exists() && !previous_meta_contents.contains(&meta_entry) {
-            continue;
-        }
-
-        if found_path.is_dir() {
-            create_dir_all(&file_destination)?;
-            continue;
-        } else {
-            if let Some(parent) = file_destination.parent() {
-                create_dir_all(parent)?;
-            }
-
-            println!(
-                "    Copying \"{}\" -> \"{}\"",
-                found_path.display(),
-                file_destination.display()
-            );
-
-            copy(&found_path, &file_destination)?;
-        }
-
-        project_meta_file.write_all(meta_entry.as_bytes())?;
-    }
-
-    Ok(())
 }

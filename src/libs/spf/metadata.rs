@@ -79,9 +79,9 @@ impl Categories {
 /// // The extracted project name
 /// let extracted_value = metadata_contents.load_value(category_to_extract)?;
 /// ```
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct Meta {
-    meta_file_contents: String,
+    pub meta_file_contents: String,
 }
 
 impl Meta {
@@ -97,8 +97,8 @@ impl Meta {
     /// // (`metadata_file` in this case).
     /// let metadata_contents = Meta::from(metadata_file)?;
     /// ```
-    pub fn from(loaded_meta_file: &str) -> Result<Self, Error> {
-        let meta_file_contents = read_to_string(loaded_meta_file)?;
+    pub fn from(loaded_meta_file_path: &str) -> Result<Self, Error> {
+        let meta_file_contents = read_to_string(loaded_meta_file_path)?;
 
         Ok(Self { meta_file_contents })
     }

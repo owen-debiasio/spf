@@ -3,13 +3,15 @@
 //! Copyright (C) 2026 Owen Debiasio <owen.debiasio@gmail.com>
 //! SPDX-License-Identifier: GPL-3.0-or-later
 
+use glob::glob;
+
 use std::{
     fs::{File, copy, create_dir, create_dir_all, remove_dir_all, write},
     io::{Error, ErrorKind},
     path::Path,
 };
 
-use tar::Builder;
+use tar::{Archive, Builder};
 
 use crate::libs::spf::metadata::{Categories, Meta, PackagePaths};
 
@@ -38,9 +40,29 @@ impl Package {
     pub fn extract(&self, destination: &str) -> Result<(), Error> {
         let archive_path = File::open(&self.package_path)?;
 
-        tar::Archive::new(archive_path).unpack(destination)?;
+        Archive::new(archive_path).unpack(destination)?;
 
         Ok(())
+    }
+
+    pub fn get_packaged_fs(&self) -> Result<Vec<String>, Error> {
+        let package_extracted = self.package_path.clone();
+
+        let collected_paths = match glob(&format!("./{package_extracted}/**/*")) {
+            Ok(paths) => paths,
+            Err(_) => todo!(),
+        };
+
+        // Stripped from path `META`
+        let mut paths_clean: Vec<String> = Vec::new();
+
+        for path in collected_paths {
+            let path_string = path.unwrap_or_default().display().to_string();
+
+            paths_clean.push(path_string);
+        }
+
+        Ok(paths_clean)
     }
 }
 
