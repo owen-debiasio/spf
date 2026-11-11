@@ -191,7 +191,7 @@ These are changes that mainly affect people developing or building spf.
 - [./dev/install.bash](./dev/install.bash) now uses
   [./packages/build.py](./packages/build.py) to build/install packages (if your
   cpu is supported). Otherwise, use the old way.
-- Rewrite command(s): `create` and `install` with new libraries.
+- Rewrite command(s): `create`, `inspect`, and `install` with new libraries.
 
 #### Removed and Retired
 
