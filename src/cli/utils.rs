@@ -1,11 +1,3 @@
-//! Extension of the main spf library. This one contains tools that
-//! shouldn't be in the main one.
-//!
-//! Copyright (C) 2026 Owen Debiasio <owen.debiasio@gmail.com>
-//! SPDX-License-Identifier: GPL-3.0-or-later
-
-#![allow(unused)]
-
 use std::{
     io::{Error, ErrorKind},
     path::Path,
@@ -17,30 +9,12 @@ use crate::libs::spf::{
 };
 
 impl Package {
-    /// Gets the tentative install location of a package.
-    ///
-    /// ```
-    /// let package = Package::new("test");
-    ///
-    /// let install_location = package.install_location()?;
-    ///
-    /// assert_eq!(install_location, format!("/usr/share/spf/packages/test"))
-    /// ```
     pub fn get_install_location(&self) -> Result<String, Error> {
         let location = format!("{PACKAGE_INSTALL_PATH}/{}", self.name.clone());
 
         Ok(location)
     }
 
-    /// Gets the list of packages that were installed when the package was installed.
-    ///
-    /// It leads the metadata install package to do so.
-    ///
-    /// ```
-    /// let package = Package::new("test".to_string());
-    ///
-    /// let paths = package.get_installed_paths()?;
-    /// ```
     pub fn get_installed_paths(&self) -> Result<Vec<String>, Error> {
         let mut paths: Vec<String> = Vec::new();
 
@@ -51,13 +25,6 @@ impl Package {
         Ok(paths)
     }
 
-    /// Loads details from an installed package. It reads the metadata file
-    /// from `/usr/share/spf/packages/`.
-    ///
-    /// ```
-    /// let package_name = "test".to_string();
-    /// let package = from_installed(package_name)?;
-    /// ```
     pub fn from_installed(name: String) -> Result<Self, Error> {
         let installed_path = format!("{PACKAGE_INSTALL_PATH}{name}");
 
@@ -79,5 +46,9 @@ impl Package {
         }
 
         Ok(package)
+    }
+
+    pub fn is_already_installed(&self) -> bool {
+        Path::new(&self.package_path).exists()
     }
 }
