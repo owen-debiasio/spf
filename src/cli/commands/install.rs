@@ -1,6 +1,6 @@
 use std::{
     env::consts::ARCH,
-    fs::{OpenOptions, copy, remove_dir_all, remove_file},
+    fs::{OpenOptions, copy, create_dir_all, remove_dir_all, remove_file},
     io::{Error, Write, stdin},
     path::Path,
 };
@@ -120,6 +120,7 @@ impl Installer {
             let source_path = format!("{}{path}", self.extracted_path.clone());
 
             if Path::new(&source_path).is_dir() {
+                create_dir_all(path)?;
                 continue;
             } else {
                 println!("    Copying \"{source_path}\" -> \"{path}\"");
