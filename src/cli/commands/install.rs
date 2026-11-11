@@ -18,6 +18,7 @@ use crate::{
     },
 };
 
+#[derive(Debug)]
 struct Installer {
     package: Package,
     extracted_path: String,
@@ -140,6 +141,10 @@ pub fn spf_install(package_path: String) -> Result<(), Error> {
 
     let mut installer_information = Installer::load(&package_path)?;
 
+    if args_contains("--debug")? {
+        println!("DEBUG: Installer information:\n{installer_information:#?}")
+    }
+
     if !arch_is_compat(installer_information.package.metadata.clone())? {
         eprintln!(
             "Package architecture: {} doesn't match current system architecture ({ARCH}).\n\
@@ -159,9 +164,11 @@ pub fn spf_install(package_path: String) -> Result<(), Error> {
 
         installer_information.install()?;
     } else {
+        installer_information.cleanup()?;
+
         println!("\nAborted.");
 
-        installer_information.cleanup()?;
+        return Ok(());
     }
 
     installer_information.cleanup()?;
@@ -209,7 +216,7 @@ impl Package {
         }
 
         let get_installed_version = || -> Result<String, Error> {
-            let version = self.get_installed_meta()?.get_metadata()?.version;
+            let version = Self::from_installed(self.name.clone())?.metadata.version;
             Ok(version)
         };
 
@@ -235,13 +242,5 @@ impl Package {
         .unwrap_or(InstallStatus::Update);
 
         Ok(update_status)
-    }
-
-    fn get_installed_meta(&self) -> Result<Meta, Error> {
-        Meta::from(&format!("{PACKAGE_INSTALL_PATH}{}", self.name))
-    }
-
-    fn is_already_installed(&self) -> bool {
-        self.get_installed_meta().is_ok()
     }
 }
