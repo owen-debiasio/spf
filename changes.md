@@ -192,6 +192,8 @@ These are changes that mainly affect people developing or building spf.
   [./packages/build.py](./packages/build.py) to build/install packages (if your
   cpu is supported). Otherwise, use the old way.
 - Rewrite command(s): `create`, `inspect`, and `install` with new libraries.
+- Make [./dev/clean.bash](./dev/clean.bash) only remove `./packages/artifacts`
+  if present
 
 #### Removed and Retired
 
