@@ -1,3 +1,5 @@
 #!/bin/bash
 
-rm -r ./packages/artifacts
+if [ -e "./packages/artifacts" ]; then
+    rm -r ./packages/artifacts
+fi
