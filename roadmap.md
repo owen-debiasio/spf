@@ -34,7 +34,7 @@ dropped out of the list at any point.
 | Feature                                                               | Priority  | Due Date (version) |
 | --------------------------------------------------------------------- | --------- | ------------------ |
 | Command `verify`: Verify `.spf`/installed package metadata and config | Low       | v0.8.0             |
-| Pre/Post install/uninstall jobs                                       | Low       | v0.9.0             |
+| Pre/Post install/uninstall jobs                                       | Undecided | v0.9.0             |
 | Unit Tests (via `cargo test`)                                         | Undecided | v0.9.0             |
 | Move argument parsing system to `clap`, rather than my custom system. | Undecided | v1.0.0             |
 | Add a `.toml` configuration system for spf cli                        | Undecided | v1.0.0             |
