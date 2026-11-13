@@ -34,9 +34,10 @@ dropped out of the list at any point.
 | Feature                                                               | Priority  | Due Date (version) |
 | --------------------------------------------------------------------- | --------- | ------------------ |
 | Command `verify`: Verify `.spf`/installed package metadata and config | Low       | v0.8.0             |
-| Pre/Post install/uninstall jobs                                       | Low       | v0.8.0             |
+| Pre/Post install/uninstall jobs                                       | Low       | v0.9.0             |
 | Unit Tests (via `cargo test`)                                         | Undecided | v0.9.0             |
-| Add a `.toml` configuration system for spf cli and backend            | Undecided | v0.9.0             |
+| Move argument parsing system to `clap`, rather than my custom system. | Undecided | v1.0.0             |
+| Add a `.toml` configuration system for spf cli                        | Undecided | v1.0.0             |
 | Ability to install packages through a remote repository               | Undecided | v1.0.0             |
 | Move to a `.toml`-based package configuration/metadata                | Undecided | v1.0.0             |
 | Remote package repository support (Ubuntu PPA, AUR, Cargo)            | NaN       | NaN                |
