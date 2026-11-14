@@ -66,14 +66,15 @@ impl Inspector {
 
     fn prep_paths(&self) -> Result<Self, Error> {
         let mut paths = if self.remove_extracted {
-            let paths = self.package.as_extracted().get_packaged_fs()?.join("\n");
+            let paths = self.package.as_extracted().get_packaged_fs();
 
             remove_dir_all(&self.extracted_path)?;
 
             paths
         } else {
-            self.initial_metadata.get_paths()?.join("\n")
-        };
+            self.initial_metadata.get_paths()
+        }?
+        .join("\n");
 
         paths = paths
             .replace(&self.extracted_path, "")
