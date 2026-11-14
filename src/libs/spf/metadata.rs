@@ -85,6 +85,12 @@ pub struct Meta {
 }
 
 impl Meta {
+    pub const fn new() -> Self {
+        Self {
+            meta_file_contents: String::new(),
+        }
+    }
+
     /// Loads the contents of the metadata file provided as `loaded_meta_file`.
     ///
     /// Stored as [`String`].
