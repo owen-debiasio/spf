@@ -34,16 +34,13 @@ impl Installer {
 
     fn load(package_path: &str) -> Result<Self, Error> {
         let mut package = Package::from(package_path.to_string())?;
+        let extracted_path = package.as_extracted().package_path;
+
+        if Path::new(&extracted_path).exists() {
+            remove_dir_all(extracted_path.clone())?
+        }
 
         package.extract(".")?;
-
-        let spf_package = Path::new(&package_path)
-            .file_stem()
-            .unwrap_or_default()
-            .display()
-            .to_string();
-
-        let extracted_path = spf_package.trim_end_matches(".spf").to_string();
 
         let extracted_meta = format!("{extracted_path}/META");
         let metadata = Meta::from(&extracted_meta)?.get_metadata()?;
