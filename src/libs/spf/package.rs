@@ -84,6 +84,21 @@ impl Package {
         Ok(details)
     }
 
+    pub fn as_extracted(&self) -> Self {
+        let package_path = Path::new(&self.package_path.trim_end_matches("spf"))
+            .file_stem()
+            .unwrap_or_default()
+            .display()
+            .to_string();
+
+        Self {
+            name: self.name.clone(),
+            package_path,
+            metadata: self.metadata.clone(),
+            paths: self.paths.clone(),
+        }
+    }
+
     /// Verifies if the package loaded is an spf package.
     ///
     /// It checks if the file extension is `spf`. Returns true if it is,
