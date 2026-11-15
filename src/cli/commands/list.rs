@@ -1,121 +1,46 @@
-//! Functions related to and providing the ability list any packages installed
-//! by spf.
+//! Functionality to list installed spf packages.
 //!
 //! Copyright (C) 2026 Owen Debiasio <owen.debiasio@gmail.com>
 //! SPDX-License-Identifier: GPL-3.0-or-later
 
-use std::io::{Error, ErrorKind};
+use std::io::Error;
 
-use glob::glob;
+use crate::{cli::args::IN_DEBUG_MODE, libs::spf::package::Package};
 
-use crate::libs::spf::metadata::{Meta, PACKAGE_INSTALL_PATH};
-
-/// Lists packages that are be installed. You can optionally provide
-/// a string of text to match (`optional_string` ([`String`])).
-///
-/// Example with no optional string:
-/// ```
-/// list_packages(String::new());
-///
-/// // Every package installed is listed
-/// ```
-/// Example with an optional string:
-/// ```
-/// let optional = String::from("sp");
-/// list_packages(optional);
-///
-/// // Every package installed that contains `spf` is listed
-/// ```
 pub fn list_packages(optional_string: &str) -> Result<(), Error> {
-    // where to search for packages
-    let path_to_search = &format!("{PACKAGE_INSTALL_PATH}/*");
+    let packages = Package::get_installed_names()?;
 
-    // packages that are to be listed.
-    //
-    // First though, it is temporarily used to verify that
-    // packages are installed
-    let mut packages_to_list = Vec::new();
-
-    let collected_packages = match glob(path_to_search) {
-        Ok(packages) => packages,
-        Err(err) => {
-            return Err(Error::new(
-                ErrorKind::InvalidFilename,
-                format!("Failed to search for packages in {path_to_search}: {err}"),
-            ));
-        }
-    };
-
-    // Collect paths and add them to the vec
-    for package in collected_packages {
-        packages_to_list.push(package?.display().to_string());
+    if *IN_DEBUG_MODE {
+        println!("DEBUG: Retrieved packages: {packages:?}")
     }
 
-    // If there are no paths found, that means no packages are installed.
-    // Throw an error.
-    if packages_to_list.is_empty() {
-        return Err(Error::new(
-            ErrorKind::NotFound,
-            "No packages are installed.",
-        ));
-    }
+    let mut packages_found = 0;
 
-    // Clear the vec to be used for its main purpose
-    packages_to_list.clear();
+    for installed in packages {
+        if !installed.contains(optional_string) {
+            if *IN_DEBUG_MODE {
+                println!("DEBUG: '{installed}' does not contain '{optional_string}', skipping...")
+            }
 
-    let collected_raw_paths = match glob(path_to_search) {
-        Ok(raw_paths) => raw_paths,
-        Err(err) => {
-            return Err(Error::new(
-                ErrorKind::InvalidFilename,
-                format!("Failed to search for packages in {path_to_search}: {err}"),
-            ));
-        }
-    };
-
-    // Go through the package metadata install directory
-    for package_path_raw in collected_raw_paths {
-        // The path of the package metadata. The name of the metadata file is the name
-        // of the package.
-        let package_metadata_path = package_path_raw?.display().to_string();
-
-        // Name of the package to be listed
-        let package_meta = Meta::from(&package_metadata_path)?.categories;
-
-        let (name, version, desc) = (
-            package_meta.name,
-            package_meta.version,
-            package_meta.description,
-        );
-
-        // Checks if the entered optional string is in the package name.
-        // If not, move to next package.
-        if !name.contains(optional_string) {
             continue;
         }
 
-        // Add the package name, version, and description
-        packages_to_list.push(format!("> {name}-{version}\n    {desc}"));
+        let metadata = Package::from_installed(installed.clone())?.metadata;
+
+        if *IN_DEBUG_MODE {
+            println!("DEBUG: metadata of '{installed}': {metadata:?}")
+        }
+
+        println!(
+            "> {installed} {}\n    > {}",
+            metadata.version, metadata.description
+        );
+
+        packages_found += 1
     }
 
-    // Dynamically choose the message to show
-    println!(
-        "{} packages:\n",
-        if optional_string.is_empty() {
-            "Installed"
-        } else if packages_to_list.is_empty() {
-            return Err(Error::new(
-                ErrorKind::NotFound,
-                format!("No packages match or contain: {optional_string}"),
-            ));
-        } else {
-            "Matching installed"
-        }
-    );
-
-    // List the packages collected
-    for package in packages_to_list {
-        println!("{package}");
+    if !optional_string.is_empty() && packages_found == 0 {
+        println!("No packages found containing '{optional_string}'")
     }
 
     Ok(())
