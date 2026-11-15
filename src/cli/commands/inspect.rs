@@ -1,3 +1,10 @@
+//! The functionality to inspect any form of an spf package. Whether it's a `.spf`
+//! package, by the installed package name, or the straight up package metadata
+//! file.
+//!
+//! Copyright (C) 2026 Owen Debiasio <owen.debiasio@gmail.com>
+//! SPDX-License-Identifier: GPL-3.0-or-later
+
 use std::{fs::remove_dir_all, io::Error, path::Path};
 
 use crate::libs::spf::{
@@ -23,7 +30,9 @@ impl Inspector {
 
         let extracted_path = loaded_package.as_extracted().package_path;
 
-        let meta_path = if package.starts_with(PACKAGE_INSTALL_PATH) && Path::new(package).exists()
+        let meta_path = if (package.starts_with(PACKAGE_INSTALL_PATH)
+            && Path::new(package).exists())
+            || package.ends_with("/META")
         {
             package.to_string()
         } else if loaded_package.is_spf_package()? {

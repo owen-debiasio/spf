@@ -1,7 +1,15 @@
+//! Extended spf library. This contains things that shouldn't be in the
+//! standard one.
+//!
+//! Copyright (C) 2026 Owen Debiasio <owen.debiasio@gmail.com>
+//! SPDX-License-Identifier: GPL-3.0-or-later
+
 use std::{
     io::{Error, ErrorKind},
     path::Path,
 };
+
+use glob::glob;
 
 use crate::libs::spf::{
     metadata::{Meta, PACKAGE_INSTALL_PATH},
@@ -9,14 +17,32 @@ use crate::libs::spf::{
 };
 
 impl Package {
+    /// Determines the install location of a package using the package name.
+    ///
+    /// ```
+    /// let package_name = String::from("test");
+    /// let package = Package::new(package_name);
+    ///
+    /// let install_location = package.get_install_location()?;
+    ///
+    /// assert_eq!(format!("{PACKAGE_INSTALL_PATH}/{package_name}"), install_location);
+    /// ```
     pub fn get_install_location(&self) -> Result<String, Error> {
         let location = format!("{PACKAGE_INSTALL_PATH}/{}", self.name.clone());
 
         Ok(location)
     }
 
+    /// Takes an installed package and returns the determined installed paths.
+    ///
+    /// ```
+    /// let package_name = String::from("test");
+    /// let package = Package::new(package_name);
+    ///
+    /// let installed_paths = package.get_installed_paths()?;
+    /// ```
     pub fn get_installed_paths(&self) -> Result<Vec<String>, Error> {
-        let mut paths: Vec<String> = Vec::new();
+        let mut paths = Vec::new();
 
         for path in Meta::from(&self.package_path)?.get_paths()? {
             paths.push(path)
@@ -25,6 +51,16 @@ impl Package {
         Ok(paths)
     }
 
+    /// Loads an installed package.
+    ///
+    /// This loads the name, metadata, installed paths, and the metadata path itself.
+    ///
+    /// ```
+    /// let package_name = String::from("test");
+    /// let installed_package = Package::from_installed(package_name)?;
+    ///
+    /// assert_eq!(package_name, installed_package.metadata.name)
+    /// ```
     pub fn from_installed(name: String) -> Result<Self, Error> {
         let installed_path = format!("{PACKAGE_INSTALL_PATH}{name}");
 
@@ -50,7 +86,49 @@ impl Package {
         Ok(package)
     }
 
+    /// Determines if an spf package is already installed.
+    ///
+    /// ```
+    /// let package_name = String::from("test");
+    /// let package = Package::from_installed(package_name)?;
+    ///
+    /// assert!(package.is_already_installed())
+    /// ```
     pub fn is_already_installed(&self) -> bool {
         Path::new(&self.package_path).exists()
+    }
+
+    /// Get a list of the names of installed packages.
+    ///
+    /// ```
+    /// // Installed packages: spf, package1, thing
+    ///
+    /// let installed_packages = Package::get_installed_names()?;
+    ///
+    /// println!("installed_packages:?");
+    ///
+    /// // Output: ["spf", "package1", "thing"]
+    /// ```
+    pub fn get_installed_names() -> Result<Vec<String>, Error> {
+        let mut names = Vec::new();
+
+        for meta_path in glob(&format!("{PACKAGE_INSTALL_PATH}/*")).unwrap() {
+            match meta_path {
+                Ok(path) => {
+                    let package_meta = path.as_os_str().to_string_lossy().to_string();
+
+                    let package_name = Meta::from(&package_meta)?.categories.name;
+                    names.push(package_name);
+                }
+                Err(err) => {
+                    return Err(Error::new(
+                        ErrorKind::NotFound,
+                        format!("Failed to search installed package names: {err}"),
+                    ));
+                }
+            }
+        }
+
+        Ok(names)
     }
 }

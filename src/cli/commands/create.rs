@@ -1,4 +1,4 @@
-//! Experimental new functionality with new spf libraries.
+//! Functionality to create an spf package a user desires.
 //!
 //! Copyright (C) 2026 Owen Debiasio <owen.debiasio@gmail.com>
 //! SPDX-License-Identifier: GPL-3.0-or-later
@@ -9,7 +9,7 @@ use std::{
 };
 
 use crate::{
-    cli::args::args_contains,
+    cli::args::IN_DEBUG_MODE,
     libs::spf::{
         metadata::{Meta, PackagePaths},
         package::Package,
@@ -42,7 +42,7 @@ pub fn create(package_config: String, output_location: String) -> Result<(), Err
 
     let package_metadata = Meta::from(&package_config)?;
 
-    if args_contains("--debug")? {
+    if *IN_DEBUG_MODE {
         println!(
             "DEBUG: Collected metadata: {:?}",
             package_metadata.categories
@@ -67,7 +67,7 @@ pub fn create(package_config: String, output_location: String) -> Result<(), Err
         package.add_path(source, dest)
     }
 
-    if args_contains("--debug")? {
+    if *IN_DEBUG_MODE {
         println!("DEBUG: Final package Information: {package:?}");
     }
 
