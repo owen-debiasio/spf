@@ -47,63 +47,48 @@ impl Inspector {
         })
     }
 
-    fn prep_meta(&self) -> Result<Self, Error> {
+    fn prep_meta(&mut self) -> Result<(), Error> {
         let initial_metadata = Meta::from(&self.meta_path)?;
 
-        let loaded_metadata =
-            Meta::construct_contents(initial_metadata.get_metadata()?)?.join("\n");
+        self.constructed_meta =
+            Meta::construct_contents(initial_metadata.categories.to_owned())?.join("\n");
+        self.initial_metadata = initial_metadata;
 
-        Ok(Self {
-            package: self.package.clone(),
-            meta_path: self.meta_path.clone(),
-            remove_extracted: self.remove_extracted,
-            extracted_path: self.extracted_path.clone(),
-            constructed_meta: loaded_metadata,
-            initial_metadata,
-            paths: String::new(),
-        })
+        Ok(())
     }
 
-    fn prep_paths(&self) -> Result<Self, Error> {
-        let mut paths = if self.remove_extracted {
-            let paths = self.package.as_extracted().get_packaged_fs();
+    fn prep_paths(&mut self) -> Result<(), Error> {
+        let collected_paths = if self.remove_extracted {
+            let packaged_paths = self.package.as_extracted().get_packaged_fs();
 
             remove_dir_all(&self.extracted_path)?;
 
-            paths
+            packaged_paths
         } else {
             self.initial_metadata.get_paths()
         }?
         .join("\n");
 
-        paths = paths
+        self.paths = collected_paths
             .replace(&self.extracted_path, "")
             .replace("/META", "")
             .trim_start()
             .to_string();
 
-        Ok(Self {
-            package: self.package.clone(),
-            meta_path: self.meta_path.clone(),
-            remove_extracted: self.remove_extracted,
-            extracted_path: self.extracted_path.clone(),
-            constructed_meta: self.constructed_meta.clone(),
-            initial_metadata: self.initial_metadata.clone(),
-            paths,
-        })
+        Ok(())
     }
 }
 
 pub fn inspect(package: &str) -> Result<(), Error> {
     println!("Loading package '{package}'...");
 
-    let loaded_package = Inspector::load(package)?;
+    let mut loaded_package = Inspector::load(package)?;
 
-    let metadata_categories = loaded_package.prep_meta()?.constructed_meta;
-    println!("\nInstalled metadata:\n{metadata_categories}");
+    loaded_package.prep_meta()?;
+    println!("\nInstalled metadata:\n{}", loaded_package.constructed_meta);
 
-    let installed_paths = loaded_package.prep_paths()?.paths;
-    println!("\nInstalled paths:\n{installed_paths}");
+    loaded_package.prep_paths()?;
+    println!("\nInstalled paths:\n{}", loaded_package.paths);
 
     Ok(())
 }

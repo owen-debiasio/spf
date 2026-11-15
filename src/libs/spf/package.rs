@@ -18,13 +18,90 @@ use crate::libs::spf::metadata::{Categories, Meta, PackagePaths};
 /// Implementation of an spf package
 #[derive(Clone, Debug)]
 pub struct Package {
+    /// Name of the package
     pub name: String,
+
+    /// Path of the package (extracted or .spf file)
     pub package_path: String,
+
+    /// The metadata categories
     pub metadata: Categories,
+
+    /// Paths inside the file. Could be be packaged paths or the
+    /// installed paths,
     pub paths: Vec<String>,
 }
 
 impl Package {
+    /// Initializes an spf package.
+    ///
+    /// Only the name of the package must be provided here.
+    ///
+    /// **NOTE**:
+    /// The name is NOT the name of the package FILE, it serves as the name
+    /// of the package in the metadata.
+    ///
+    /// By default, the output path will be `<name>.spf`
+    ///
+    /// ```
+    /// let name_of_package = String::from("test");
+    ///
+    /// let package = Package::new(name_of_package);
+    /// ```
+    pub fn new(name: String) -> Self {
+        let default_output = format!("{name}.spf");
+
+        Self {
+            name,
+            package_path: default_output,
+            metadata: Categories::new(),
+            paths: Vec::new(),
+        }
+    }
+
+    /// Loads an spf package.
+    ///
+    /// ```
+    /// let package_path = String::from("test/spf.spf");
+    /// let package = Package::from(package_path)?;
+    /// ```
+    pub fn from(package_path: String) -> Result<Self, Error> {
+        let details = Self {
+            name: String::new(),
+            package_path,
+            metadata: Categories::new(),
+            paths: Vec::new(),
+        };
+
+        Ok(details)
+    }
+
+    /// Treats the package path as it would be if the package
+    /// would be extracted.
+    ///
+    /// Everything else (metadata, name, etc) remains the same.
+    ///
+    /// ```
+    /// let package_path = String::from("test/spf.spf");
+    /// let package = Package::from(package_path)?;
+    ///
+    /// assert_eq!("test/spf", package.as_extracted().package_path)
+    /// ```
+    pub fn as_extracted(&self) -> Self {
+        let package_path = Path::new(&self.package_path.trim_end_matches("spf"))
+            .file_stem()
+            .unwrap_or_default()
+            .display()
+            .to_string();
+
+        Self {
+            name: self.name.clone(),
+            package_path,
+            metadata: self.metadata.clone(),
+            paths: self.paths.clone(),
+        }
+    }
+
     /// Extracts an spf package to a location.
     ///
     /// Since the package is a `tar` file, use [`extract_archive`] with
@@ -45,16 +122,33 @@ impl Package {
         Ok(())
     }
 
+    /// Retrieves the installed filesystem inside an extracted package.
+    ///
+    /// If the package path isn't one that's extracted, **it will fail**.
+    ///
+    /// ```
+    /// let package_path = String::from("test/spf.spf");
+    /// let package = Package::from(package_path)?;
+    ///
+    /// package.extract(".")?;
+    ///
+    /// package.as_extracted().get_packaged_fs()?;
+    /// ```
     pub fn get_packaged_fs(&self) -> Result<Vec<String>, Error> {
         let package_extracted = self.package_path.clone();
 
         let collected_paths = match glob(&format!("./{package_extracted}/**/*")) {
             Ok(paths) => paths,
-            Err(_) => todo!(),
+            Err(err) => {
+                return Err(Error::new(
+                    ErrorKind::InvalidData,
+                    format!("Failed to read path `{package_extracted}`: {err}"),
+                ));
+            }
         };
 
         // Stripped from path `META`
-        let mut paths_clean: Vec<String> = Vec::new();
+        let mut paths_clean = Vec::new();
 
         for path in collected_paths {
             let path_string = path.unwrap_or_default().display().to_string();
@@ -63,40 +157,6 @@ impl Package {
         }
 
         Ok(paths_clean)
-    }
-}
-
-impl Package {
-    /// Loads an spf package.
-    ///
-    /// ```
-    /// let package_path = String::from("test/spf.spf");
-    /// let package = Package::from(package_path)?;
-    /// ```
-    pub fn from(package_path: String) -> Result<Self, Error> {
-        let details = Self {
-            name: String::new(),
-            package_path,
-            metadata: Categories::new(),
-            paths: Vec::new(),
-        };
-
-        Ok(details)
-    }
-
-    pub fn as_extracted(&self) -> Self {
-        let package_path = Path::new(&self.package_path.trim_end_matches("spf"))
-            .file_stem()
-            .unwrap_or_default()
-            .display()
-            .to_string();
-
-        Self {
-            name: self.name.clone(),
-            package_path,
-            metadata: self.metadata.clone(),
-            paths: self.paths.clone(),
-        }
     }
 
     /// Verifies if the package loaded is an spf package.
@@ -119,59 +179,31 @@ impl Package {
         Ok(is_spf_package)
     }
 
-    /// Initializes an spf package.
-    ///
-    /// Only the name of the package must be provided here.
-    ///
-    /// **NOTE**:
-    /// The name is NOT the name of the package FILE, it serves as the name
-    /// of the package in the metadata.
-    ///
-    /// By default, the output path will be `<name>.spf`
-    ///
-    /// ```
-    /// let name_of_package = "test";
-    ///
-    /// let package = Package::new(name_of_package);
-    /// ```
-    pub fn new(name: String) -> Self {
-        let default_output = format!("{name}.spf");
-
-        Self {
-            name,
-            package_path: default_output,
-            metadata: Categories::new(),
-            paths: Vec::new(),
-        }
-    }
-
-    /// Adds the package metadata.
+    /// Sets the package metadata.
     ///
     /// Using the [`Categories`] struct, this defines what metadata the
     /// package will contain.
     ///
     /// ```
     /// let name_of_package = "test";
-    /// let package = Package::new(name_of_package)
-    ///     .add_metadata(Categories::new());
+    /// let package = Package::new(name_of_package);
+    ///
+    /// package.set_metadata(Categories::new());
     /// ```
-    pub fn add_metadata(&self, metadata: Categories) -> Self {
-        Self {
-            name: self.name.clone(),
-            package_path: self.package_path.clone(),
-            metadata,
-            paths: self.paths.clone(),
-        }
+    pub fn set_metadata(&mut self, metadata: Categories) {
+        self.metadata = metadata;
     }
 
     /// Defines the output location of the package.
     ///
     /// ```
     /// let name_of_package = "test";
-    /// let package = Package::new(name_of_package)
-    ///     .output_location("./test_output.spf")
+    /// let package = Package::new(name_of_package);
+    ///
+    /// let output = String::from("./test_output.spf");
+    /// package.set_output_location(output);
     /// ```
-    pub fn output_location(&self, package_path: String) -> Result<Self, Error> {
+    pub fn set_output_location(&mut self, package_path: String) -> Result<(), Error> {
         if !Self::from(package_path.clone())?.is_spf_package()? {
             return Err(Error::new(
                 ErrorKind::InvalidFilename,
@@ -179,12 +211,9 @@ impl Package {
             ));
         }
 
-        Ok(Self {
-            name: self.name.clone(),
-            package_path,
-            metadata: self.metadata.clone(),
-            paths: self.paths.clone(),
-        })
+        self.package_path = package_path;
+
+        Ok(())
     }
 
     /// Adds the definition of source and destination paths.
@@ -194,38 +223,33 @@ impl Package {
     /// ```
     /// let name_of_package = "test";
     ///
-    /// let source = "./source/file";
-    /// let dest = "/dest/file/location";
+    /// let package = Package::new(name_of_package);
     ///
-    /// let package = Package::new(name_of_package)
-    ///     .add_path(source, dest)
+    /// let dest = "/dest/file/location";
+    /// let source = "./source/file";
+    ///
+    /// package.add_path(source, dest);
     /// ```
-    pub fn add_path(&self, source: &str, dest: &str) -> Self {
-        Self {
-            name: self.name.clone(),
-            package_path: self.package_path.clone(),
-            metadata: self.metadata.clone(),
-            paths: {
-                let mut coll_paths = self.paths.clone();
-                coll_paths.push(PackagePaths::into_spf_path(source, dest));
-                coll_paths
-            },
-        }
+    pub fn add_path(&mut self, source: &str, dest: &str) {
+        let mut coll_paths = self.paths.clone();
+        coll_paths.push(PackagePaths::into_spf_path(source, dest));
+
+        self.paths.extend(coll_paths);
     }
 
     /// Builds and assembles the package.
     ///
     /// ```
     /// let name_of_package = "test";
-    /// let package = Package::new(name_of_package)
-    ///     .add_metadata(Categories::new())
-    ///     .output_location("./test_output.spf")
-    ///     .add_path("./target/debug/spf")
-    ///     .add_paths(["./path/to/thing", "./other/path/to/thing/"]);
+    /// let package = Package::new(name_of_package);
+    ///
+    /// package.add_metadata(Categories::new());
+    /// package.set_output_location("./test_output.spf");
+    /// package.add_path("./target/debug/spf");
     ///
     /// package.build()?
     /// ```
-    pub fn build(&self) -> Result<(), Error> {
+    pub fn build(self) -> Result<(), Error> {
         let raw_folder_name = Path::new(&self.package_path)
             .file_name()
             .unwrap_or_default()
@@ -236,11 +260,9 @@ impl Package {
 
         create_dir(raw_folder_name)?;
 
-        let meta = self.metadata.clone();
-
         write(
             format!("{raw_folder_name}/META"),
-            Meta::construct_contents(meta)?.join("\n"),
+            Meta::construct_contents(self.metadata)?.join("\n"),
         )?;
 
         for path in self.paths.clone() {

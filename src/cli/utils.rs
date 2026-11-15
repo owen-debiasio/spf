@@ -35,9 +35,11 @@ impl Package {
             ));
         }
 
-        let metadata = Meta::from(&installed_path)?.get_metadata()?;
+        let metadata = Meta::from(&installed_path)?.categories;
 
-        let mut package = Self::new(name).add_metadata(metadata);
+        let mut package = Self::new(name);
+
+        package.set_metadata(metadata);
 
         package.package_path = package.get_install_location()?;
 

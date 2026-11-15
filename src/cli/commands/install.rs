@@ -43,7 +43,7 @@ impl Installer {
         package.extract(".")?;
 
         let extracted_meta = format!("{extracted_path}/META");
-        let metadata = Meta::from(&extracted_meta)?.get_metadata()?;
+        let metadata = Meta::from(&extracted_meta)?.categories;
 
         package.name = metadata.name.clone();
         package.metadata = metadata;
@@ -66,7 +66,7 @@ impl Installer {
         })
     }
 
-    fn initialize(&self) -> Result<Self, Error> {
+    fn initialize(&mut self) -> Result<(), Error> {
         let install_type = self.package.check_version()?;
         let message = install_type.as_message();
 
@@ -92,21 +92,16 @@ impl Installer {
 
         proceed_to_install = proceed_to_install.trim().to_lowercase();
 
-        let is_confirmed = proceed_to_install == "y" || proceed_to_install.is_empty();
+        self.is_confirmed = proceed_to_install == "y" || proceed_to_install.is_empty();
 
-        Ok(Self {
-            package: self.package.clone(),
-            extracted_path: self.extracted_path.clone(),
-            extracted_meta: self.extracted_meta.clone(),
-            is_confirmed,
-        })
+        Ok(())
     }
 
     fn install(&self) -> Result<(), Error> {
         let installed_package_meta = format!("{PACKAGE_INSTALL_PATH}{}", self.package.name);
 
-        copy(self.extracted_meta.clone(), &installed_package_meta)?;
-        remove_file(self.extracted_meta.clone())?;
+        copy(&self.extracted_meta, &installed_package_meta)?;
+        remove_file(&self.extracted_meta)?;
 
         let mut project_meta_file = OpenOptions::new()
             .append(true)
@@ -114,8 +109,8 @@ impl Installer {
 
         project_meta_file.write_all(b"\n:::PATH DEFINE START:::\n")?;
 
-        for path in self.package.paths.clone() {
-            let source_path = format!("{}{path}", self.extracted_path.clone());
+        for path in &self.package.paths {
+            let source_path = format!("{}{path}", self.extracted_path);
 
             if Path::new(&source_path).is_dir() {
                 create_dir_all(path)?;
@@ -123,7 +118,7 @@ impl Installer {
             } else {
                 println!("    Copying \"{source_path}\" -> \"{path}\"");
 
-                copy(source_path, &path)?;
+                copy(source_path, path)?;
 
                 project_meta_file.write_all(format!("{path}\n").as_bytes())?;
             }
@@ -154,7 +149,7 @@ pub fn spf_install(package_path: String) -> Result<(), Error> {
         return Ok(());
     }
 
-    installer_information = installer_information.initialize()?;
+    installer_information.initialize()?;
 
     if installer_information.is_confirmed {
         println!("\nInstalling...\n");
@@ -213,12 +208,13 @@ impl Package {
         }
 
         let get_installed_version = || -> Result<String, Error> {
-            let version = Self::from_installed(self.name.clone())?.metadata.version;
+            let version = Self::from_installed(self.name.to_owned())?.metadata.version;
+
             Ok(version)
         };
 
         let (package_version, installed_version) =
-            (self.metadata.version.clone(), get_installed_version()?);
+            (self.metadata.version.to_string(), get_installed_version()?);
 
         if package_version == installed_version {
             return Ok(InstallStatus::Reinstall);

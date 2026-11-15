@@ -60,6 +60,7 @@ impl Categories {
 /// package that has its metadata stored at `/usr/share/spf/packages/` ([`PACKAGE_INSTALL_PATH`]).
 ///
 /// - `meta_file_contents` refers to the actually text (the metadata itself) inside the file.
+/// - `categories` refers to the actual metadata itself, using [`Categories`].
 ///
 /// You can load package metadata by using [`Meta::from`], and then you can extract a value from
 /// a category by using [`Meta::load_value`].
@@ -81,13 +82,16 @@ impl Categories {
 /// ```
 #[derive(Clone, Debug)]
 pub struct Meta {
-    pub meta_file_contents: String,
+    pub contents: String,
+    pub categories: Categories,
 }
 
 impl Meta {
+    /// Create a new metadata instance
     pub const fn new() -> Self {
         Self {
-            meta_file_contents: String::new(),
+            contents: String::new(),
+            categories: Categories::new(),
         }
     }
 
@@ -106,9 +110,31 @@ impl Meta {
     pub fn from(loaded_meta_file_path: &str) -> Result<Self, Error> {
         let meta_file_contents = read_to_string(loaded_meta_file_path)?;
 
-        Ok(Self { meta_file_contents })
+        let mut meta = Self {
+            contents: meta_file_contents,
+            categories: Categories::new(),
+        };
+
+        meta.categories = meta.get_metadata()?;
+
+        Ok(meta)
     }
 
+    /// Parses a package config file and parses the metadata.
+    ///
+    /// This is an alternate way of getting the metadata categories,
+    /// other than using:
+    ///
+    /// `Meta::from("./package/path/META")?.categories`
+    ///
+    /// Using [`Meta::load_value`], it individually assigns each value
+    /// into its assigned position in [`Categories`].
+    ///
+    /// ```
+    /// let metadata = Meta::from("test/META")?;
+    ///
+    /// metadata.get_metadata()?;
+    /// ```
     pub fn get_metadata(&self) -> Result<Categories, Error> {
         let retrieved_categories = Categories {
             name: self.load_value("PROJECT_NAME")?,
@@ -145,7 +171,7 @@ impl Meta {
         let string_prior_to_value = &format!("{category_to_find} =");
 
         let meta_contents = self
-            .meta_file_contents
+            .contents
             .split('\n')
             // Find the line that contains the category.
             //
@@ -211,7 +237,7 @@ impl Meta {
 
         let mut header_is_read = false;
 
-        for entry in self.meta_file_contents.lines() {
+        for entry in self.contents.lines() {
             if entry == START_HEADER {
                 header_is_read = true;
                 continue;
@@ -233,7 +259,6 @@ impl Meta {
 pub struct PackagePaths;
 
 impl PackagePaths {
-    #[allow(unused)]
     /// Takes the source and dest paths, and formats them into what is inside a
     /// package's config.
     ///

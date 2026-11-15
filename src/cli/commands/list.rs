@@ -80,7 +80,7 @@ pub fn list_packages(optional_string: &str) -> Result<(), Error> {
         let package_metadata_path = package_path_raw?.display().to_string();
 
         // Name of the package to be listed
-        let package_meta = Meta::from(&package_metadata_path)?.get_metadata()?;
+        let package_meta = Meta::from(&package_metadata_path)?.categories;
 
         let (name, version, desc) = (
             package_meta.name,
