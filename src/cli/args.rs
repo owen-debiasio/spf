@@ -3,7 +3,7 @@
 //! Copyright (C) 2026 Owen Debiasio <owen.debiasio@gmail.com>
 //! SPDX-License-Identifier: GPL-3.0-or-later
 
-use std::{env::args, io::Error};
+use std::{env::args, io::Error, sync::LazyLock};
 
 /// Determine if the args that have been retrieved from [`args_contains`] contains
 /// what the user wants to find (`arg` (as [`str`])).
@@ -120,3 +120,25 @@ pub struct Args {
     /// Passed arg #3
     pub third: String,
 }
+
+/// Detects if user is in debug mode.
+///
+/// User enters debug mode if `--debug` is passed.
+///
+/// ```bash
+/// $ spf remove --debug spf
+/// ```
+///
+/// You use it like this:
+///
+/// ```
+/// // Previous code
+///
+/// if *IN_DEBUG_MODE {
+///     println!("Showing debug info")
+/// }
+///
+/// // Anything else
+/// ```
+pub static IN_DEBUG_MODE: LazyLock<bool> =
+    LazyLock::new(|| args_contains("--debug").unwrap_or(false));

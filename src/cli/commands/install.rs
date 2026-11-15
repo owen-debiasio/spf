@@ -1,3 +1,8 @@
+//! The installation process of an spf package.
+//!
+//! Copyright (C) 2026 Owen Debiasio <owen.debiasio@gmail.com>
+//! SPDX-License-Identifier: GPL-3.0-or-later
+
 use std::{
     env::consts::ARCH,
     fs::{OpenOptions, copy, create_dir_all, remove_dir_all, remove_file},
@@ -8,7 +13,7 @@ use std::{
 use semver::Version;
 
 use crate::{
-    cli::args::args_contains,
+    cli::args::{IN_DEBUG_MODE, args_contains},
     libs::{
         spf::{
             metadata::{Categories, Meta, PACKAGE_INSTALL_PATH},
@@ -133,7 +138,7 @@ pub fn spf_install(package_path: String) -> Result<(), Error> {
 
     let mut installer_information = Installer::load(&package_path)?;
 
-    if args_contains("--debug")? {
+    if *IN_DEBUG_MODE {
         println!("DEBUG: Installer information:\n{installer_information:#?}")
     }
 
