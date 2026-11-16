@@ -94,7 +94,7 @@ pub fn is_root() -> Result<bool, Error> {
 /// // `/usr/bin/spf`
 /// ```
 pub fn get_binary_path() -> Result<String, Error> {
-    let path = current_exe()?.display().to_string();
+    let path = current_exe()?.to_string_lossy().to_string();
 
     Ok(path)
 }

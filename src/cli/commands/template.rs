@@ -54,7 +54,7 @@ target/debug/spf:/usr/bin/spf
 /// ```
 pub fn gen_meta_template(mut output_location: String) -> Result<(), Error> {
     if output_location.is_empty() {
-        output_location = current_dir()?.display().to_string();
+        output_location = current_dir()?.to_string_lossy().to_string();
 
     // Output location has to be a directory because rust doesn't want to
     // listen to me

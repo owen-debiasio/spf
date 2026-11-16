@@ -151,7 +151,7 @@ impl Package {
         let mut paths_clean = Vec::new();
 
         for path in collected_paths {
-            let path_string = path.unwrap_or_default().display().to_string();
+            let path_string = path.unwrap_or_default().to_string_lossy().to_string();
 
             paths_clean.push(path_string);
         }
