@@ -91,7 +91,7 @@ impl Package {
         let package_path = Path::new(&self.package_path.trim_end_matches("spf"))
             .file_stem()
             .unwrap_or_default()
-            .display()
+            .to_string_lossy()
             .to_string();
 
         Self {
@@ -253,7 +253,7 @@ impl Package {
         let raw_folder_name = Path::new(&self.package_path)
             .file_name()
             .unwrap_or_default()
-            .display()
+            .to_string_lossy()
             .to_string();
 
         let raw_folder_name = raw_folder_name.trim_end_matches(".spf");
@@ -265,7 +265,7 @@ impl Package {
             Meta::construct_contents(self.metadata)?.join("\n"),
         )?;
 
-        for path in self.paths.clone() {
+        for path in self.paths {
             let (source, dest) = PackagePaths::get_src_dest(&path);
 
             PackagePaths::verify_src_dest(source, dest)?;
