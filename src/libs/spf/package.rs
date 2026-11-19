@@ -227,10 +227,7 @@ impl Package {
     /// package.add_path(source, dest);
     /// ```
     pub fn add_path(&mut self, source: &str, dest: &str) {
-        let mut coll_paths = self.paths.clone();
-        coll_paths.push(PackagePaths::into_spf_path(source, dest));
-
-        self.paths.extend(coll_paths);
+        self.paths.push(PackagePaths::into_spf_path(source, dest));
     }
 
     /// Builds and assembles the package.
