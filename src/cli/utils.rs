@@ -95,7 +95,7 @@ impl Package {
     /// assert!(package.is_already_installed())
     /// ```
     pub fn is_already_installed(&self) -> bool {
-        Path::new(&self.package_path).exists()
+        Path::new(&format!("{PACKAGE_INSTALL_PATH}/{}", self.name)).exists()
     }
 
     /// Get a list of the names of installed packages.

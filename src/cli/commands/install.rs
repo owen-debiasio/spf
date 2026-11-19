@@ -108,6 +108,8 @@ impl Installer {
     }
 
     fn install(&self) -> Result<(), Error> {
+        create_dir_all(PACKAGE_INSTALL_PATH)?;
+
         let installed_package_meta = format!("{PACKAGE_INSTALL_PATH}{}", self.package.name);
 
         copy(&self.extracted_meta, &installed_package_meta)?;
@@ -129,7 +131,8 @@ impl Installer {
 
                 // Replace the spf binary to prevent crashes. For some shitty reason
                 // it will crash otherwise. Don't ask me.
-                if path == "/usr/bin/spf" {
+                let spf_binary_path = "/usr/bin/spf";
+                if path == spf_binary_path && Path::new(spf_binary_path).exists() {
                     self_replace(path)?;
                 }
 
