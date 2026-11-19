@@ -1,7 +1,7 @@
 # spf Roadmap
 
 > [!IMPORTANT]  
-> Last updated: `November 07, 2026 @ 02:51 PM EST`
+> Last updated: `November 18, 2026 @ 07:54 PM EST`
 
 Here's an idea list that I've thrown together of things I want to add/change
 over time. These are only IDEAS and are not guaranteed to be implemented.
@@ -33,7 +33,7 @@ dropped out of the list at any point.
 
 | Feature                                                               | Priority  | Due Date (version) |
 | --------------------------------------------------------------------- | --------- | ------------------ |
-| Command `verify`: Verify `.spf`/installed package metadata and config | Low       | v0.8.0             |
+| Command `verify`: Verify `.spf`/installed package metadata and config | Undecided | v0.8.0             |
 | Pre/Post install/uninstall jobs                                       | Undecided | v0.9.0             |
 | Unit Tests (via `cargo test`)                                         | Undecided | v0.9.0             |
 | Move argument parsing system to `clap`, rather than my custom system. | Undecided | v1.0.0             |
