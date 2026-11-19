@@ -45,12 +45,3 @@ dropped out of the list at any point.
 | GUI Package install tool (GTK4)                                       | NaN       | NaN                |
 
 <!-- markdownlint-enable MD013 -->
-
-## Previously Completed
-
-Here are some features that were previously on here, and are now completed.
-
-| Feature                                          | Version Completed |
-| ------------------------------------------------ | ----------------- |
-| Conversion in between `.spf` and `.deb` packages | v0.6.0            |
-| Conversion in between `.spf` and `.rpm` packages | v0.7.0            |
