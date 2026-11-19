@@ -65,15 +65,13 @@ impl Package {
     /// let package_path = String::from("test/spf.spf");
     /// let package = Package::from(package_path)?;
     /// ```
-    pub fn from(package_path: String) -> Result<Self, Error> {
-        let details = Self {
+    pub fn from(package_path: String) -> Self {
+        Self {
             name: String::new(),
             package_path,
             metadata: Categories::new(),
             paths: Vec::new(),
-        };
-
-        Ok(details)
+        }
     }
 
     /// Treats the package path as it would be if the package
@@ -167,16 +165,14 @@ impl Package {
     /// ```
     /// let package_path = String::from("test.spf");
     ///
-    /// let package = Package::from(package_path)?;
+    /// let package = Package::from(package_path);
     ///
     /// assert_eq!(package.is_spf_package(), true)
     /// ```
-    pub fn is_spf_package(&self) -> Result<bool, Error> {
-        let is_spf_package = Path::new(&self.package_path)
+    pub fn is_spf_package(&self) -> bool {
+        Path::new(&self.package_path)
             .extension()
-            .is_some_and(|ext| ext.eq_ignore_ascii_case("spf"));
-
-        Ok(is_spf_package)
+            .is_some_and(|ext| ext.eq_ignore_ascii_case("spf"))
     }
 
     /// Sets the package metadata.
@@ -204,7 +200,7 @@ impl Package {
     /// package.set_output_location(output);
     /// ```
     pub fn set_output_location(&mut self, package_path: String) -> Result<(), Error> {
-        if !Self::from(package_path.clone())?.is_spf_package()? {
+        if !Self::from(package_path.clone()).is_spf_package() {
             return Err(Error::new(
                 ErrorKind::InvalidFilename,
                 format!("Output path '{package_path}' must be a .spf file"),

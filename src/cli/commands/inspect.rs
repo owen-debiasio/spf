@@ -24,7 +24,7 @@ struct Inspector {
 
 impl Inspector {
     fn load(package: &str) -> Result<Self, Error> {
-        let loaded_package = Package::from(package.to_string())?;
+        let loaded_package = Package::from(package.to_string());
 
         let mut remove_extracted = false;
 
@@ -35,7 +35,7 @@ impl Inspector {
             || package.ends_with("/META")
         {
             package.to_string()
-        } else if loaded_package.is_spf_package()? {
+        } else if loaded_package.is_spf_package() {
             loaded_package.extract(".")?;
 
             remove_extracted.toggle();
