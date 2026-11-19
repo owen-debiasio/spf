@@ -10,6 +10,7 @@ use std::{
     path::Path,
 };
 
+use self_replace::self_replace;
 use semver::Version;
 
 use crate::{
@@ -38,7 +39,7 @@ impl Installer {
     }
 
     fn load(package_path: &str) -> Result<Self, Error> {
-        let mut package = Package::from(package_path.to_string())?;
+        let mut package = Package::from(package_path.to_string());
         let extracted_path = package.as_extracted().package_path;
 
         if Path::new(&extracted_path).exists() {
@@ -53,7 +54,7 @@ impl Installer {
         package.name = metadata.name.clone();
         package.metadata = metadata;
 
-        for path in Package::from(extracted_path.clone())?.get_packaged_fs()? {
+        for path in Package::from(extracted_path.clone()).get_packaged_fs()? {
             let found_path = path.trim_start_matches(&extracted_path).to_string();
 
             if found_path == "/META" {
@@ -74,6 +75,10 @@ impl Installer {
     fn initialize(&mut self) -> Result<(), Error> {
         let install_type = self.package.check_version()?;
         let message = install_type.as_message();
+
+        if *IN_DEBUG_MODE {
+            println!("DEBUG: Install Type: {install_type:?}, using message '{message}'")
+        }
 
         println!(
             "Do you want to proceed to {message} {}-{}?\n\n\
@@ -118,10 +123,15 @@ impl Installer {
             let source_path = format!("{}{path}", self.extracted_path);
 
             if Path::new(&source_path).is_dir() {
-                create_dir_all(path)?;
-                continue;
+                create_dir_all(path)?
             } else {
                 println!("    Copying \"{source_path}\" -> \"{path}\"");
+
+                // Replace the spf binary to prevent crashes. For some shitty reason
+                // it will crash otherwise. Don't ask me.
+                if path == "/usr/bin/spf" {
+                    self_replace(path)?;
+                }
 
                 copy(source_path, path)?;
 
@@ -142,52 +152,40 @@ pub fn spf_install(package_path: String) -> Result<(), Error> {
         println!("DEBUG: Installer information:\n{installer_information:#?}")
     }
 
-    if !arch_is_compat(installer_information.package.metadata.clone())? {
+    if !args_contains("--ignore-arch")? && !installer_information.package.metadata.arch_is_compat()
+    {
         eprintln!(
             "Package architecture: {} doesn't match current system architecture ({ARCH}).\n\
             NOTE: Bypass by passing: `--ignore-arch`",
             installer_information.package.metadata.arch
         );
-
-        installer_information.cleanup()?;
-
-        return Ok(());
-    }
-
-    installer_information.initialize()?;
-
-    if installer_information.is_confirmed {
-        println!("\nInstalling...\n");
-
-        installer_information.install()?;
     } else {
-        installer_information.cleanup()?;
+        installer_information.initialize()?;
 
-        println!("\nAborted.");
+        if installer_information.is_confirmed {
+            println!("\nInstalling...\n");
 
-        return Ok(());
+            let name = installer_information.package.name.clone();
+
+            match installer_information.install() {
+                Ok(()) => {
+                    println!("\nDone! Installed '{name}'!");
+                }
+                Err(err) => {
+                    eprintln!("\nFailed to install '{name}': {err}");
+                }
+            }
+        } else {
+            println!("\nAborted.");
+        }
     }
 
     installer_information.cleanup()?;
 
-    println!(
-        "\nDone! Installed '{}'!",
-        installer_information.package.name
-    );
-
     Ok(())
 }
 
-fn arch_is_compat(meta: Categories) -> Result<bool, Error> {
-    if args_contains("--ignore-arch")? {
-        return Ok(true);
-    }
-
-    let status = SUPPORTED_ARCHS.contains(&meta.arch.as_str());
-
-    Ok(status)
-}
-
+#[derive(Debug)]
 enum InstallStatus {
     Install,
     Update,
@@ -197,12 +195,18 @@ enum InstallStatus {
 
 impl InstallStatus {
     fn as_message(&self) -> &str {
-        match &self {
-            InstallStatus::Install => "install",
-            InstallStatus::Update => "update",
-            InstallStatus::Downgrade => "downgrade",
-            InstallStatus::Reinstall => "reinstall",
+        match self {
+            Self::Install => "install",
+            Self::Update => "update",
+            Self::Downgrade => "downgrade",
+            Self::Reinstall => "reinstall",
         }
+    }
+}
+
+impl Categories {
+    fn arch_is_compat(&self) -> bool {
+        SUPPORTED_ARCHS.contains(&self.arch.as_str())
     }
 }
 
