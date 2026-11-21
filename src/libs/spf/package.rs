@@ -199,17 +199,8 @@ impl Package {
     /// let output = String::from("./test_output.spf");
     /// package.set_output_location(output);
     /// ```
-    pub fn set_output_location(&mut self, package_path: String) -> Result<(), Error> {
-        if !Self::from(package_path.clone()).is_spf_package() {
-            return Err(Error::new(
-                ErrorKind::InvalidFilename,
-                format!("Output path '{package_path}' must be a .spf file"),
-            ));
-        }
-
+    pub fn set_output_location(&mut self, package_path: String) {
         self.package_path = package_path;
-
-        Ok(())
     }
 
     /// Adds the definition of source and destination paths.

@@ -54,7 +54,7 @@ pub fn create(package_config: String, output_location: String) -> Result<(), Err
     package.set_metadata(package_metadata.categories.clone());
 
     if !output_location.is_empty() {
-        package.set_output_location(output_location)?
+        package.set_output_location(output_location)
     }
 
     println!("    Collecting paths...");
