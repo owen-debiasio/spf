@@ -60,7 +60,7 @@ impl Inspector {
         let initial_metadata = Meta::from(&self.meta_path)?;
 
         self.constructed_meta =
-            Meta::construct_contents(initial_metadata.categories.to_owned())?.join("\n");
+            Meta::construct_contents(initial_metadata.categories.to_owned()).join("\n");
         self.initial_metadata = initial_metadata;
 
         Ok(())
@@ -74,7 +74,7 @@ impl Inspector {
 
             packaged_paths
         } else {
-            self.initial_metadata.get_paths()
+            Ok(self.initial_metadata.get_paths())
         }?
         .join("\n");
 

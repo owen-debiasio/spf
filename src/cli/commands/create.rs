@@ -11,7 +11,7 @@ use std::{
 use crate::{
     cli::args::IN_DEBUG_MODE,
     libs::spf::{
-        metadata::{Meta, PackagePaths},
+        metadata::{Meta, PackagedPaths},
         package::Package,
     },
 };
@@ -59,12 +59,12 @@ pub fn create(package_config: String, output_location: String) -> Result<(), Err
 
     println!("    Collecting paths...");
 
-    for path in package_metadata.get_paths()? {
+    for path in package_metadata.get_paths() {
         println!("        Adding path: '{path}'");
 
-        let (source, dest) = PackagePaths::get_src_dest(&path);
+        let path = PackagedPaths::from_formatted(path);
 
-        package.add_path(source, dest)
+        package.add_path(path.source, path.dest)
     }
 
     if *IN_DEBUG_MODE {

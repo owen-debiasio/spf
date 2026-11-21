@@ -23,14 +23,12 @@ impl Package {
     /// let package_name = String::from("test");
     /// let package = Package::new(package_name);
     ///
-    /// let install_location = package.get_install_location()?;
+    /// let install_location = package.get_install_location();
     ///
     /// assert_eq!(format!("{PACKAGE_INSTALL_PATH}/{package_name}"), install_location);
     /// ```
-    pub fn get_install_location(&self) -> Result<String, Error> {
-        let location = format!("{PACKAGE_INSTALL_PATH}/{}", self.name.clone());
-
-        Ok(location)
+    pub fn get_install_location(&self) -> String {
+        format!("{PACKAGE_INSTALL_PATH}/{}", self.name)
     }
 
     /// Takes an installed package and returns the determined installed paths.
@@ -44,7 +42,7 @@ impl Package {
     pub fn get_installed_paths(&self) -> Result<Vec<String>, Error> {
         let mut paths = Vec::new();
 
-        for path in Meta::from(&self.package_path)?.get_paths()? {
+        for path in Meta::from(&self.package_path)?.get_paths() {
             paths.push(path)
         }
 
@@ -77,7 +75,7 @@ impl Package {
 
         package.set_metadata(metadata);
 
-        package.package_path = package.get_install_location()?;
+        package.package_path = package.get_install_location();
 
         for path in package.get_installed_paths()? {
             package.paths.push(path);
@@ -95,7 +93,7 @@ impl Package {
     /// assert!(package.is_already_installed())
     /// ```
     pub fn is_already_installed(&self) -> bool {
-        Path::new(&format!("{PACKAGE_INSTALL_PATH}/{}", self.name)).exists()
+        Path::new(&self.get_install_location()).exists()
     }
 
     /// Get a list of the names of installed packages.
@@ -112,10 +110,12 @@ impl Package {
     pub fn get_installed_names() -> Result<Vec<String>, Error> {
         let mut names = Vec::new();
 
-        for meta_path in glob(&format!("{PACKAGE_INSTALL_PATH}/*")).unwrap() {
-            match meta_path {
+        for meta_path in glob(&format!("{PACKAGE_INSTALL_PATH}/*"))
+            .map_err(|err| Error::new(ErrorKind::InvalidInput, err))?
+        {
+            match &meta_path {
                 Ok(path) => {
-                    let package_meta = path.as_os_str().to_string_lossy().to_string();
+                    let package_meta = path.as_os_str().to_string_lossy();
 
                     let package_name = Meta::from(&package_meta)?.categories.name;
                     names.push(package_name);
@@ -123,7 +123,9 @@ impl Package {
                 Err(err) => {
                     return Err(Error::new(
                         ErrorKind::NotFound,
-                        format!("Failed to search installed package names: {err}"),
+                        format!(
+                            "Failed to search installed package names using path {meta_path:?}: {err}"
+                        ),
                     ));
                 }
             }

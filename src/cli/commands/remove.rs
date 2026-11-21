@@ -80,7 +80,7 @@ pub fn remove_packages(mut packages_to_remove: Vec<String>) -> Result<(), Error>
         let package_meta_path = format!("{PACKAGE_INSTALL_PATH}{package}");
 
         // Retrieves the package version
-        let package_version = Meta::from(&package_meta_path)?.load_value("VERSION")?;
+        let package_version = Meta::from(&package_meta_path)?.categories.version;
 
         // The pretty-print of the package to be removed. Shows the package name
         // and the version.
@@ -204,7 +204,7 @@ fn list_packages(packages_to_list: &[String]) -> Result<(), Error> {
     // `package-version` to the buffer.
     for package in packages_to_list {
         let package_meta_path = format!("{PACKAGE_INSTALL_PATH}{package}");
-        let package_version = Meta::from(&package_meta_path)?.load_value("VERSION")?;
+        let package_version = Meta::from(&package_meta_path)?.categories.version;
 
         package_list.push(format!("{package}-{package_version}"));
     }

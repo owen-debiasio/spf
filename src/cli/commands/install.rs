@@ -17,7 +17,7 @@ use crate::{
     cli::args::{IN_DEBUG_MODE, args_contains},
     libs::{
         spf::{
-            metadata::{Categories, Meta, PACKAGE_INSTALL_PATH},
+            metadata::{Categories, Meta, PACKAGE_INSTALL_PATH, PackagedPaths},
             package::Package,
         },
         sys::SUPPORTED_ARCHS,
@@ -91,7 +91,7 @@ impl Installer {
             self.package.metadata.name,
             self.package.metadata.version,
             self.package.metadata.description,
-            self.package.metadata.source,
+            self.package.metadata.repository,
             self.package.metadata.license,
             self.package.metadata.authors,
             self.package.metadata.arch
@@ -119,7 +119,7 @@ impl Installer {
             .append(true)
             .open(installed_package_meta)?;
 
-        project_meta_file.write_all(b"\n:::PATH DEFINE START:::\n")?;
+        project_meta_file.write_all(format!("\n{}\n", PackagedPaths::START_HEADER).as_bytes())?;
 
         for path in &self.package.paths {
             let source_path = format!("{}{path}", self.extracted_path);

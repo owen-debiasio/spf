@@ -29,7 +29,7 @@ pub struct Categories {
     pub description: String,
 
     /// Package homepage, repository, or source
-    pub source: String,
+    pub repository: String,
 
     /// Package license
     pub license: String,
@@ -42,16 +42,54 @@ pub struct Categories {
 }
 
 impl Categories {
+    pub const PROJECT_NAME: &str = "PROJECT_NAME";
+    pub const VERSION: &str = "VERSION";
+    pub const DESCRIPTION: &str = "DESCRIPTION";
+    pub const REPOSITORY: &str = "REPOSITORY";
+    pub const LICENSE: &str = "LICENSE";
+    pub const AUTHORS: &str = "AUTHORS";
+    pub const ARCH: &str = "ARCH";
+
     /// Create new instance of categories.
-    pub const fn new() -> Categories {
-        Categories {
+    pub const fn new() -> Self {
+        Self {
             name: String::new(),
             version: String::new(),
             description: String::new(),
-            source: String::new(),
+            repository: String::new(),
             license: String::new(),
             authors: String::new(),
             arch: String::new(),
+        }
+    }
+
+    /// Get the metadata categories from an existing [`META`] instance using
+    /// [`load_value`].
+    ///
+    /// This comes in handy when the [`META`] instance already has the contents
+    /// covered, but not the categories itself.
+    ///
+    /// ```
+    /// let meta_file_contents = read_to_string("META")?;
+    ///
+    /// let mut meta = Self {
+    ///     contents: meta_file_contents,
+    ///     categories: Categories::new(),
+    /// };
+    ///
+    /// let categories = Categories::from(meta.clone());
+    ///
+    /// meta.categories = categories;
+    /// ```
+    pub fn from(meta: Meta) -> Self {
+        Self {
+            name: meta.load_value(Self::PROJECT_NAME),
+            version: meta.load_value(Self::VERSION),
+            description: meta.load_value(Self::DESCRIPTION),
+            repository: meta.load_value(Self::REPOSITORY),
+            license: meta.load_value(Self::LICENSE),
+            authors: meta.load_value(Self::AUTHORS),
+            arch: meta.load_value(Self::ARCH),
         }
     }
 }
@@ -115,38 +153,9 @@ impl Meta {
             categories: Categories::new(),
         };
 
-        meta.categories = meta.get_metadata()?;
+        meta.categories = Categories::from(meta.clone());
 
         Ok(meta)
-    }
-
-    /// Parses a package config file and parses the metadata.
-    ///
-    /// This is an alternate way of getting the metadata categories,
-    /// other than using:
-    ///
-    /// `Meta::from("./package/path/META")?.categories`
-    ///
-    /// Using [`Meta::load_value`], it individually assigns each value
-    /// into its assigned position in [`Categories`].
-    ///
-    /// ```
-    /// let metadata = Meta::from("test/META")?;
-    ///
-    /// metadata.get_metadata()?;
-    /// ```
-    pub fn get_metadata(&self) -> Result<Categories, Error> {
-        let retrieved_categories = Categories {
-            name: self.load_value("PROJECT_NAME")?,
-            version: self.load_value("VERSION")?,
-            description: self.load_value("DESCRIPTION")?,
-            source: self.load_value("REPOSITORY")?,
-            license: self.load_value("LICENSE")?,
-            authors: self.load_value("AUTHORS")?,
-            arch: self.load_value("ARCH")?,
-        };
-
-        Ok(retrieved_categories)
     }
 
     /// Extracts the desired value from the metadata loaded by [`Meta::from`].
@@ -167,11 +176,10 @@ impl Meta {
     /// // Retrieved the stored architecture
     /// let extracted_value = metadata_contents.load_value(category_to_extract_value)?
     /// ```
-    pub fn load_value(&self, category_to_find: &str) -> Result<String, Error> {
+    pub fn load_value(&self, category_to_find: &str) -> String {
         let string_prior_to_value = &format!("{category_to_find} =");
 
-        let meta_contents = self
-            .contents
+        self.contents
             .split('\n')
             // Find the line that contains the category.
             //
@@ -182,9 +190,7 @@ impl Meta {
             // Return the value of the category by stripping out the category name
             .trim_start_matches(string_prior_to_value)
             .trim()
-            .to_string();
-
-        Ok(meta_contents)
+            .to_string()
     }
 
     /// Create the contents of the spf package metadata.
@@ -193,31 +199,23 @@ impl Meta {
     /// - `metadata` ([`Categories`]): The metadata you want to be constructed
     ///
     /// ```
-    /// let package = Meta::from("sample.spf")?;
+    /// let meta = Meta::from("sample.spf")?;
     ///
-    /// let metadata = Categories {
-    ///     name: package.load_value("PROJECT_NAME")?,
-    ///     version: package.load_value("VERSION")?,
-    ///     description: package.load_value("DESCRIPTION")?,
-    ///     source: package.load_value("REPOSITORY")?,
-    ///     license: package.load_value("LICENSE")?,
-    ///     authors: package.load_value("AUTHORS")?,
-    ///     arch: package.load_value("ARCH")?,
-    /// };
+    /// let metadata = meta.categories;
     ///
-    /// let metadata_contents = construct_contents(metadata)?;
+    /// let metadata_contents = construct_contents(metadata);
     /// ```
-    pub fn construct_contents(metadata: Categories) -> Result<Vec<String>, Error> {
-        Ok(vec![
+    pub fn construct_contents(metadata: Categories) -> Vec<String> {
+        vec![
             format!("### PACKAGED WITH SPF {VERSION} ###\n"),
             format!("PROJECT_NAME = {}", metadata.name),
             format!("VERSION = {}", metadata.version),
             format!("DESCRIPTION = {}", metadata.description),
-            format!("REPOSITORY = {}", metadata.source),
+            format!("REPOSITORY = {}", metadata.repository),
             format!("LICENSE = {}", metadata.license),
             format!("AUTHORS = {}", metadata.authors),
             format!("ARCH = {}", metadata.arch),
-        ])
+        ]
     }
 
     /// Loads the packages from a package build config.
@@ -228,68 +226,112 @@ impl Meta {
     /// let package_config_path: "spf_config";
     /// let package = Meta::from("sample.spf")?;
     ///
-    /// let paths = package.get_paths()?;
+    /// let paths = package.get_paths();
     /// ```
-    pub fn get_paths(&self) -> Result<Vec<String>, Error> {
+    pub fn get_paths(&self) -> Vec<String> {
         let mut paths: Vec<String> = Vec::new();
-
-        const START_HEADER: &str = ":::PATH DEFINE START:::";
 
         let mut header_is_read = false;
 
         for entry in self.contents.lines() {
-            if entry == START_HEADER {
+            if entry == PackagedPaths::START_HEADER {
                 header_is_read = true;
                 continue;
             } else if !header_is_read {
                 continue;
-            } else if entry == ":::PATH DEFINE END:::" {
+            } else if entry == PackagedPaths::END_HEADER {
                 break;
             }
 
             paths.push(entry.to_string());
         }
 
-        Ok(paths)
+        paths
     }
 }
 
 /// Construct paths used in metadata
 #[derive(Clone, Debug)]
-pub struct PackagePaths;
+pub struct PackagedPaths {
+    pub source: String,
+    pub dest: String,
+    pub packaged_paths: String,
+}
 
-impl PackagePaths {
+#[allow(unused)]
+impl PackagedPaths {
+    /// The header that starts the section in a package builder files
+    /// that defines the paths.
+    pub const START_HEADER: &str = ":::PATH DEFINE START:::";
+
+    /// The header that ends the section in a package builder files
+    /// that defines the paths.
+    pub const END_HEADER: &str = ":::PATH DEFINE END:::";
+
+    /// New instance of [`PackagedPaths`]
+    pub const fn new() -> Self {
+        Self {
+            source: String::new(),
+            dest: String::new(),
+            packaged_paths: String::new(),
+        }
+    }
+
+    /// Take separate source and destination paths and convert them to
+    /// [`PackagedPaths`].
+    ///
+    /// ```
+    /// let source = "./source/file".to_string();
+    /// let dest = "/dest/location/file".to_string();
+    ///
+    /// let paths = PackagedPaths::from_source_dest(source, dest);
+    ///
+    /// assert_eq!(source, paths.source);
+    /// assert_eq!(dest, paths.dest);
+    /// ```
+    pub fn from_source_dest(source: String, dest: String) -> Self {
+        Self {
+            source: source.clone(),
+            dest: dest.clone(),
+            packaged_paths: Self::into_spf_path(source, dest),
+        }
+    }
+
+    /// Take a packaged location path and convert it to [`PackagedPaths`].
+    ///
+    /// ```
+    /// let config = "./source/file:/dest/location/file".to_string();
+    ///
+    /// let paths = PackagedPaths::from_formatted(config);
+    ///
+    /// assert_eq!(config, paths.packaged_path);
+    /// ```
+    pub fn from_formatted(packaged_paths: String) -> Self {
+        let make_string = |thing: Option<&str>| -> String { thing.unwrap_or_default().to_string() };
+
+        let source = packaged_paths.split(':').next();
+        let dest = packaged_paths.split(':').next_back();
+
+        Self {
+            source: make_string(source),
+            dest: make_string(dest),
+            packaged_paths,
+        }
+    }
+
     /// Takes the source and dest paths, and formats them into what is inside a
     /// package's config.
     ///
     /// ```
-    /// let source = "./source/path";
-    /// let dest = "/dest/path"
+    /// let source = "./source/path".to_string();
+    /// let dest = "/dest/path".to_string();
     ///
     /// let spf_formatted = PackagePaths::into_spf_path(source, dest);
     ///
     /// assert_eq!(spf_formatted, &format!("{source}:{dest}"));
     /// ```
-    pub fn into_spf_path(source: &str, dest: &str) -> String {
+    pub fn into_spf_path(source: String, dest: String) -> String {
         format!("{source}:{dest}")
-    }
-
-    /// Reads the formatted path you would find in the package config, and
-    /// returns both the source and destination paths.
-    ///
-    /// ```
-    /// let formatted_paths = "./source/file:/destination/location/path"
-    ///
-    /// let (source, dest) = get_src_dest(formatted_paths);
-    ///
-    /// assert_eq!(source, "./source/file");
-    /// assert_eq!(dest, "/destination/location/path");
-    /// ```
-    pub fn get_src_dest(formatted_path: &str) -> (&str, &str) {
-        let source = formatted_path.split(':').next().unwrap_or_default();
-        let dest = formatted_path.split(':').next_back().unwrap_or_default();
-
-        (source, dest)
     }
 
     /// Make sure that the paths entered follow the standards correctly.
@@ -305,28 +347,28 @@ impl PackagePaths {
     ///
     /// PackagePaths::verify_src_dest(src, dest)?; // Succeeds because all checks are passed
     /// ```
-    pub fn verify_src_dest(src: &str, dest: &str) -> Result<(), Error> {
-        if src.is_empty() {
+    pub fn verify(&self) -> Result<(), Error> {
+        if self.source.is_empty() {
             return Err(Error::new(
                 ErrorKind::InvalidFilename,
                 "No source path provided",
             ));
-        } else if !Path::new(src).exists() {
+        } else if !Path::new(&self.source).exists() {
             return Err(Error::new(
                 ErrorKind::NotFound,
-                format!("Source path not found: {src}"),
+                format!("Source path not found: {}", self.source),
             ));
         }
 
-        if dest.is_empty() {
+        if self.dest.is_empty() {
             return Err(Error::new(
                 ErrorKind::InvalidFilename,
                 "No destination path provided",
             ));
-        } else if !dest.starts_with("/") {
+        } else if !self.dest.starts_with("/") {
             return Err(Error::new(
                 ErrorKind::InvalidFilename,
-                format!("Destination path must start from the root: {dest}"),
+                format!("Destination path must start from the root: {}", self.dest),
             ));
         }
 

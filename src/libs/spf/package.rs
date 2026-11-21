@@ -13,7 +13,7 @@ use std::{
 
 use tar::{Archive, Builder};
 
-use crate::libs::spf::metadata::{Categories, Meta, PackagePaths};
+use crate::libs::spf::metadata::{Categories, Meta, PackagedPaths};
 
 /// Implementation of an spf package
 #[derive(Clone, Debug)]
@@ -221,13 +221,14 @@ impl Package {
     ///
     /// let package = Package::new(name_of_package);
     ///
-    /// let dest = "/dest/file/location";
-    /// let source = "./source/file";
+    /// let dest = "/dest/file/location".to_string();
+    /// let source = "./source/file".to_string();
     ///
     /// package.add_path(source, dest);
     /// ```
-    pub fn add_path(&mut self, source: &str, dest: &str) {
-        self.paths.push(PackagePaths::into_spf_path(source, dest));
+    pub fn add_path(&mut self, source: String, dest: String) {
+        self.paths
+            .push(PackagedPaths::from_source_dest(source, dest).packaged_paths);
     }
 
     /// Builds and assembles the package.
@@ -255,22 +256,22 @@ impl Package {
 
         write(
             format!("{raw_folder_name}/META"),
-            Meta::construct_contents(self.metadata)?.join("\n"),
+            Meta::construct_contents(self.metadata).join("\n"),
         )?;
 
         for path in self.paths {
-            let (source, dest) = PackagePaths::get_src_dest(&path);
+            let package_path = PackagedPaths::from_formatted(path);
 
-            PackagePaths::verify_src_dest(source, dest)?;
+            package_path.verify()?;
 
-            let file_dest_str = format!("{raw_folder_name}{dest}");
+            let file_dest_str = format!("{raw_folder_name}{}", package_path.dest);
             let file_dest = Path::new(&file_dest_str);
 
             if let Some(parent_dir) = file_dest.parent() {
                 create_dir_all(parent_dir)?;
             }
 
-            copy(source, file_dest)?;
+            copy(package_path.source, file_dest)?;
         }
 
         let archive_file = File::create(&self.package_path)?;
