@@ -3,7 +3,7 @@
 //! Copyright (C) 2026 Owen Debiasio <owen.debiasio@gmail.com>
 //! SPDX-License-Identifier: GPL-3.0-or-later
 
-use std::{env::args, io::Error, sync::LazyLock};
+use std::{env::args, sync::LazyLock};
 
 /// Determine if the args that have been retrieved from [`args_contains`] contains
 /// what the user wants to find (`arg` (as [`str`])).
@@ -33,10 +33,8 @@ use std::{env::args, io::Error, sync::LazyLock};
 /// // Output should be `false`
 /// println!("{does_arg_contain}");
 /// ```
-pub fn args_contains(arg: &str) -> Result<bool, Error> {
-    let args = return_args()?.contains(&arg.to_string());
-
-    Ok(args)
+pub fn args_contains(arg: &str) -> bool {
+    return_args().contains(&arg.to_string())
 }
 
 /// Returns collected args that have been supplied.
@@ -57,7 +55,7 @@ pub fn args_contains(arg: &str) -> Result<bool, Error> {
 /// ```
 /// let collected_args = return_args();
 /// ```
-pub fn return_args() -> Result<Vec<String>, Error> {
+pub fn return_args() -> Vec<String> {
     let mut collected_args = Vec::new();
 
     for given_arg in args().skip(1) {
@@ -76,7 +74,7 @@ pub fn return_args() -> Result<Vec<String>, Error> {
         }
     }
 
-    Ok(collected_args)
+    collected_args
 }
 
 /// Defines the collected args passed through the CLI.
@@ -140,5 +138,4 @@ pub struct Args {
 ///
 /// // Anything else
 /// ```
-pub static IN_DEBUG_MODE: LazyLock<bool> =
-    LazyLock::new(|| args_contains("--debug").unwrap_or(false));
+pub static IN_DEBUG_MODE: LazyLock<bool> = LazyLock::new(|| args_contains("--debug"));

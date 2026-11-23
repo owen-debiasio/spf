@@ -22,11 +22,11 @@ mod libs;
 /// ```
 pub static VERSION: &str = "v0.8.0";
 
-fn main() -> Result<(), Error> {
+fn main() {
     // Intro
     println!("spf-{VERSION}\n");
 
-    let all = return_args()?;
+    let all = return_args();
 
     let as_str_and_starts_with_dash = |thing: &String| -> bool { thing.as_str().starts_with("-") };
 

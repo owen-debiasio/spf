@@ -176,8 +176,7 @@ pub fn spf_install(package_path: String) -> Result<(), Error> {
         println!("DEBUG: Installer information:\n{installer_information:#?}")
     }
 
-    if !args_contains("--ignore-arch")? && !installer_information.package.metadata.arch_is_compat()
-    {
+    if !args_contains("--ignore-arch") && !installer_information.package.metadata.arch_is_compat() {
         eprintln!(
             "Package architecture: {} doesn't match current system architecture ({ARCH}).\n\
             NOTE: Bypass by passing: `--ignore-arch`",
