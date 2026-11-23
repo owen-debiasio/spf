@@ -7,7 +7,7 @@
 use std::{
     env::current_dir,
     fs::write,
-    io::{Error, ErrorKind},
+    io::{Error, ErrorKind::InvalidInput},
     path::Path,
 };
 
@@ -59,10 +59,9 @@ pub fn gen_meta_template(mut output_location: String) -> Result<(), Error> {
     // Output location has to be a directory because rust doesn't want to
     // listen to me
     } else if !Path::new(&output_location).is_dir() {
-        return Err(Error::new(
-            ErrorKind::InvalidInput,
-            "Please enter a directory to generate to",
-        ));
+        eprintln!("Please enter a directory to generate to.");
+
+        return Err(Error::from(InvalidInput));
     }
 
     output_location =

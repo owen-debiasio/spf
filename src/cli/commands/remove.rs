@@ -10,7 +10,11 @@ use crate::libs::{
 use std::{
     collections::HashSet,
     fs::{read_to_string, remove_dir_all, remove_file},
-    io::{Error, ErrorKind, stdin},
+    io::{
+        Error,
+        ErrorKind::{InvalidInput, NotFound, PermissionDenied},
+        stdin,
+    },
     path::Path,
     process::exit,
 };
@@ -33,14 +37,14 @@ use std::{
 /// ```
 pub fn remove_packages(mut packages_to_remove: Vec<String>) -> Result<(), Error> {
     if !is_root()? {
-        return Err(Error::new(ErrorKind::PermissionDenied, "Root required"));
+        eprintln!("Root permissions are required to remove packages.");
+        return Err(Error::from(PermissionDenied));
     }
 
     if packages_to_remove.is_empty() {
-        return Err(Error::new(
-            ErrorKind::InvalidInput,
-            "Provide the package(s) you want to remove",
-        ));
+        eprintln!("Provide the package(s) you want to remove.");
+
+        return Err(Error::from(InvalidInput));
     }
 
     // Remove duplicate package entries
@@ -52,10 +56,9 @@ pub fn remove_packages(mut packages_to_remove: Vec<String>) -> Result<(), Error>
         let package_meta_path = format!("{PACKAGE_INSTALL_PATH}{package}");
 
         if !Path::new(&package_meta_path).exists() {
-            return Err(Error::new(
-                ErrorKind::NotFound,
-                format!("Package not installed: {package}"),
-            ));
+            eprintln!("Package not found: {package}");
+
+            return Err(Error::from(NotFound));
         }
     }
 
@@ -197,7 +200,7 @@ fn remove_package(package_formatted: &str, package_meta_path: &str) -> Result<()
 fn list_packages(packages_to_list: &[String]) -> Result<(), Error> {
     println!("You are about to remove the following package(s):\n");
 
-    let mut package_list: Vec<String> = Vec::new();
+    let mut package_list = Vec::new();
 
     // Goes through and collect the package names and versions from their metadata
     // file located in `PACKAGE_INSTALL_PATH`. Then it writes the formatted name:
@@ -211,7 +214,7 @@ fn list_packages(packages_to_list: &[String]) -> Result<(), Error> {
 
     // If there are more than 6 packages, separate them with `\n`. Otherwise,
     // keep them aligned next to each other with ` `.
-    let package_list_buffer: String = if packages_to_list.len() > 5 {
+    let package_list_buffer = if packages_to_list.len() > 5 {
         package_list.join("\n")
     } else {
         package_list.join(" ")

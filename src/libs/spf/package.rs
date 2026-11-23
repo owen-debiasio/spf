@@ -242,6 +242,11 @@ impl Package {
             .to_string();
 
         let raw_folder_name = raw_folder_name.trim_end_matches(".spf");
+        let raw_folder = Path::new(raw_folder_name);
+
+        if raw_folder.exists() {
+            remove_dir_all(raw_folder_name)?;
+        }
 
         create_dir(raw_folder_name)?;
 
@@ -269,7 +274,7 @@ impl Package {
 
         let mut archive = Builder::new(&archive_file);
 
-        if let Some(path) = Path::new(raw_folder_name).file_name() {
+        if let Some(path) = raw_folder.file_name() {
             archive.append_dir_all(path, raw_folder_name)?;
         }
 
