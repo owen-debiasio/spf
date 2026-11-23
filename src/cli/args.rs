@@ -103,7 +103,7 @@ pub fn return_args() -> Result<Vec<String>, Error> {
 /// assert_eq!(args.get(2), collected_args.second);
 /// assert_eq!(args.get(3), collected_args.third);
 /// ```
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Args {
     /// Commands, subcommands, etc
     pub commands: Vec<String>,

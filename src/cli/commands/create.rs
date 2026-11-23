@@ -4,7 +4,10 @@
 //! SPDX-License-Identifier: GPL-3.0-or-later
 
 use std::{
-    io::{Error, ErrorKind},
+    io::{
+        Error,
+        ErrorKind::{InvalidInput, NotFound},
+    },
     path::Path,
 };
 
@@ -18,15 +21,13 @@ use crate::{
 
 pub fn create(package_config: String, output_location: String) -> Result<(), Error> {
     if package_config.is_empty() {
-        return Err(Error::new(
-            ErrorKind::NotFound,
-            "No package config provided",
-        ));
+        eprintln!("Package configuration not provided!");
+
+        return Err(Error::from(InvalidInput));
     } else if !Path::new(&package_config).exists() {
-        return Err(Error::new(
-            ErrorKind::NotFound,
-            format!("Package config not found: {package_config}"),
-        ));
+        eprintln!("Package configuration '{package_config}' not found!");
+
+        return Err(Error::from(NotFound));
     }
 
     println!(

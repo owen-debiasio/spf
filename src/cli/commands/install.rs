@@ -6,7 +6,11 @@
 use std::{
     env::consts::ARCH,
     fs::{OpenOptions, copy, create_dir_all, remove_dir_all, remove_file},
-    io::{Error, Write, stdin},
+    io::{
+        Error,
+        ErrorKind::{NotFound, PermissionDenied, Unsupported},
+        Write, stdin,
+    },
     path::Path,
 };
 
@@ -20,7 +24,7 @@ use crate::{
             metadata::{Categories, Meta, PACKAGE_INSTALL_PATH, PackagedPaths},
             package::Package,
         },
-        sys::SUPPORTED_ARCHS,
+        sys::{SUPPORTED_ARCHS, is_root},
     },
 };
 
@@ -147,9 +151,26 @@ impl Installer {
 }
 
 pub fn spf_install(package_path: String) -> Result<(), Error> {
+    if !is_root()? {
+        eprintln!("Root permissions are required to install packages.");
+        return Err(Error::from(PermissionDenied));
+    }
+
+    if package_path.is_empty() {
+        eprintln!("Please provide an .spf package file.");
+
+        return Err(Error::from(NotFound));
+    }
+
     println!("Loading package '{package_path}'...\n");
 
-    let mut installer_information = Installer::load(&package_path)?;
+    let mut installer_information = match Installer::load(&package_path) {
+        Ok(info) => info,
+        Err(err) => {
+            println!("Failed to load package '{package_path}': {err}");
+            return Err(err);
+        }
+    };
 
     if *IN_DEBUG_MODE {
         println!("DEBUG: Installer information:\n{installer_information:#?}")
@@ -162,11 +183,24 @@ pub fn spf_install(package_path: String) -> Result<(), Error> {
             NOTE: Bypass by passing: `--ignore-arch`",
             installer_information.package.metadata.arch
         );
+
+        installer_information.cleanup()?;
+
+        return Err(Error::from(Unsupported));
     } else {
-        installer_information.initialize()?;
+        match installer_information.initialize() {
+            Ok(()) => (),
+            Err(err) => {
+                eprintln!(
+                    "Failed to initialize installation for '{}': {err}",
+                    installer_information.package.package_path
+                );
+                return Err(err);
+            }
+        }
 
         if installer_information.is_confirmed {
-            println!("\nInstalling...\n");
+            println!("\nInstalling...");
 
             let name = installer_information.package.name.clone();
 
@@ -176,6 +210,10 @@ pub fn spf_install(package_path: String) -> Result<(), Error> {
                 }
                 Err(err) => {
                     eprintln!("\nFailed to install '{name}': {err}");
+
+                    installer_information.cleanup()?;
+
+                    return Err(err);
                 }
             }
         } else {

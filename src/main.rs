@@ -4,7 +4,7 @@
 use std::{io::Error, process::exit};
 
 use crate::cli::{
-    args::{Args, return_args},
+    args::{Args, IN_DEBUG_MODE, return_args},
     commands::{
         create::create, inspect::inspect, install::spf_install, list::list_packages,
         remove::remove_packages, template::gen_meta_template,
@@ -36,23 +36,36 @@ fn main() -> Result<(), Error> {
     let mut flags = all.clone();
     flags.retain(|arg| arg.as_str().starts_with("-"));
 
+    let make_str =
+        |thing: Option<&String>| -> String { thing.unwrap_or(&String::new()).to_string() };
+
     let collected_args = Args {
         commands: commands.clone(),
         flags,
-        root: commands.first().unwrap_or(&String::new()).to_string(),
-        second: commands.get(1).unwrap_or(&String::new()).to_string(),
-        third: commands.get(2).unwrap_or(&String::new()).to_string(),
+        root: make_str(commands.first()),
+        second: make_str(commands.get(1)),
+        third: make_str(commands.get(2)),
     };
 
-    if collected_args.flags.contains(&"--debug".to_string()) {
+    if *IN_DEBUG_MODE {
         println!("WARNING: Debug mode on!\n");
 
         println!("DEBUG: Collected args: {collected_args:?}\n")
     }
 
-    parse_spf_cli(collected_args)?;
+    match parse_spf_cli(collected_args.clone()) {
+        Ok(()) => exit(0),
+        Err(err) => {
+            if *IN_DEBUG_MODE {
+                eprintln!(
+                    "\nDEBUG: Failed to run command '{}': {err}",
+                    collected_args.root
+                );
+            }
 
-    exit(0)
+            exit(1)
+        }
+    }
 }
 
 /// Parses arguments passed, and maps them to the available commands and actions

@@ -271,11 +271,6 @@ impl Package {
 
         if let Some(path) = Path::new(raw_folder_name).file_name() {
             archive.append_dir_all(path, raw_folder_name)?;
-        } else {
-            return Err(Error::new(
-                ErrorKind::NotFound,
-                format!("Failed to add to archive '{archive_file:?}': {raw_folder_name}"),
-            ));
         }
 
         archive.finish()?;

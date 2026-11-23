@@ -5,7 +5,11 @@
 //! Copyright (C) 2026 Owen Debiasio <owen.debiasio@gmail.com>
 //! SPDX-License-Identifier: GPL-3.0-or-later
 
-use std::{fs::remove_dir_all, io::Error, path::Path};
+use std::{
+    fs::remove_dir_all,
+    io::{Error, ErrorKind::InvalidFilename},
+    path::Path,
+};
 
 use crate::libs::spf::{
     metadata::{Meta, PACKAGE_INSTALL_PATH},
@@ -30,9 +34,8 @@ impl Inspector {
 
         let extracted_path = loaded_package.as_extracted().package_path;
 
-        let meta_path = if (package.starts_with(PACKAGE_INSTALL_PATH)
-            && Path::new(package).exists())
-            || package.ends_with("/META")
+        let meta_path = if (package.starts_with(PACKAGE_INSTALL_PATH) || package.ends_with("/META"))
+            && Path::new(package).exists()
         {
             package.to_string()
         } else if loaded_package.is_spf_package() {
@@ -41,8 +44,10 @@ impl Inspector {
             remove_extracted.toggle();
 
             format!("{extracted_path}/META")
-        } else {
+        } else if Package::from_installed(package.to_string())?.is_already_installed() {
             format!("{PACKAGE_INSTALL_PATH}/{package}")
+        } else {
+            return Err(Error::from(InvalidFilename));
         };
 
         Ok(Self {
@@ -91,7 +96,13 @@ impl Inspector {
 pub fn inspect(package: &str) -> Result<(), Error> {
     println!("Loading package '{package}'...");
 
-    let mut loaded_package = Inspector::load(package)?;
+    let mut loaded_package = match Inspector::load(package) {
+        Ok(loaded) => loaded,
+        Err(err) => {
+            eprintln!("\nFailed to inspect '{package}': {err}");
+            return Err(err);
+        }
+    };
 
     loaded_package.prep_meta()?;
     println!("\nInstalled metadata:\n{}", loaded_package.constructed_meta);
