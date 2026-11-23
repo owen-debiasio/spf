@@ -208,13 +208,13 @@ impl Meta {
     pub fn construct_contents(metadata: Categories) -> Vec<String> {
         vec![
             format!("### PACKAGED WITH SPF {VERSION} ###\n"),
-            format!("PROJECT_NAME = {}", metadata.name),
-            format!("VERSION = {}", metadata.version),
-            format!("DESCRIPTION = {}", metadata.description),
-            format!("REPOSITORY = {}", metadata.repository),
-            format!("LICENSE = {}", metadata.license),
-            format!("AUTHORS = {}", metadata.authors),
-            format!("ARCH = {}", metadata.arch),
+            format!("{} = {}", Categories::PROJECT_NAME, metadata.name),
+            format!("{} = {}", Categories::VERSION, metadata.version),
+            format!("{} = {}", Categories::DESCRIPTION, metadata.description),
+            format!("{} = {}", Categories::REPOSITORY, metadata.repository),
+            format!("{} = {}", Categories::LICENSE, metadata.license),
+            format!("{} = {}", Categories::AUTHORS, metadata.authors),
+            format!("{} = {}", Categories::ARCH, metadata.arch),
         ]
     }
 
