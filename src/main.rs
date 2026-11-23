@@ -28,13 +28,15 @@ fn main() -> Result<(), Error> {
 
     let all = return_args()?;
 
+    let as_str_and_starts_with_dash = |thing: &String| -> bool { thing.as_str().starts_with("-") };
+
     // Parse commands, strip flags
     let mut commands = all.clone();
-    commands.retain(|arg| !arg.as_str().starts_with("-"));
+    commands.retain(|arg| !as_str_and_starts_with_dash(arg));
 
     // Parse commands, strip flags
     let mut flags = all.clone();
-    flags.retain(|arg| arg.as_str().starts_with("-"));
+    flags.retain(|arg| as_str_and_starts_with_dash(arg));
 
     let make_str =
         |thing: Option<&String>| -> String { thing.unwrap_or(&String::new()).to_string() };

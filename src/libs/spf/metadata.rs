@@ -309,8 +309,9 @@ impl PackagedPaths {
     pub fn from_formatted(packaged_paths: String) -> Self {
         let make_string = |thing: Option<&str>| -> String { thing.unwrap_or_default().to_string() };
 
-        let source = packaged_paths.split(':').next();
-        let dest = packaged_paths.split(':').next_back();
+        let mut paths_split = packaged_paths.split(':');
+
+        let (source, dest) = (paths_split.next(), paths_split.next_back());
 
         Self {
             source: make_string(source),
