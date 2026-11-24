@@ -1,7 +1,10 @@
 //! Copyright (C) 2026 Owen Debiasio <owen.debiasio@gmail.com>
 //! SPDX-License-Identifier: GPL-3.0-or-later
 
-use std::{io::Error, process::exit};
+use std::{
+    io::{Error, ErrorKind::InvalidInput},
+    process::exit,
+};
 
 use crate::cli::{
     args::{Args, IN_DEBUG_MODE, return_args},
@@ -58,7 +61,7 @@ fn main() {
     match parse_spf_cli(collected_args.clone()) {
         Ok(()) => exit(0),
         Err(err) => {
-            if *IN_DEBUG_MODE {
+            if *IN_DEBUG_MODE && !collected_args.root.is_empty() {
                 eprintln!(
                     "\nDEBUG: Failed to run command '{}': {err}",
                     collected_args.root
@@ -119,7 +122,9 @@ fn parse_spf_cli(collected_args: Args) -> Result<(), Error> {
                     spf has NO WARRANTY and is not responsible for breaking your system."
                 )
             } else {
-                available_commands()
+                available_commands();
+
+                return Err(Error::new(InvalidInput, "Invalid arg/command input"));
             }
         }
     }
