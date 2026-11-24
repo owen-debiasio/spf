@@ -172,6 +172,7 @@ means the libraries and what's going on inside.
 - Fix arguments being parsed incorrectly
 - Fix paths being written in package installation files
 - Fix files not being copied/overwritten properly
+- Fix incorrect output for incorrect inputs
 
 ### Developers
 
