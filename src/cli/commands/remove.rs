@@ -145,6 +145,11 @@ pub fn remove_packages(packages: Vec<String>) -> Result<(), Error> {
         return Err(Error::from(PermissionDenied));
     }
 
+    if packages.is_empty() {
+        eprintln!("Please provide package(s) to remove!");
+        return Err(Error::from(InvalidInput));
+    }
+
     println!("Initializing...");
     let mut remover = Remover::gather_packages(packages);
 
