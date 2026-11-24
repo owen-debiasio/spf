@@ -11,18 +11,6 @@ spf is my small side project where I aim to create a packaging format similar to
 
 [Codeberg Mirror](https://codeberg.org/owen-debiasio/spf)
 
-## How to use
-
-```none
-create     <metadata file> <output directory>    Create package
-install    <.spf package location>               Install package
-remove     <package to uninstall>                Uninstall package
-list       <(optional) string to match>          List installed packages
-template   <(optional) output location>          Generate package metadata template
-inspect    <package to inspect>                  Inspect metadata of a package
-convert    <source package> <converted format>   Convert package formats
-```
-
 ## Install
 
 To see installation instructions, see [the installation docs](./INSTALL.md)
