@@ -1,7 +1,7 @@
 # spf Roadmap
 
 > [!IMPORTANT]  
-> Last updated: `November 18, 2026 @ 07:54 PM EST`
+> Last updated: `November 23, 2026 @ 08:03 PM EST`
 
 Here's an idea list that I've thrown together of things I want to add/change
 over time. These are only IDEAS and are not guaranteed to be implemented.
@@ -31,17 +31,14 @@ dropped out of the list at any point.
 
 <!-- markdownlint-disable MD013 -->
 
-| Feature                                                               | Priority  | Due Date (version) |
-| --------------------------------------------------------------------- | --------- | ------------------ |
-| Command `verify`: Verify `.spf`/installed package metadata and config | Undecided | v0.8.0             |
-| Pre/Post install/uninstall jobs                                       | Undecided | v0.9.0             |
-| Unit Tests (via `cargo test`)                                         | Undecided | v0.9.0             |
-| Move argument parsing system to `clap`, rather than my custom system. | Undecided | v1.0.0             |
-| Add a `.toml` configuration system for spf cli                        | Undecided | v1.0.0             |
-| Ability to install packages through a remote repository               | Undecided | v1.0.0             |
-| Move to a `.toml`-based package configuration/metadata                | Undecided | v1.0.0             |
-| Remote package repository support (Ubuntu PPA, AUR, Cargo)            | NaN       | NaN                |
-| Intel x86_64 and M-series Apple Silicon (aarch64) MacOS support       | NaN       | NaN                |
-| GUI Package install tool (GTK4)                                       | NaN       | NaN                |
+| Feature                                                         | Priority  | Due Date (version) |
+| --------------------------------------------------------------- | --------- | ------------------ |
+| Pre/Post install/uninstall jobs                                 | Undecided | v0.9.0             |
+| Unit Tests (via `cargo test`)                                   | Undecided | v0.9.0             |
+| Add a `.toml` configuration system for spf cli                  | Undecided | v1.0.0             |
+| Ability to install packages through a remote repository         | Undecided | v1.0.0             |
+| Remote package repository support (Ubuntu PPA, AUR, Cargo)      | NaN       | NaN                |
+| Intel x86_64 and M-series Apple Silicon (aarch64) MacOS support | NaN       | NaN                |
+| GUI Package install tool (GTK4)                                 | NaN       | NaN                |
 
 <!-- markdownlint-enable MD013 -->
