@@ -3,225 +3,168 @@
 //! Copyright (C) 2026 Owen Debiasio <owen.debiasio@gmail.com>
 //! SPDX-License-Identifier: GPL-3.0-or-later
 
-use crate::libs::{
-    spf::metadata::{Meta, PACKAGE_INSTALL_PATH},
-    sys::{get_binary_path, is_root},
-};
 use std::{
     collections::HashSet,
-    fs::{read_to_string, remove_dir_all, remove_file},
+    fs::{remove_dir_all, remove_file},
     io::{
         Error,
         ErrorKind::{InvalidInput, NotFound, PermissionDenied},
         stdin,
     },
     path::Path,
-    process::exit,
 };
 
-/// Starts the process of removing `.spf` packages.
-///
-/// The list of packages to be removed is stored in `packages_to_list` as [`Vec<String>`].
-///
-/// Cycles through the packages in `packages_to_list` and removes the metadata file, and
-/// the installed files/directories found within its package metadata (found in [`PACKAGE_INSTALL_PATH`]).
-///
-/// ```
-/// let packages_to_remove = vec![
-///     String::from("package_a"),
-///     String::from("package_b"),
-///     String::from("package_c")
-/// ];
-///
-/// remove_spf_package(packages_to_remove)
-/// ```
-pub fn remove_packages(mut packages_to_remove: Vec<String>) -> Result<(), Error> {
+use crate::{
+    cli::args::IN_DEBUG_MODE,
+    libs::{
+        spf::package::Package,
+        sys::{get_binary_path, is_root},
+    },
+};
+
+use self_replace::self_replace;
+
+#[derive(Debug)]
+struct Remover {
+    provided_packages: Vec<String>,
+    installed: Vec<String>,
+    not_installed: Vec<String>,
+}
+
+impl Remover {
+    fn gather_packages(provided_packages: Vec<String>) -> Self {
+        let mut remover = Self {
+            provided_packages,
+            installed: Vec::new(),
+            not_installed: Vec::new(),
+        };
+
+        remover.sanitize();
+
+        remover
+    }
+
+    fn sanitize(&mut self) {
+        let package_set: HashSet<_> = self.provided_packages.drain(..).collect();
+
+        self.provided_packages.clear();
+
+        self.provided_packages.extend(package_set);
+    }
+
+    fn determine_installed(&mut self) {
+        let mut not_installed_packages = Vec::new();
+        let mut installed_packages = Vec::new();
+
+        for package in self.provided_packages.clone() {
+            if !Package::new(package.clone()).is_already_installed() {
+                not_installed_packages.push(package);
+            } else {
+                installed_packages.push(package);
+            }
+        }
+
+        self.not_installed = not_installed_packages;
+        self.installed = installed_packages;
+    }
+
+    fn verify(&self) -> Result<(), Error> {
+        if !self.not_installed.is_empty() {
+            eprintln!(
+                "\nError: The following packages are not installed:\n\n{}\n",
+                self.not_installed.join("\n")
+            );
+
+            Err(Error::from(NotFound))
+        } else {
+            Ok(())
+        }
+    }
+
+    fn initialize_removal(&self) -> Result<(), Error> {
+        println!(
+            "\nAre you sure that you want to remove the following:\n\n{}\n\n(Y/N)",
+            self.installed.join("\n")
+        );
+
+        let mut proceed_to_remove = String::new();
+        stdin().read_line(&mut proceed_to_remove)?;
+
+        if proceed_to_remove.trim().to_lowercase() != "y" {
+            println!("Aborted.");
+
+            Err(Error::from(InvalidInput))
+        } else {
+            Ok(())
+        }
+    }
+
+    fn remove_installed(&self) -> Result<(), Error> {
+        for package in self.installed.clone() {
+            println!("Removing {package}...");
+
+            let package_as_package = Package::from_installed(package)?;
+
+            println!("    Removing installed files...");
+
+            for path in package_as_package.clone().paths {
+                let path_as_path = Path::new(&path);
+
+                if !path_as_path.exists() {
+                    println!("        Path '{path}' not found... Skipping...");
+                    continue;
+                } else {
+                    if *IN_DEBUG_MODE {
+                        println!("        Removing '{path}'...");
+                    }
+                }
+
+                if path_as_path.is_dir() {
+                    remove_dir_all(path)?;
+                } else {
+                    if path == get_binary_path()? {
+                        self_replace(path.clone())?;
+                    }
+
+                    remove_file(path)?;
+                }
+            }
+
+            println!("    Removing package entry...");
+            let package_entry = package_as_package.get_install_location();
+            remove_file(package_entry)?;
+        }
+
+        Ok(())
+    }
+}
+
+pub fn remove_packages(packages: Vec<String>) -> Result<(), Error> {
     if !is_root()? {
         eprintln!("Root permissions are required to remove packages.");
         return Err(Error::from(PermissionDenied));
     }
 
-    if packages_to_remove.is_empty() {
-        eprintln!("Provide the package(s) you want to remove.");
+    println!("Initializing...");
+    let mut remover = Remover::gather_packages(packages);
 
-        return Err(Error::from(InvalidInput));
+    println!("Evaluating installed...");
+    remover.determine_installed();
+    remover.verify()?;
+
+    match remover.initialize_removal() {
+        Ok(()) => (),
+        Err(err) => return Err(err),
     }
 
-    // Remove duplicate package entries
-    let package_set: HashSet<_> = packages_to_remove.drain(..).collect();
-    packages_to_remove.extend(package_set);
-
-    // Check if packages are installed
-    for package in &packages_to_remove {
-        let package_meta_path = format!("{PACKAGE_INSTALL_PATH}{package}");
-
-        if !Path::new(&package_meta_path).exists() {
-            eprintln!("Package not found: {package}");
-
-            return Err(Error::from(NotFound));
+    println!("\nRemoving Packages...\n");
+    match remover.remove_installed() {
+        Ok(()) => println!("Done!"),
+        Err(err) => {
+            eprintln!("Failed to remove package(s): {err}");
+            return Err(err);
         }
-    }
-
-    list_packages(&packages_to_remove)?;
-
-    // Everything below here is to ask user for confirmation
-    // to remove their selected packages
-    println!("\nProceed?\n(Y/N)");
-
-    let mut proceed_to_remove = String::new();
-    stdin().read_line(&mut proceed_to_remove)?;
-
-    if proceed_to_remove.trim().to_lowercase() != "y" {
-        println!("Aborted.");
-
-        exit(0)
-    }
-
-    // Cycle through the packages, and remove them
-    for package in packages_to_remove {
-        // The marker of where the package is installed. Also removed.
-        let package_meta_path = format!("{PACKAGE_INSTALL_PATH}{package}");
-
-        // Retrieves the package version
-        let package_version = Meta::from(&package_meta_path)?.categories.version;
-
-        // The pretty-print of the package to be removed. Shows the package name
-        // and the version.
-        let package_formatted = format!("{package}-{package_version}");
-
-        // Finally remove the package
-        remove_package(&package_formatted, &package_meta_path)?;
-    }
-
-    println!("\nSuccessfully removed package(s)!");
-
-    Ok(())
-}
-
-/// Removes an installed spf package (entries and metadata file).
-///
-/// Requires:
-///     - `package_formatted` ([`String`]): To list that the package has been removed
-///     - `package_meta_path`([`String`]): for retrieving paths to delete and to have itself
-///     deleted.
-///
-/// ```
-/// // The formatted package name includes the version at the end, such as "-v0.2.0".
-/// let package_formatted = "package-v0.2.0";
-/// let package_meta_path = "/usr/share/spf/packages/package";
-///
-/// remove_package(package_formatted, package_meta_path)
-/// ```
-fn remove_package(package_formatted: &str, package_meta_path: &str) -> Result<(), Error> {
-    println!("\nRemoving: {package_formatted}");
-
-    let meta_file = read_to_string(package_meta_path)?;
-
-    let mut paths_to_remove: Vec<&str> = meta_file.lines().collect();
-
-    // Remove anything that's not a path
-    for _ in paths_to_remove.clone() {
-        paths_to_remove.retain(|path| path.starts_with('/'));
-    }
-
-    // Cycle through the lines of the metadata file
-    for entry in paths_to_remove {
-        println!("    Removing \"{entry}\"...");
-
-        let path_to_remove = Path::new(entry);
-
-        if !path_to_remove.exists() {
-            continue;
-        }
-
-        if path_to_remove.is_file() {
-            if entry == get_binary_path()? {
-                self_replace::self_replace(entry)?;
-            }
-
-            remove_file(entry)?;
-        } else {
-            remove_dir_all(entry)?;
-        }
-    }
-
-    println!("    Removing package entry...");
-
-    // Removes the metadata file
-    remove_file(package_meta_path)?;
-
-    println!("Successfully removed {package_formatted}!");
-
-    Ok(())
-}
-
-/// Lists the packages that are going to be removed (`packages`).
-///
-/// `package_meta_path` is used to retrieve the version of those
-/// packages.
-///
-/// ```
-/// // This is if 5 or less packages are being listed
-///
-/// let packages = vec![
-///     String::from("package1"),
-///     String::from("package2"),
-///     String::from("package3")
-/// ];
-///
-/// list_packages(packages);
-///
-/// // Output:
-/// // package1-v0.0.1 package2-v0.0.2 package3-v0.0.3 ...
-/// ```
-///
-/// This is how the packages are listed if there are 5 or more
-/// packages.
-///
-/// ```
-/// let packages = vec![
-///     String::from("package1"),
-///     String::from("package2"),
-///     String::from("package3"),
-///     String::from("package4"),
-///     String::from("package5"),
-///     String::from("package6"),
-/// ];
-///
-/// list_packages(packages);
-///
-/// // Output:
-///
-/// // package1-v0.0.1
-/// // package2-v0.0.2
-/// // package3-v0.0.3
-/// // ...
-/// ```
-fn list_packages(packages_to_list: &[String]) -> Result<(), Error> {
-    println!("You are about to remove the following package(s):\n");
-
-    let mut package_list = Vec::new();
-
-    // Goes through and collect the package names and versions from their metadata
-    // file located in `PACKAGE_INSTALL_PATH`. Then it writes the formatted name:
-    // `package-version` to the buffer.
-    for package in packages_to_list {
-        let package_meta_path = format!("{PACKAGE_INSTALL_PATH}{package}");
-        let package_version = Meta::from(&package_meta_path)?.categories.version;
-
-        package_list.push(format!("{package}-{package_version}"));
-    }
-
-    // If there are more than 6 packages, separate them with `\n`. Otherwise,
-    // keep them aligned next to each other with ` `.
-    let package_list_buffer = if packages_to_list.len() > 5 {
-        package_list.join("\n")
-    } else {
-        package_list.join(" ")
     };
-
-    // Display the collected packages and their versions
-    println!("{package_list_buffer}");
 
     Ok(())
 }
