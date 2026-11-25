@@ -47,10 +47,10 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v7
 
-      - name: Install aarch64
+      - name: Install Build Dependencies
         run: |
           sudo apt update
-          sudo apt install gcc-aarch64-linux-gnu
+          sudo apt install clang mold
 
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
@@ -79,10 +79,10 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v7
 
-      - name: Install aarch64
+      - name: Install Build Dependencies
         run: |
           sudo apt update
-          sudo apt install gcc-aarch64-linux-gnu
+          sudo apt install clang mold
 
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
