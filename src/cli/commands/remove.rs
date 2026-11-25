@@ -15,7 +15,7 @@ use std::{
 };
 
 use crate::{
-    cli::args::IN_DEBUG_MODE,
+    cli::args::{IN_DEBUG_MODE, USING_AUTO_CONFIRM},
     libs::{
         spf::package::Package,
         sys::{get_binary_path, is_root},
@@ -91,7 +91,7 @@ impl Remover {
         stdin().read_line(&mut proceed_to_remove)?;
 
         if proceed_to_remove.trim().to_lowercase() != "y" {
-            println!("Aborted.");
+            println!("\nAborted.");
 
             Err(Error::from(InvalidInput))
         } else {
@@ -157,9 +157,11 @@ pub fn remove_packages(packages: Vec<String>) -> Result<(), Error> {
     remover.determine_installed();
     remover.verify()?;
 
-    match remover.initialize_removal() {
-        Ok(()) => (),
-        Err(err) => return Err(err),
+    if !*USING_AUTO_CONFIRM {
+        match remover.initialize_removal() {
+            Ok(()) => (),
+            Err(err) => return Err(err),
+        }
     }
 
     println!("\nRemoving Packages...\n");

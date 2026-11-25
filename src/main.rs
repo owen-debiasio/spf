@@ -145,8 +145,9 @@ fn available_commands() {
           inspect    <package to inspect>                  Inspect metadata of a package
         \n\
         Available options:\n\n \
-          --version            Display spf version\n \
-          --ignore-arch        Force the installation of a package with a different architecture\n \
-          --debug              Display debug information as spf runs"
+          --version         Display spf version\n \
+          --ignore-arch     Force the installation of a package with a different architecture\n \
+          --debug           Display debug information as spf runs\n \
+          --yes             Automatically confirms any prompt"
     );
 }

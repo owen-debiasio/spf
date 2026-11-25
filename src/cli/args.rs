@@ -139,3 +139,24 @@ pub struct Args {
 /// // Anything else
 /// ```
 pub static IN_DEBUG_MODE: LazyLock<bool> = LazyLock::new(|| args_contains("--debug"));
+
+/// Detects if user is autoconfirming prompts.
+///
+/// User enters debug mode if `--yes` is passed.
+///
+/// ```bash
+/// $ spf remove --yes spf
+/// ```
+///
+/// You use it like this:
+///
+/// ```
+/// // Previous code
+///
+/// if *USING_AUTO_CONFIRM {
+///     println!("Showing debug info")
+/// }
+///
+/// // Anything else
+/// ```
+pub static USING_AUTO_CONFIRM: LazyLock<bool> = LazyLock::new(|| args_contains("--yes"));

@@ -18,7 +18,7 @@ use self_replace::self_replace;
 use semver::Version;
 
 use crate::{
-    cli::args::{IN_DEBUG_MODE, args_contains},
+    cli::args::{IN_DEBUG_MODE, USING_AUTO_CONFIRM, args_contains},
     libs::{
         spf::{
             metadata::{Categories, Meta, PACKAGE_INSTALL_PATH, PackagedPaths},
@@ -77,6 +77,12 @@ impl Installer {
     }
 
     fn initialize(&mut self) -> Result<(), Error> {
+        if *USING_AUTO_CONFIRM {
+            self.is_confirmed = true;
+
+            return Ok(());
+        }
+
         let install_type = self.package.check_version()?;
         let message = install_type.as_message();
 
