@@ -1,7 +1,7 @@
 FROM archlinux:latest
 
 # Dependencies
-RUN pacman -Syu --noconfirm base-devel rust cargo
+RUN pacman -Syu --noconfirm base-devel rust cargo clang mold
 
 # Setup source
 WORKDIR /usr/src/spf

@@ -2,14 +2,35 @@
 
 Some stuff to help with development
 
-## Target(s)
+## Building
 
 > [!NOTE]  
 > You'll need to install the needed linkers. See
-> [.cargo/config.toml](.cargo/config.toml) if you are using an `x86_64` system
+> [.cargo/config.toml](./.cargo/config.toml), or [below](#linkers).
+
+### Linkers
+
+In order to build spf, you need these.
+
+- `clang`
+- `mold`
+
+I chose these because the code links faster using Clang and Mold on my weaker
+CPU.
+
+### Targets
 
 - x86_64-unknown-linux-gnu
 - aarch64-unknown-linux-gnu
+
+You can run something like this to install them using Rustup:
+
+```shell
+rustup target add x86_64-unknown-linux-gnu aarch64-unknown-linux-gnu
+```
+
+However, you could also just run `cargo`/`cargo build` and they will install on
+their own
 
 ## Linters
 
@@ -17,7 +38,7 @@ Some stuff to help with development
 - `rustfmt` / `cargo fmt` For formatting Rust code
 
 - `Prettier` for formatting Markdown files
-- `markdownlint-cli2` for linting markdown files
+- `markdownlint-cli2` for linting Markdown files
 
 - `shfmt` for formatting shell files
 - `shellcheck` for linting shell files

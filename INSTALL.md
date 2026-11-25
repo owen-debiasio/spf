@@ -47,6 +47,8 @@ effortlessly build packages neccesary for your system.
 You need the following to build particular packages:
 
 - Cargo
+- Mold
+- Clang
 - `cargo-generate-rpm` for `.rpm` packages
 - `cargo-deb` for `.deb` packages
 
@@ -109,7 +111,9 @@ This is when you just want the binary, and nothing else.
 
 #### Dependencies
 
-You only need Cargo. Nothing else.
+- Cargo
+- Mold
+- Clang
 
 #### Build
 
