@@ -77,7 +77,7 @@ pub fn create(package_config: String, output_location: String) -> Result<(), Err
     match package.build() {
         Ok(()) => (),
         Err(err) => {
-            eprintln!("Failed to build package {output_location}: {err}");
+            eprintln!("Failed to build package '{output_location}': {err}");
 
             return Err(err);
         }
