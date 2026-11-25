@@ -47,7 +47,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v7
 
-      - name: Configure aarch64 linker for Ubuntu
+      - name: aarch64 Fixes
         run: sed -i '/--sysroot/d' .cargo/config.toml
 
       - name: Install Build Dependencies
@@ -82,7 +82,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v7
 
-      - name: Configure aarch64 linker for Ubuntu
+      - name: aarch64 Fixes
         run: sed -i '/--sysroot/d' .cargo/config.toml
 
       - name: Install Build Dependencies
