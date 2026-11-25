@@ -7,142 +7,10 @@ Waiting for new features? Check out the status of them in these related pages:
 - [SPF Roadmap](roadmap.md)
 - [TODO list](todo.md)
 
-## v0.1.0
+> [!IMPORTANT]  
+> Last updated: `November 25, 2026 @ 9:00 AM EST`
 
-- Initial release
-
-## v0.2.0
-
-<details>
-<summary>Show details</summary>
-
-- Add script to clean up generated packages in `./packages/`
-- Add command `template`: Used to generate package metadata template
-- Added safeguard when removing spf using spf.
-  - If you want to remove spf using spf, you must use the standalone binary.
-- Enhanced the cleaning functionality of `./dev/package.sh` and
-  `./package/clean.bash`
-- Enhanced error reporting
-- Many, many code optimizations
-- Fix files not being deleted when removing a package
-- Add a header at the top of a packages META file displaying what version of spf
-  that package was packaged with
-- Fix issues with file copying and installing
-
-</details>
-
-## v0.3.0
-
-<details>
-<summary>Show details</summary>
-
-- Changes to command `list`:
-  - If there are no commands installed, an error will now be thrown
-  - Other tweaks
-- Code optimizations
-- Add command `inspect`: Inspect metadata of a package
-  - Can inspect either a `.spf` package or an already installed package
-  - Usage: `$ spf inspect <package to inspect>`
-- Add support for `.deb` and `.rpm` packages
-- Add more suggested tools for linting/formatting
-
-</details>
-
-## v0.4.0
-
-<details>
-<summary>Show details</summary>
-
-- Improve output when listing commands to now let you know that a command
-  doesn't match the input string
-- Code optimizations
-- Enhanced and optimized errors.
-  - Use native functions like `panic!()` or `.expect()` instead of custom error
-    handlers to avoid complexity and improve code readability
-- Add logo to readme, located at `assets/logo.png`
-- You can now easily update spf from a `.spf` package
-- `./dev/install.bash` now runs `./dev/format.bash`
-- You can now remove spf using spf
-- Add Github workflows for Bash scripts, Rust code, and Markdown files
-
-</details>
-
-## v0.5.0
-
-<details>
-<summary>Show details</summary>
-
-- Improve code documentation
-- Improve how metadata is retrieved using a more efficient method
-- Add support for Linux `aarch64` systems
-- Add flag `--ignore-args`: Allows you to the installation of a package with
-  architecture
-- You will be blocked from installing a `.spf` package with a different
-  architecture unless you pass `--ignore-args`.
-- Allow details to be hidden for older changelog entries
-
-</details>
-
-## v0.5.1
-
-<details>
-<summary>Show details</summary>
-
-- Optimized the listing of packages when you are removing packages
-- Code optimizations
-- A list of supported architectures must be fulfilled when packaging.
-- The existence of command `tar` is checked during the init process
-- Add better `.deb` and `.rpm` package metadata
-
-</details>
-
-## v0.5.2
-
-<details>
-<summary>Show details</summary>
-
-- Optimized error handling
-- Code optimizations
-- Made command example output in `available_commands` look nicer
-- Add support for metadata field `REPOSITORY`, which displays the source of the
-  program
-
-</details>
-
-## v0.6.0
-
-<details>
-<summary>Show details</summary>
-
-- Add support for converting `.deb` packages to `.spf` packages (and vice versa)
-  using command `convert`
-- Fix package reinstallation (At the cost of wiping my own drive while fixing
-  it)
-- Code optimizations & random fixes
-- Tar is now used natively
-- Overhauled package architecture system
-  - There is now a list of supported architectures: `x86_64`, `x86`, `aarch64`,
-    `arm`
-
-</details>
-
-## v0.7.0
-
-This is a HUGE release! Looking at this list, it may not be too much.
-Internally, there are lots and lots of important changes that will continue to
-shape spf.
-
-**Full Changelog**:
-<https://github.com/owen-debiasio/spf/compare/v0.6.0...v0.7.0>
-
-- An overwhelming amount of refactoring, more to come.
-- Use dependency `xz2` by @alexcrichton, replacing `xz`.
-- Add support for converting `.spf` packages to `.rpm` packages (and vice versa)
-- Added a Docker container for use with testing or developing the latest build
-  of spf.
-- Update documentation for conversion.
-- The mirror to Codeberg is now available.
-  [Find it here](https://codeberg.org/owen-debiasio/spf)
+---
 
 ## v0.8.0
 
@@ -162,6 +30,7 @@ means the libraries and what's going on inside.
 
 - Errors are now more descriptive
 - Make creation output look nicer when building a `.spf` package
+- Improved cleanup after failure of an action
 
 ### Removed
 
@@ -203,6 +72,8 @@ These are changes that mainly affect people developing or building spf.
   if present
 - spf is now built with Clang + Mold. I chose this setup because it works better
   on my hardware. Applies to both `x86_64` and `aarch64` builds.
+- [./dev/update.bash](./dev/update.bash) now creates a commit with the message:
+  `Update to <version>` before pushing the tag
 
 #### Removed and Retired
 
@@ -211,3 +82,140 @@ These are changes that mainly affect people developing or building spf.
 - Remove dependencies: `deb-rs2`, `xz2`, `flate2`, `rpm`, `deb-rust`, `rust-ar`,
   `file_diff`, `hostname`, `cmd-exists`
 - Retire `sys::error` and `spf::fs`. They are no longer needed.
+
+## v0.7.0
+
+This is a HUGE release! Looking at this list, it may not be too much.
+Internally, there are lots and lots of important changes that will continue to
+shape spf.
+
+**Full Changelog**:
+<https://github.com/owen-debiasio/spf/compare/v0.6.0...v0.7.0>
+
+- An overwhelming amount of refactoring, more to come.
+- Use dependency `xz2` by @alexcrichton, replacing `xz`.
+- Add support for converting `.spf` packages to `.rpm` packages (and vice versa)
+- Added a Docker container for use with testing or developing the latest build
+  of spf.
+- Update documentation for conversion.
+- The mirror to Codeberg is now available.
+  [Find it here](https://codeberg.org/owen-debiasio/spf)
+
+## v0.6.0
+
+<details>
+<summary>Show details</summary>
+
+- Add support for converting `.deb` packages to `.spf` packages (and vice versa)
+  using command `convert`
+- Fix package reinstallation (At the cost of wiping my own drive while fixing
+  it)
+- Code optimizations & random fixes
+- Tar is now used natively
+- Overhauled package architecture system
+  - There is now a list of supported architectures: `x86_64`, `x86`, `aarch64`,
+    `arm`
+
+</details>
+
+## v0.5.2
+
+<details>
+<summary>Show details</summary>
+
+- Optimized error handling
+- Code optimizations
+- Made command example output in `available_commands` look nicer
+- Add support for metadata field `REPOSITORY`, which displays the source of the
+  program
+
+</details>
+
+## v0.5.1
+
+<details>
+<summary>Show details</summary>
+
+- Optimized the listing of packages when you are removing packages
+- Code optimizations
+- A list of supported architectures must be fulfilled when packaging.
+- The existence of command `tar` is checked during the init process
+- Add better `.deb` and `.rpm` package metadata
+
+</details>
+
+## v0.5.0
+
+<details>
+<summary>Show details</summary>
+
+- Improve code documentation
+- Improve how metadata is retrieved using a more efficient method
+- Add support for Linux `aarch64` systems
+- Add flag `--ignore-args`: Allows you to the installation of a package with
+  architecture
+- You will be blocked from installing a `.spf` package with a different
+  architecture unless you pass `--ignore-args`.
+- Allow details to be hidden for older changelog entries
+
+</details>
+
+## v0.4.0
+
+<details>
+<summary>Show details</summary>
+
+- Improve output when listing commands to now let you know that a command
+  doesn't match the input string
+- Code optimizations
+- Enhanced and optimized errors.
+  - Use native functions like `panic!()` or `.expect()` instead of custom error
+    handlers to avoid complexity and improve code readability
+- Add logo to readme, located at `assets/logo.png`
+- You can now easily update spf from a `.spf` package
+- `./dev/install.bash` now runs `./dev/format.bash`
+- You can now remove spf using spf
+- Add Github workflows for Bash scripts, Rust code, and Markdown files
+
+</details>
+
+## v0.3.0
+
+<details>
+<summary>Show details</summary>
+
+- Changes to command `list`:
+  - If there are no commands installed, an error will now be thrown
+  - Other tweaks
+- Code optimizations
+- Add command `inspect`: Inspect metadata of a package
+  - Can inspect either a `.spf` package or an already installed package
+  - Usage: `$ spf inspect <package to inspect>`
+- Add support for `.deb` and `.rpm` packages
+- Add more suggested tools for linting/formatting
+
+</details>
+
+## v0.2.0
+
+<details>
+<summary>Show details</summary>
+
+- Add script to clean up generated packages in `./packages/`
+- Add command `template`: Used to generate package metadata template
+- Added safeguard when removing spf using spf.
+  - If you want to remove spf using spf, you must use the standalone binary.
+- Enhanced the cleaning functionality of `./dev/package.sh` and
+  `./package/clean.bash`
+- Enhanced error reporting
+- Many, many code optimizations
+- Fix files not being deleted when removing a package
+- Add a header at the top of a packages META file displaying what version of spf
+  that package was packaged with
+- Fix issues with file copying and installing
+
+</details>
+
+## v0.1.0
+
+- Initial release
