@@ -98,4 +98,8 @@ jobs:
         run: cargo build --release --target x86_64-unknown-linux-gnu
 
       - name: Build (Linux aarch64)
+        env:
+          CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_RUSTFLAGS: >-
+            -C link-arg=--target=aarch64-linux-gnu -C
+            link-arg=--gcc-toolchain=/usr -C link-arg=-fuse-ld=/usr/bin/mold
         run: cargo build --release --target aarch64-unknown-linux-gnu
