@@ -1,3 +1,5 @@
+#!/usr/bin/bash
+
 [[ $# -eq 1 ]] || {
     echo "Provide package version (MUST START WITH v)"
     exit 1
@@ -8,8 +10,8 @@
     exit 1
 }
 
-git commit -m "Update to $1"
+git commit --allow-empty -m "Update to $1"
 git tag "$1"
-git push origin "$1"
+git push origin HEAD --tags
 
 echo "Done"
