@@ -47,10 +47,13 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v7
 
+      - name: Configure aarch64 linker for Ubuntu
+        run: sed -i '/--sysroot/d' .cargo/config.toml
+
       - name: Install Build Dependencies
         run: |
-          sudo apt update
-          sudo apt install clang mold gcc-aarch64-linux-gnu libc6-dev-arm64-cross libgcc-13-dev-arm64-cross
+          sudo apt-get update
+          sudo apt-get install -y clang mold gcc-aarch64-linux-gnu libc6-dev-arm64-cross libgcc-13-dev-arm64-cross
 
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
@@ -79,10 +82,13 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v7
 
+      - name: Configure aarch64 linker for Ubuntu
+        run: sed -i '/--sysroot/d' .cargo/config.toml
+
       - name: Install Build Dependencies
         run: |
-          sudo apt update
-          sudo apt install clang mold gcc-aarch64-linux-gnu libc6-dev-arm64-cross libgcc-13-dev-arm64-cross
+          sudo apt-get update
+          sudo apt-get install -y clang mold gcc-aarch64-linux-gnu libc6-dev-arm64-cross libgcc-13-dev-arm64-cross
 
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
@@ -98,8 +104,4 @@ jobs:
         run: cargo build --release --target x86_64-unknown-linux-gnu
 
       - name: Build (Linux aarch64)
-        env:
-          CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_RUSTFLAGS: >-
-            -C link-arg=--target=aarch64-linux-gnu -C
-            link-arg=--gcc-toolchain=/usr -C link-arg=-fuse-ld=/usr/bin/mold
         run: cargo build --release --target aarch64-unknown-linux-gnu
