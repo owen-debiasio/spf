@@ -20,10 +20,13 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: aarch64 fix
+        run: sed -i '/--sysroot/d' .cargo/config.toml
+
       - name: Install aarch64
         run: |
           sudo apt update
-          sudo apt install gcc-aarch64-linux-gnu
+          sudo apt install clang mold gcc-aarch64-linux-gnu libc6-dev-arm64-cross libgcc-13-dev-arm64-cross
 
       - name: Install Rust Toolchain
         uses: dtolnay/rust-toolchain@stable
