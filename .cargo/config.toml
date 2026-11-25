@@ -5,7 +5,7 @@ rustflags = ["-C", "link-arg=-fuse-ld=/usr/bin/mold"]
 [target.aarch64-unknown-linux-gnu]
 linker = "clang"
 rustflags = [
-  "-C", "link-arg=--target=aarch64-unknown-linux-gnu",
-  "-C", "link-arg=--gcc-toolchain=/usr",
+  "-C", "link-arg=--target=aarch64-linux-gnu",
+  "-C", "link-arg=--sysroot=/usr/aarch64-linux-gnu",
   "-C", "link-arg=-fuse-ld=/usr/bin/mold",
 ]
