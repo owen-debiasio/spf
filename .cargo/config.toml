@@ -7,5 +7,6 @@ linker = "clang"
 rustflags = [
   "-C", "link-arg=--target=aarch64-linux-gnu",
   "-C", "link-arg=--sysroot=/usr/aarch64-linux-gnu",
+  "-C", "link-arg=--gcc-toolchain=/usr",
   "-C", "link-arg=-fuse-ld=/usr/bin/mold",
 ]

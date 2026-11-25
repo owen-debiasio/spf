@@ -14,6 +14,8 @@ In order to build spf, you need these.
 
 - `clang`
 - `mold`
+- `aarch64-linux-gnu-glibc`
+- `aarch64-linux-gnu-gcc`
 
 I chose these because the code links faster using Clang and Mold on my weaker
 CPU.

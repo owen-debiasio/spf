@@ -50,7 +50,7 @@ jobs:
       - name: Install Build Dependencies
         run: |
           sudo apt update
-          sudo apt install clang mold gcc-aarch64-linux-gnu
+          sudo apt install clang mold gcc-aarch64-linux-gnu libc6-dev-arm64-cross libgcc-13-dev-arm64-cross
 
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
@@ -82,7 +82,7 @@ jobs:
       - name: Install Build Dependencies
         run: |
           sudo apt update
-          sudo apt install clang mold gcc-aarch64-linux-gnu
+          sudo apt install clang mold gcc-aarch64-linux-gnu libc6-dev-arm64-cross libgcc-13-dev-arm64-cross
 
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
