@@ -72,7 +72,7 @@ jobs:
         uses: softprops/action-gh-release@v3
         with:
           name: Release ${{ github.ref_name }}
-          files: packages/spf-*
+          files: packages/artifacts/spf-*
           body_path: latest_changelog.txt
           draft: false
           prerelease: false
