@@ -156,6 +156,7 @@ means the libraries and what's going on inside.
 ### Added
 
 - Introduce debug mode, activated when passing `--debug`
+- Add flag `--yes`, autoconfirms any prompt
 
 ### Changed
 
@@ -185,6 +186,10 @@ These are changes that mainly affect people developing or building spf.
   independent to the command, some are global.
 - Added the ability to skip code linting/formatting
   [./dev/install.bash](./dev/install.bash). Pass `--skip-format` to use.
+- Added the ability use debug mode in [./dev/install.bash](./dev/install.bash).
+  Pass `--debug` to use.
+- Added the ability to autoconfirm prompts in
+  [./dev/install.bash](./dev/install.bash). Pass `--yes` to use.
 
 #### Changed
 
