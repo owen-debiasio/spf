@@ -15,7 +15,14 @@ You can find packages and binaries over at
 ## Build from source
 
 You can build from source if you wish, like if you want to use the latest git
-build
+build.
+
+> [!TIP]  
+> Having trouble building on `aarch64`? Try running:
+>
+> ```bash
+> sed -i '/--sysroot/d' .cargo/config.toml
+> ```
 
 You have two options to do this. You can either:
 
