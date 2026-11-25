@@ -196,7 +196,7 @@ These are changes that mainly affect people developing or building spf.
   native spf libraries.
 - Make [./dev/clean.bash](./dev/clean.bash) only remove `./packages/artifacts`
   if present
-- spf is now build with Clang + Mold. I chose this setup because it works better
+- spf is now built with Clang + Mold. I chose this setup because it works better
   on my hardware. Applies to both `x86_64` and `aarch64` builds.
 
 #### Removed and Retired
