@@ -1,7 +1,7 @@
 # spf TODO
 
 > [!IMPORTANT]  
-> Last updated: `November 24, 2026 @ 9:11 AM EST`
+> Last updated: `November 25, 2026 @ 9:39 AM EST`
 
 Related:
 
@@ -17,10 +17,8 @@ Related:
 
 <!-- markdownlint-disable MD013 -->
 
-| Task                                        | Status | Priority | Due Date |
-| ------------------------------------------- | ------ | -------- | -------- |
-| Better cleanup/recovery after failed action | WIP    | High     | v0.8.0   |
-| Continue to work on debug mode              | WIP    | Medium   | v0.8.0   |
-| Refactor everything, everywhere             | WIP    | Low      | v1.0.0   |
+| Task              | Status | Priority | Due Date |
+| ----------------- | ------ | -------- | -------- |
+| Nothing Right Now | N/A    | N/A      | N/A      |
 
 <!-- markdownlint-enable MD013 -->
