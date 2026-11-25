@@ -8,6 +8,7 @@
     exit 1
 }
 
+git commit -m "Update to $1"
 git tag "$1"
 git push origin "$1"
 
