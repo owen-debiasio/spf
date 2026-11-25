@@ -47,7 +47,7 @@ impl Installer {
         let extracted_path = package.as_extracted().package_path;
 
         if Path::new(&extracted_path).exists() {
-            remove_dir_all(extracted_path.clone())?
+            remove_dir_all(&extracted_path)?
         }
 
         package.extract(".")?;
@@ -55,7 +55,7 @@ impl Installer {
         let extracted_meta = format!("{extracted_path}/META");
         let metadata = Meta::from(&extracted_meta)?.categories;
 
-        package.name = metadata.name.clone();
+        package.name = metadata.name.to_owned();
         package.metadata = metadata;
 
         for path in Package::from(extracted_path.clone()).get_packaged_fs()? {
@@ -201,7 +201,7 @@ pub fn spf_install(package_path: String) -> Result<(), Error> {
         if installer_information.is_confirmed {
             println!("\nInstalling...");
 
-            let name = installer_information.package.name.clone();
+            let name = installer_information.package.name.to_owned();
 
             match installer_information.install() {
                 Ok(()) => {
@@ -246,7 +246,7 @@ impl InstallStatus {
 
 impl Categories {
     fn arch_is_compat(&self) -> bool {
-        SUPPORTED_ARCHS.contains(&self.arch.as_str())
+        SUPPORTED_ARCHS.contains(&&*self.arch)
     }
 }
 
@@ -256,14 +256,12 @@ impl Package {
             return Ok(InstallStatus::Install);
         }
 
-        let get_installed_version = || -> Result<String, Error> {
-            let version = Self::from_installed(self.name.to_owned())?.metadata.version;
+        let installed = Self::from_installed(self.name.to_owned())
+            .unwrap_or(self.to_owned())
+            .metadata
+            .version;
 
-            Ok(version)
-        };
-
-        let (package_version, installed_version) =
-            (self.metadata.version.to_string(), get_installed_version()?);
+        let (package_version, installed_version) = (&*self.metadata.version, installed);
 
         if package_version == installed_version {
             return Ok(InstallStatus::Reinstall);
