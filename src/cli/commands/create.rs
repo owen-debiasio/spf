@@ -4,6 +4,7 @@
 //! SPDX-License-Identifier: GPL-3.0-or-later
 
 use std::{
+    fs::remove_file,
     io::{
         Error,
         ErrorKind::{InvalidInput, NotFound},
@@ -75,15 +76,22 @@ pub fn create(package_config: String, output_location: String) -> Result<(), Err
     println!("    Building...");
 
     match package.build() {
-        Ok(()) => (),
+        Ok(()) => println!("Done! Built to '{output_location}'"),
         Err(err) => {
+            if Path::new(&output_location).exists() {
+                remove_file(&output_location)?;
+            }
+
+            let extracted = &output_location.trim_end_matches(".spf");
+            if Path::new(extracted).exists() {
+                remove_file(extracted)?;
+            }
+
             eprintln!("Failed to build package '{output_location}': {err}");
 
             return Err(err);
         }
     }
-
-    println!("Done!");
 
     Ok(())
 }
