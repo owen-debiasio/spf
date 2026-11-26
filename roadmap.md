@@ -1,7 +1,7 @@
 # spf Roadmap
 
 > [!IMPORTANT]  
-> Last updated: `November 23, 2026 @ 08:03 PM EST`
+> Last updated: `November 26, 2026 @ 10:51 PM EST`
 
 Here's an idea list that I've thrown together of things I want to add/change
 over time. These are only IDEAS and are not guaranteed to be implemented.
@@ -34,7 +34,8 @@ dropped out of the list at any point.
 | Feature                                                         | Priority  | Due Date (version) |
 | --------------------------------------------------------------- | --------- | ------------------ |
 | Pre/Post install/uninstall jobs                                 | Undecided | v0.9.0             |
-| Unit Tests (via `cargo test`)                                   | Undecided | v0.9.0             |
+| Extract and built packages to temporary directories             | Undecided | v0.9.0             |
+| Unit Tests (via `cargo test`)                                   | Undecided | v1.0.0             |
 | Add a `.toml` configuration system for spf cli                  | Undecided | v1.0.0             |
 | Ability to install packages through a remote repository         | Undecided | v1.0.0             |
 | Remote package repository support (Ubuntu PPA, AUR, Cargo)      | NaN       | NaN                |
