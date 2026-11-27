@@ -1,7 +1,7 @@
 # spf Roadmap
 
 > [!IMPORTANT]  
-> Last updated: `November 26, 2026 @ 10:51 PM EST`
+> Last updated: `November 27, 2026 @ 1:04 PM EST`
 
 Here's an idea list that I've thrown together of things I want to add/change
 over time. These are only IDEAS and are not guaranteed to be implemented.
@@ -16,9 +16,14 @@ Related:
 These are some features that are currently being worked on. Things may be
 delayed, removed, or added to the list.
 
-| Feature                           | Priority | Due Date (version) |
-| --------------------------------- | -------- | ------------------ |
-| Restructure and clean up codebase | Medium   | v1.0.0             |
+<!-- markdownlint-disable MD013 -->
+
+| Feature                                             | Priority | Due Date (version) |
+| --------------------------------------------------- | -------- | ------------------ |
+| Extract and built packages to temporary directories | High     | v0.9.0             |
+| Restructure and clean up codebase                   | Medium   | v1.0.0             |
+
+<!-- markdownlint-enable MD013 -->
 
 ## List of Proposed Features
 
@@ -33,8 +38,8 @@ dropped out of the list at any point.
 
 | Feature                                                         | Priority  | Due Date (version) |
 | --------------------------------------------------------------- | --------- | ------------------ |
+| Extract and built packages to temporary directories             | High      | v0.9.0             |
 | Pre/Post install/uninstall jobs                                 | Undecided | v0.9.0             |
-| Extract and built packages to temporary directories             | Undecided | v0.9.0             |
 | Unit Tests (via `cargo test`)                                   | Undecided | v1.0.0             |
 | Add a `.toml` configuration system for spf cli                  | Undecided | v1.0.0             |
 | Ability to install packages through a remote repository         | Undecided | v1.0.0             |
