@@ -135,7 +135,7 @@ impl Package {
     pub fn get_packaged_fs(&self) -> Result<Vec<String>, Error> {
         let package_extracted = self.package_path.clone();
 
-        let collected_paths = match glob(&format!("./{package_extracted}/**/*")) {
+        let collected_paths = match glob(&format!("{package_extracted}/**/*")) {
             Ok(paths) => paths,
             Err(err) => {
                 return Err(Error::new(
