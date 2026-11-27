@@ -1,7 +1,7 @@
 # spf TODO
 
 > [!IMPORTANT]  
-> Last updated: `November 27, 2026 @ 1:04 PM EST`
+> Last updated: `November 27, 2026 @ 2:34 PM EST`
 
 Related:
 
@@ -17,8 +17,8 @@ Related:
 
 <!-- markdownlint-disable MD013 -->
 
-| Task                                                | Status      | Priority | Due Date |
-| --------------------------------------------------- | ----------- | -------- | -------- |
-| Extract and built packages to temporary directories | Not Started | High     | v0.9.0   |
+| Task              | Status      | Priority | Due Date |
+| ----------------- | ----------- | -------- | -------- |
+| Nothing right now | Not Started | N/A      | N/A      |
 
 <!-- markdownlint-enable MD013 -->
