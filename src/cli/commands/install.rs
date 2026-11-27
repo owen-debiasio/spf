@@ -207,7 +207,7 @@ pub fn spf_install(package_path: String) -> Result<(), Error> {
         if installer_information.is_confirmed {
             println!("\nInstalling...");
 
-            let name = installer_information.package.name.to_owned();
+            let name = &installer_information.package.name;
 
             match installer_information.install() {
                 Ok(()) => {
