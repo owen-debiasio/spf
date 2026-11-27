@@ -8,9 +8,19 @@ Waiting for new features? Check out the status of them in these related pages:
 - [TODO list](todo.md)
 
 > [!IMPORTANT]  
-> Last updated: `November 25, 2026 @ 9:00 AM EST`
+> Last updated: `November 27, 2026 @ 02:46 PM EST`
 
 ---
+
+## v0.9.0
+
+**Full Changelog**:
+<https://github.com/owen-debiasio/spf/compare/v0.8.0...v0.9.0>
+
+### Changed
+
+- When installing packages, the packages are now extracted to the respective
+  temporary directories such as `/tmp/`
 
 ## v0.8.0
 
