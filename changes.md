@@ -8,7 +8,7 @@ Waiting for new features? Check out the status of them in these related pages:
 - [TODO list](todo.md)
 
 > [!IMPORTANT]  
-> Last updated: `November 27, 2026 @ 02:46 PM EST`
+> Last updated: `November 27, 2026 @ 04:08 PM EST`
 
 ---
 
@@ -21,6 +21,7 @@ Waiting for new features? Check out the status of them in these related pages:
 
 - When installing packages, the packages are now extracted to the respective
   temporary directories such as `/tmp/`
+- Packages are now built with `xz` compresssion.
 
 ## v0.8.0
 
