@@ -17,7 +17,6 @@ use std::{
     path::Path,
 };
 
-use crate::libs::sys::get_binary_path;
 use crate::{
     cli::args::{IN_DEBUG_MODE, USING_AUTO_CONFIRM, args_contains},
     libs::{
@@ -25,7 +24,7 @@ use crate::{
             metadata::{Categories, Meta, PACKAGE_INSTALL_PATH, PackagedPaths},
             package::Package,
         },
-        sys::{SUPPORTED_ARCHS, is_root},
+        sys::{SUPPORTED_ARCHS, get_binary_path, is_root},
     },
 };
 
