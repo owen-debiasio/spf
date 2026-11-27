@@ -3,6 +3,9 @@
 //! Copyright (C) 2026 Owen Debiasio <owen.debiasio@gmail.com>
 //! SPDX-License-Identifier: GPL-3.0-or-later
 
+use self_replace::self_replace;
+use semver::Version;
+use std::env::temp_dir;
 use std::{
     env::consts::ARCH,
     fs::{OpenOptions, copy, create_dir_all, remove_dir_all, remove_file},
@@ -14,9 +17,7 @@ use std::{
     path::Path,
 };
 
-use self_replace::self_replace;
-use semver::Version;
-
+use crate::libs::sys::get_binary_path;
 use crate::{
     cli::args::{IN_DEBUG_MODE, USING_AUTO_CONFIRM, args_contains},
     libs::{
@@ -43,14 +44,16 @@ impl Installer {
     }
 
     fn load(package_path: &str) -> Result<Self, Error> {
+        let temp_dir = temp_dir().to_string_lossy().to_string();
+
         let mut package = Package::from(package_path.to_string());
-        let extracted_path = package.as_extracted().package_path;
+        let extracted_path = format!("{temp_dir}/{}", package.as_extracted().package_path);
 
         if Path::new(&extracted_path).exists() {
             remove_dir_all(&extracted_path)?
         }
 
-        package.extract(".")?;
+        package.extract(&temp_dir)?;
 
         let extracted_meta = format!("{extracted_path}/META");
         let metadata = Meta::from(&extracted_meta)?.categories;
@@ -141,8 +144,8 @@ impl Installer {
 
                 // Replace the spf binary to prevent crashes. For some shitty reason
                 // it will crash otherwise. Don't ask me.
-                let spf_binary_path = "/usr/bin/spf";
-                if path == spf_binary_path && Path::new(spf_binary_path).exists() {
+                let spf_binary_path = get_binary_path()?;
+                if *path == spf_binary_path && Path::new(&spf_binary_path).exists() {
                     self_replace(path)?;
                 }
 
