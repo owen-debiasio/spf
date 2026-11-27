@@ -34,3 +34,5 @@ To see installation instructions, see [the installation docs](./INSTALL.md)
   [@composefs](https://github.com/composefs)
 - [semver](https://github.com/dtolnay/semver) by
   [@dtolnay](https://github.com/dtolnay)
+- [xz2-rs](https://github.com/alexcrichton/xz2-rs) by
+  [Alex Crichton](https://github.com/alexcrichton)
