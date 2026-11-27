@@ -4,6 +4,7 @@
 //! SPDX-License-Identifier: GPL-3.0-or-later
 
 use glob::glob;
+use xz2::{read::XzDecoder, write::XzEncoder};
 
 use std::{
     fs::{File, copy, create_dir, create_dir_all, remove_dir_all, write},
@@ -113,9 +114,9 @@ impl Package {
     /// package.extract(destination)?;
     /// ```
     pub fn extract(&self, destination: &str) -> Result<(), Error> {
-        let archive_path = File::open(&self.package_path)?;
+        let archive = File::open(&self.package_path)?;
 
-        Archive::new(archive_path).unpack(destination)?;
+        Archive::new(XzDecoder::new(archive)).unpack(destination)?;
 
         Ok(())
     }
@@ -272,7 +273,7 @@ impl Package {
 
         let archive_file = File::create(&self.package_path)?;
 
-        let mut archive = Builder::new(&archive_file);
+        let mut archive = Builder::new(XzEncoder::new(&archive_file, 6));
 
         if let Some(path) = raw_folder.file_name() {
             archive.append_dir_all(path, raw_folder_name)?;
