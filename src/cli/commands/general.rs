@@ -34,7 +34,25 @@ pub fn extractor(package_path: &str, mut output: &str) -> Result<(), Error> {
         output = "."
     }
 
-    package.extract(output)?;
+    println!(
+        "Extracting '{}' to './{}'...",
+        package.package_path,
+        if output == "." {
+            package.package_path.trim_end_matches(".spf")
+        } else {
+            output
+        }
+    );
+
+    match package.extract(output) {
+        Ok(()) => (),
+        Err(err) => {
+            eprintln!("Failed to extract archive {}: {err}", package.package_path);
+            return Err(err);
+        }
+    }
+
+    println!("\nDone!");
 
     Ok(())
 }
