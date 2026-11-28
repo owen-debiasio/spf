@@ -8,7 +8,7 @@ Waiting for new features? Check out the status of them in these related pages:
 - [TODO list](todo.md)
 
 > [!IMPORTANT]  
-> Last updated: `November 27, 2026 @ 08:25 PM EST`
+> Last updated: `November 28, 2026 @ 11:55 AM EST`
 
 ---
 
@@ -19,7 +19,7 @@ Waiting for new features? Check out the status of them in these related pages:
 
 ### Added
 
-- Command `extract`: Extracts a `.spf` package (package `v0.9.0` and later) to a
+- Command `extract`: Extracts a `.spf` package (version `v0.9.0` and later) to a
   desired location
 
 ### Changed
