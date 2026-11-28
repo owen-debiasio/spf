@@ -17,6 +17,11 @@ Waiting for new features? Check out the status of them in these related pages:
 **Full Changelog**:
 <https://github.com/owen-debiasio/spf/compare/v0.8.0...v0.9.0>
 
+### Added
+
+- Command `extract`: Extracts a `.spf` package (package `v0.9.0` and later) to a
+  desired location
+
 ### Changed
 
 - When installing packages, the packages are now extracted to the respective
