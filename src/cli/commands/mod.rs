@@ -4,6 +4,7 @@
 //! SPDX-License-Identifier: GPL-3.0-or-later
 
 pub mod create;
+pub mod general;
 pub mod inspect;
 pub mod install;
 pub mod list;

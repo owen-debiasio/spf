@@ -9,8 +9,8 @@ use std::{
 use crate::cli::{
     args::{Args, IN_DEBUG_MODE, return_args},
     commands::{
-        create::create, inspect::inspect, install::spf_install, list::list_packages,
-        remove::remove_packages, template::gen_meta_template,
+        create::create, general::extractor, inspect::inspect, install::spf_install,
+        list::list_packages, remove::remove_packages, template::gen_meta_template,
     },
 };
 
@@ -97,7 +97,7 @@ fn parse_spf_cli(collected_args: Args) -> Result<(), Error> {
         "remove" => {
             // Manually supply args because I hate this. Allows you to
             // remove multiple packages at once.
-            let mut packages: Vec<String> = Vec::new();
+            let mut packages = Vec::new();
 
             // The first two args that are skipped are `spf remove`. Everything
             // else after that is a package to check.
@@ -107,6 +107,8 @@ fn parse_spf_cli(collected_args: Args) -> Result<(), Error> {
 
             remove_packages(packages)?
         }
+
+        "extract" => extractor(&collected_args.second, &collected_args.third)?,
 
         "list" => list_packages(&collected_args.second)?,
 
