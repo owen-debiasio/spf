@@ -20,7 +20,7 @@ use crate::{
     },
 };
 
-pub fn create(package_config: String, output_location: String) -> Result<(), Error> {
+pub fn create(package_config: String, mut output_location: String) -> Result<(), Error> {
     if package_config.is_empty() {
         eprintln!("Package configuration not provided!");
 
@@ -49,6 +49,10 @@ pub fn create(package_config: String, output_location: String) -> Result<(), Err
             "DEBUG: Collected metadata: {:?}",
             package_metadata.categories
         );
+    }
+
+    if output_location.is_empty() {
+        output_location = format!("{}.spf", package_metadata.categories.name);
     }
 
     let mut package = Package::new(package_metadata.categories.name.clone());

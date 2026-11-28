@@ -28,6 +28,8 @@ Waiting for new features? Check out the status of them in these related pages:
   temporary directories such as `/tmp/`
 - Packages are now built with `xz` compresssion.
 - The command usage screen has been slightly tweaked
+- If no output location is provided when building a package, set it to
+  `<name>.spf`
 
 ## v0.8.0
 
