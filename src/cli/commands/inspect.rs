@@ -6,18 +6,25 @@
 //! SPDX-License-Identifier: GPL-3.0-or-later
 
 use std::{
+    env::temp_dir,
     fs::remove_dir_all,
-    io::{Error, ErrorKind::InvalidFilename},
+    io::{
+        Error,
+        ErrorKind::{InvalidFilename, InvalidInput},
+    },
     path::Path,
 };
 
-use crate::libs::spf::{
-    metadata::{Meta, PACKAGE_INSTALL_PATH},
-    package::Package,
+use crate::{
+    cli::args::IN_DEBUG_MODE,
+    libs::spf::{
+        metadata::{Meta, PACKAGE_INSTALL_PATH},
+        package::Package,
+    },
 };
 
+#[derive(Debug)]
 struct Inspector {
-    package: Package,
     meta_path: String,
     remove_extracted: bool,
     extracted_path: String,
@@ -32,14 +39,16 @@ impl Inspector {
 
         let mut remove_extracted = false;
 
-        let extracted_path = loaded_package.as_extracted().package_path;
+        let temp_dir = temp_dir().to_string_lossy().to_string();
+
+        let extracted_path = format!("{temp_dir}/{}", loaded_package.as_extracted().package_path);
 
         let meta_path = if (package.starts_with(PACKAGE_INSTALL_PATH) || package.ends_with("/META"))
             && Path::new(package).exists()
         {
             package.to_string()
         } else if loaded_package.is_spf_package() {
-            loaded_package.extract(".")?;
+            loaded_package.extract(&temp_dir)?;
 
             remove_extracted.toggle();
 
@@ -51,7 +60,6 @@ impl Inspector {
         };
 
         Ok(Self {
-            package: loaded_package,
             meta_path,
             remove_extracted,
             extracted_path,
@@ -73,7 +81,7 @@ impl Inspector {
 
     fn prep_paths(&mut self) -> Result<(), Error> {
         let collected_paths = if self.remove_extracted {
-            let packaged_paths = self.package.as_extracted().get_packaged_fs();
+            let packaged_paths = Package::from(self.extracted_path.clone()).get_packaged_fs();
 
             remove_dir_all(&self.extracted_path)?;
 
@@ -94,6 +102,11 @@ impl Inspector {
 }
 
 pub fn inspect(package: &str) -> Result<(), Error> {
+    if package.is_empty() {
+        eprintln!("Please provide an extracted package, metadata file, or .spf file.");
+        return Err(Error::from(InvalidInput));
+    }
+
     println!("Loading package '{package}'...");
 
     let mut loaded_package = match Inspector::load(package) {
@@ -110,5 +123,8 @@ pub fn inspect(package: &str) -> Result<(), Error> {
     loaded_package.prep_paths()?;
     println!("\nInstalled paths:\n{}", loaded_package.paths);
 
+    if *IN_DEBUG_MODE {
+        println!("DEBUG: loaded package: {loaded_package:#?}")
+    }
     Ok(())
 }
