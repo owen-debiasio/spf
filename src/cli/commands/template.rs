@@ -64,8 +64,7 @@ pub fn gen_meta_template(mut output_location: String) -> Result<(), Error> {
         return Err(Error::from(InvalidInput));
     }
 
-    output_location =
-        format!("{output_location}/spf_template").replace("//spf_template", "/spf_template");
+    output_location = format!("{output_location}/spf_template");
 
     // Write the contents
     write(&output_location, TEMPLATE_CONTENTS)?;
