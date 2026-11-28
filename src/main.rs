@@ -9,8 +9,12 @@ use std::{
 use crate::cli::{
     args::{Args, IN_DEBUG_MODE, return_args},
     commands::{
-        create::create, general::extractor, inspect::inspect, install::spf_install,
-        list::list_packages, remove::remove_packages, template::gen_meta_template,
+        create::create,
+        general::{extractor, template::gen_meta_template},
+        inspect::inspect,
+        install::spf_install,
+        list::list_packages,
+        remove::remove_packages,
     },
 };
 
