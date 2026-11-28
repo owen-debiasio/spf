@@ -139,17 +139,18 @@ fn available_commands() {
     println!(
         "\
         Available Commands:\n\n  \
-          create     <metadata file> <output directory>    Create package\n  \
+          create     <metadata file> <destination>         Create package\n  \
           install    <.spf package location>               Install package\n  \
-          remove     <package to uninstall>                Uninstall package\n  \
+          remove     <package(s)>                          Uninstall package(s)\n  \
           list       <(optional) string to match>          List installed packages\n  \
-          template   <(optional) output location>          Generate package metadata template\n  \
-          inspect    <package to inspect>                  Inspect metadata of a package
+          template   <(optional) destination>              Generate package metadata template\n  \
+          inspect    <package>                             Inspect metadata of a package\n  \
+          extract    <package> <(optional) destination>    Inspect metadata of a package
         \n\
         Available options:\n\n \
-          --version         Display spf version\n \
-          --ignore-arch     Force the installation of a package with a different architecture\n \
-          --debug           Display debug information as spf runs\n \
-          --yes             Automatically confirms any prompt"
+          --version        Display spf version\n \
+          --ignore-arch    Force the installation of a package with a different architecture\n \
+          --debug          Display debug information as spf runs\n \
+          --yes            Automatically confirms any prompt"
     );
 }
